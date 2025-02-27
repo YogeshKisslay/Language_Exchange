@@ -134,6 +134,169 @@
 
 
 
+// import React, { useEffect } from 'react';
+// import { useDispatch } from 'react-redux';
+// import { useGetProfileQuery } from './redux/services/authApi';
+// import { setCredentials } from './redux/slices/authSlice';
+// import { Routes, Route, useLocation } from 'react-router-dom';
+// import Navbar from './components/Navbar';
+// import LoginModal from './components/LoginModal';
+// import RegisterModal from './components/RegisterModal';
+
+// const App = () => {
+//   const dispatch = useDispatch();
+//   const { data, error, isLoading, refetch } = useGetProfileQuery();
+//   const location = useLocation();
+
+//   useEffect(() => {
+//     console.log('Profile Query - Data:', data, 'Error:', error, 'Loading:', isLoading);
+//     if (data) {
+//       dispatch(setCredentials({ token: null, user: data.user }));
+//     } else if (error?.status === 401) {
+//       console.log('User not authenticated yet, waiting for redirect...');
+//     } else if (error) {
+//       console.error('Profile fetch error:', error);
+//     }
+
+//     // Refetch on redirect to homepage if no data
+//     if (location.pathname === '/' && !data && !isLoading) {
+//       refetch();
+//     }
+//   }, [data, error, isLoading, location.pathname, refetch, dispatch]);
+
+//   useEffect(() => {
+//     const loginModal = document.getElementById('loginModal');
+//     const registerModal = document.getElementById('registerModal');
+//     const backdrop = document.querySelector('.modal-backdrop');
+
+//     if (backdrop) backdrop.remove();
+//     document.body.classList.remove('modal-open');
+//     if (loginModal) {
+//       loginModal.classList.remove('show');
+//       loginModal.style.display = 'none';
+//     }
+//     if (registerModal) {
+//       registerModal.classList.remove('show');
+//       registerModal.style.display = 'none';
+//     }
+
+//     if (location.pathname === '/login' && loginModal) {
+//       loginModal.classList.add('show');
+//       loginModal.style.display = 'block';
+//       document.body.classList.add('modal-open');
+//       const newBackdrop = document.createElement('div');
+//       newBackdrop.className = 'modal-backdrop fade show';
+//       document.body.appendChild(newBackdrop);
+//     } else if (location.pathname === '/register' && registerModal) {
+//       registerModal.classList.add('show');
+//       registerModal.style.display = 'block';
+//       document.body.classList.add('modal-open');
+//       const newBackdrop = document.createElement('div');
+//       newBackdrop.className = 'modal-backdrop fade show';
+//       document.body.appendChild(newBackdrop);
+//     }
+//   }, [location.pathname]);
+
+//   if (isLoading) return <div>Loading...</div>;
+//   if (error && error.status !== 401) return <div>Error: {error.data?.message || 'Failed to load user data'}</div>;
+
+//   return (
+//     <>
+//       <Navbar />
+//       <LoginModal />
+//       <RegisterModal />
+//       <Routes>
+//         <Route path="/" element={<h1>Welcome to Language Exchange</h1>} />
+//       </Routes>
+//     </>
+//   );
+// };
+
+// export default App;
+
+
+// import React, { useEffect } from 'react';
+// import { useDispatch } from 'react-redux';
+// import { useGetProfileQuery } from './redux/services/authApi';
+// import { setCredentials } from './redux/slices/authSlice';
+// import { Routes, Route, useLocation } from 'react-router-dom';
+// import Navbar from './components/Navbar';
+// import LoginModal from './components/LoginModal';
+// import RegisterModal from './components/RegisterModal';
+// import ResetPassword from './components/ResetPassword'; // Import the new component
+
+// const App = () => {
+//   const dispatch = useDispatch();
+//   const { data, error, isLoading, refetch } = useGetProfileQuery();
+//   const location = useLocation();
+
+//   useEffect(() => {
+//     console.log('Profile Query - Data:', data, 'Error:', error, 'Loading:', isLoading);
+//     if (data) {
+//       dispatch(setCredentials({ token: null, user: data.user }));
+//     } else if (error?.status === 401) {
+//       console.log('User not authenticated yet, waiting for redirect...');
+//     } else if (error) {
+//       console.error('Profile fetch error:', error);
+//     }
+
+//     if (location.pathname === '/' && !data && !isLoading) {
+//       refetch();
+//     }
+//   }, [data, error, isLoading, location.pathname, refetch, dispatch]);
+
+//   useEffect(() => {
+//     const loginModal = document.getElementById('loginModal');
+//     const registerModal = document.getElementById('registerModal');
+//     const backdrop = document.querySelector('.modal-backdrop');
+
+//     if (backdrop) backdrop.remove();
+//     document.body.classList.remove('modal-open');
+//     if (loginModal) {
+//       loginModal.classList.remove('show');
+//       loginModal.style.display = 'none';
+//     }
+//     if (registerModal) {
+//       registerModal.classList.remove('show');
+//       registerModal.style.display = 'none';
+//     }
+
+//     if (location.pathname === '/login' && loginModal) {
+//       loginModal.classList.add('show');
+//       loginModal.style.display = 'block';
+//       document.body.classList.add('modal-open');
+//       const newBackdrop = document.createElement('div');
+//       newBackdrop.className = 'modal-backdrop fade show';
+//       document.body.appendChild(newBackdrop);
+//     } else if (location.pathname === '/register' && registerModal) {
+//       registerModal.classList.add('show');
+//       registerModal.style.display = 'block';
+//       document.body.classList.add('modal-open');
+//       const newBackdrop = document.createElement('div');
+//       newBackdrop.className = 'modal-backdrop fade show';
+//       document.body.appendChild(newBackdrop);
+//     }
+//   }, [location.pathname]);
+
+//   if (isLoading) return <div>Loading...</div>;
+//   if (error && error.status !== 401) return <div>Error: {error.data?.message || 'Failed to load user data'}</div>;
+
+//   return (
+//     <>
+//       <Navbar />
+//       <LoginModal />
+//       <RegisterModal />
+//       <Routes>
+//         <Route path="/" element={<h1>Welcome to Language Exchange</h1>} />
+//         <Route path="/reset/:token" element={<ResetPassword />} /> {/* Add this route */}
+//       </Routes>
+//     </>
+//   );
+// };
+
+// export default App;
+
+
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useGetProfileQuery } from './redux/services/authApi';
@@ -142,6 +305,9 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import LoginModal from './components/LoginModal';
 import RegisterModal from './components/RegisterModal';
+import ResetPassword from './components/ResetPassword';
+import Profile from './components/Profile'; // Import Profile
+import UpdateProfile from './components/UpdateProfile'; // Import UpdateProfile
 
 const App = () => {
   const dispatch = useDispatch();
@@ -158,7 +324,6 @@ const App = () => {
       console.error('Profile fetch error:', error);
     }
 
-    // Refetch on redirect to homepage if no data
     if (location.pathname === '/' && !data && !isLoading) {
       refetch();
     }
@@ -207,6 +372,9 @@ const App = () => {
       <RegisterModal />
       <Routes>
         <Route path="/" element={<h1>Welcome to Language Exchange</h1>} />
+        <Route path="/reset/:token" element={<ResetPassword />} />
+        <Route path="/profile" element={<Profile />} /> {/* Added Profile route */}
+        <Route path="/update-profile" element={<UpdateProfile />} /> {/* Added UpdateProfile route */}
       </Routes>
     </>
   );

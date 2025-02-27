@@ -306,6 +306,26 @@ const registerUser = asyncHandler(async (req, res) => {
 // });
 
 // Verify User
+// const verifyUser = asyncHandler(async (req, res) => {
+//   try {
+//     const { token } = req.params;
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     const user = await User.findById(decoded.id);
+
+//     if (!user) {
+//       return res.status(400).json({ message: "Invalid token" });
+//     }
+
+//     user.isVerified = true;
+//     await user.save();
+
+//     res.redirect(`${process.env.FRONTEND_URL}/login`);
+//   } catch (error) {
+//     console.error("Email verification failed:", error.message);
+//     res.status(400).json({ message: "Invalid or expired token" });
+//   }
+// });
+
 const verifyUser = asyncHandler(async (req, res) => {
   try {
     const { token } = req.params;
@@ -319,7 +339,7 @@ const verifyUser = asyncHandler(async (req, res) => {
     user.isVerified = true;
     await user.save();
 
-    res.redirect(`${process.env.FRONTEND_URL}/login`);
+    res.redirect(`${process.env.FRONTEND_URL}`);
   } catch (error) {
     console.error("Email verification failed:", error.message);
     res.status(400).json({ message: "Invalid or expired token" });
