@@ -281,50 +281,6 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
-// const registerUser = asyncHandler(async (req, res) => {
-//   const { name, email, password } = req.body;
-
-//   const existingUser = await User.findOne({ email });
-
-//   if (existingUser) {
-//     if (existingUser.googleId) {
-//       return res.status(400).json({ message: "Use Auth0 login instead" });
-//     } else {
-//       return res.status(400).json({ message: "User already exists" });
-//     }
-//   }
-
-//   const hashedPassword = await bcrypt.hash(password, 10);
-//   const user = await User.create({ name, email, password: hashedPassword });
-
-//   if (user) {
-//     sendVerificationEmail(user);
-//     res.status(201).json({ message: "Verification email sent" });
-//   } else {
-//     res.status(400).json({ message: "Invalid user data" });
-//   }
-// });
-
-// Verify User
-// const verifyUser = asyncHandler(async (req, res) => {
-//   try {
-//     const { token } = req.params;
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//     const user = await User.findById(decoded.id);
-
-//     if (!user) {
-//       return res.status(400).json({ message: "Invalid token" });
-//     }
-
-//     user.isVerified = true;
-//     await user.save();
-
-//     res.redirect(`${process.env.FRONTEND_URL}/login`);
-//   } catch (error) {
-//     console.error("Email verification failed:", error.message);
-//     res.status(400).json({ message: "Invalid or expired token" });
-//   }
-// });
 
 const verifyUser = asyncHandler(async (req, res) => {
   try {
@@ -345,30 +301,6 @@ const verifyUser = asyncHandler(async (req, res) => {
     res.status(400).json({ message: "Invalid or expired token" });
   }
 });
-
-// Login User
-// const loginUser = asyncHandler(async (req, res) => {
-//   const { email, password } = req.body;
-
-//   const user = await User.findOne({ email });
-//   if (!user || !user.isVerified) {
-//     res.status(401).json({ message: "Invalid email or not verified" });
-//     return;
-//   }
-//   if (user.googleId) {
-//     return res.status(400).json({ message: "Use Auth0 login instead" });
-//   }
-//   const match = await bcrypt.compare(password, user.password);
-//   if (!match) {
-//     res.status(401).json({ message: "Invalid credentials" });
-//     return;
-//   }
-
-//   res.cookie("token", generateToken(user._id), { httpOnly: true });
-//   res.json({ message: "Logged in successfully" });
-// });
-
-
 
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -436,71 +368,6 @@ const resetPassword = asyncHandler(async (req, res) => {
 });
 
 
-
-// const auth0Login = asyncHandler(async (req, res) => {
-//   const { emails, name, sub: googleId } = req.user;
-  
-//   // Extract email correctly
-//   const email = emails?.[0]?.value || "";
-
-//   // Convert name to a string
-//   const fullName = `${name.givenName || ""} ${name.familyName || ""}`.trim();
-
-//   let user = await User.findOne({ email });
-
-//   if (!user) {
-//     // Create user if they don’t exist
-//     user = await User.create({
-//       name: fullName,
-//       email,
-//       googleId,
-//       isVerified: true, // Auth0 verifies the email
-//     });
-//   } else if (!user.googleId) {
-//     // If user exists but was registered manually, link Google ID
-//     user.googleId = googleId;
-//     await user.save();
-//   }
-
-//   // Generate JWT for frontend authentication
-//   const token = generateToken(user._id);
-  
-//   // Set the token in an httpOnly cookie
-//   res.cookie("token", token, { 
-//     httpOnly: true,
-//     secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-//     sameSite: "strict", // Optional: Enhance security
-//   });
-
-//   // Redirect to frontend homepage
-//   res.redirect("http://localhost:3000");
-// });
-// const auth0Login = asyncHandler(async (req, res) => {
-//   const { emails, name, sub: googleId } = req.user;
-//   const email = emails?.[0]?.value || "";
-//   const fullName = `${name.givenName || ""} ${name.familyName || ""}`.trim();
-
-//   let user = await User.findOne({ email });
-//   if (!user) {
-//     user = await User.create({
-//       name: fullName,
-//       email,
-//       googleId,
-//       isVerified: true,
-//     });
-//   } else if (!user.googleId) {
-//     user.googleId = googleId;
-//     await user.save();
-//   }
-
-//   const token = generateToken(user._id);
-//   res.cookie("token", token, { 
-//     httpOnly: true,
-//     secure: process.env.NODE_ENV === "production",
-//     sameSite: "strict",
-//   });
-//   res.redirect("http://localhost:3000");
-// });
 const auth0Login = asyncHandler(async (req, res) => {
   const { emails, name, sub: googleId } = req.user;
   const email = emails?.[0]?.value || "";
