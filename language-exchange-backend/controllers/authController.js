@@ -302,6 +302,67 @@ const verifyUser = asyncHandler(async (req, res) => {
   }
 });
 
+// const loginUser = asyncHandler(async (req, res) => {
+//   const { email, password } = req.body;
+
+//   const user = await User.findOne({ email });
+//   if (!user || !user.isVerified) {
+//     res.status(401).json({ message: "Invalid email or not verified" });
+//     return;
+//   }
+//   if (user.googleId) {
+//     return res.status(400).json({ message: "Use Auth0 login instead" });
+//   }
+//   const match = await bcrypt.compare(password, user.password);
+//   if (!match) {
+//     res.status(401).json({ message: "Invalid credentials" });
+//     return;
+//   }
+
+//   const token = generateToken(user._id);
+//   res.cookie("token", token, { 
+//     httpOnly: true,
+//     secure: process.env.NODE_ENV === "production",
+//     sameSite: "strict",
+//   });
+//   res.json({ 
+//     message: "Logged in successfully",
+//     token,
+//     user: { name: user.name } // Include user data for avatar
+//   });
+// });
+// const loginUser = asyncHandler(async (req, res) => {
+//   const { email, password } = req.body;
+
+//   const user = await User.findOne({ email });
+//   if (!user || !user.isVerified) {
+//     res.status(401).json({ message: "Invalid email or not verified" });
+//     return;
+//   }
+//   if (user.googleId) {
+//     return res.status(400).json({ message: "Use Auth0 login instead" });
+//   }
+//   const match = await bcrypt.compare(password, user.password);
+//   if (!match) {
+//     res.status(401).json({ message: "Invalid credentials" });
+//     return;
+//   }
+
+//   const token = generateToken(user._id);
+//   res.cookie("token", token, { 
+//     httpOnly: true,
+//     secure: process.env.NODE_ENV === "production",
+//     sameSite: "lax", // Changed to lax for cross-site compatibility
+//     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+//   });
+//   console.log('Login - Setting cookie:', token); // Debug
+//   res.json({ 
+//     message: "Logged in successfully",
+//     token,
+//     user: { name: user.name }
+//   });
+// });
+
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -323,15 +384,16 @@ const loginUser = asyncHandler(async (req, res) => {
   res.cookie("token", token, { 
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
   });
+  console.log('Login - Setting cookie:', token); // Debug
   res.json({ 
     message: "Logged in successfully",
     token,
-    user: { name: user.name } // Include user data for avatar
+    user: { name: user.name, _id: user._id } // Include _id
   });
 });
-
 // Forgot Password
 const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
