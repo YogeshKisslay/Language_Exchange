@@ -167,6 +167,150 @@
 // export default LoginModal;
 
 
+// import React, { useState } from 'react';
+// import { useDispatch } from 'react-redux';
+// import { useNavigate, Link } from 'react-router-dom';
+// import { useLoginMutation, useForgotPasswordMutation } from '../redux/services/authApi';
+// import { setCredentials } from '../redux/slices/authSlice';
+
+// const LoginModal = () => {
+//   const [email, setEmail] = useState('');
+//   const [password, setPassword] = useState('');
+//   const dispatch = useDispatch();
+//   const navigate = useNavigate();
+
+//   const [login, { isLoading: loginLoading }] = useLoginMutation();
+//   const [forgotPassword, { isLoading: forgotLoading }] = useForgotPasswordMutation();
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     try {
+//       const response = await login({ email, password }).unwrap();
+//       dispatch(setCredentials({ token: response.token, user: response.user }));
+//       navigate('/'); // Redirect to homepage after login
+//     } catch (err) {
+//       alert(err.data?.message || 'Login failed');
+//     }
+//   };
+
+//   const handleForgotPassword = async () => {
+//     try {
+//       await forgotPassword(email).unwrap();
+//       alert('Password reset email sent');
+//     } catch (err) {
+//       alert(err.data?.message || 'Failed to send reset email');
+//     }
+//   };
+
+//   const handleGoogleLogin = () => {
+//     window.location.href = 'http://localhost:5000/api/auth/auth0';
+//   };
+
+//   return (
+//     <div
+//       className="modal fade"
+//       id="loginModal"
+//       tabIndex="-1"
+//       aria-labelledby="loginModalLabel"
+//       aria-hidden="true"
+//     >
+//       <div className="modal-dialog modal-dialog-centered">
+//         <div className="modal-content">
+//           <div className="modal-header">
+//             <h5 className="modal-title" id="loginModalLabel">
+//               Login to Language Exchange
+//             </h5>
+//             <button
+//               type="button"
+//               className="btn-close"
+//               onClick={() => navigate('/')} // Close modal and go to homepage
+//               aria-label="Close"
+//             ></button>
+//           </div>
+//           <div className="modal-body">
+//             <form onSubmit={handleSubmit}>
+//               <div className="mb-3">
+//                 <label htmlFor="email" className="form-label">
+//                   Email address
+//                 </label>
+//                 <input
+//                   type="email"
+//                   className="form-control"
+//                   id="email"
+//                   placeholder="Enter your email"
+//                   value={email}
+//                   onChange={(e) => setEmail(e.target.value)}
+//                   required
+//                 />
+//               </div>
+//               <div className="mb-3">
+//                 <label htmlFor="password" className="form-label">
+//                   Password
+//                 </label>
+//                 <input
+//                   type="password"
+//                   className="form-control"
+//                   id="password"
+//                   placeholder="Enter your password"
+//                   value={password}
+//                   onChange={(e) => setPassword(e.target.value)}
+//                   required
+//                 />
+//               </div>
+//               <div className="mb-3 text-end">
+//                 <button
+//                   type="button"
+//                   className="btn btn-link p-0 text-decoration-none"
+//                   onClick={handleForgotPassword}
+//                   disabled={forgotLoading}
+//                 >
+//                   Forgot Password?
+//                 </button>
+//               </div>
+//               <button
+//                 type="submit"
+//                 className="btn btn-primary w-100 mb-3"
+//                 disabled={loginLoading}
+//               >
+//                 {loginLoading ? 'Logging in...' : 'Submit'}
+//               </button>
+//             </form>
+//             <div className="d-flex align-items-center justify-content-center mb-3">
+//               <hr className="w-25" />
+//               <span className="mx-2 text-muted">OR</span>
+//               <hr className="w-25" />
+//             </div>
+//             <button
+//               type="button"
+//               className="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center gap-2"
+//               onClick={handleGoogleLogin}
+//             >
+//               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+//                 {/* Google SVG paths remain the same */}
+//               </svg>
+//               Continue with Google
+//             </button>
+//             <p className="text-center mt-3">
+//               Don’t have an account?{' '}
+//               <Link
+//                 to="/register"
+//                 className="btn btn-link p-0"
+//                 onClick={() => document.getElementById('loginModal')?.classList.remove('show')}
+//               >
+//                 Click here to register
+//               </Link>
+//             </p>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default LoginModal;
+
+
+
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
@@ -203,7 +347,7 @@ const LoginModal = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:5000/api/auth/auth0';
+    window.location.href = `${process.env.REACT_APP_BACKEND_URL}/api/auth/auth0`;
   };
 
   return (
