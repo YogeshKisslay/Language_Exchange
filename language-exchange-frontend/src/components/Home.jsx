@@ -1,1016 +1,3 @@
-// // import React from 'react'
-
-// // const Home = () => {
-// //   return (
-// //     <div className="container mt-5">
-// //       <h1 className="text-primary">Welcome to Language Exchange!</h1>
-// //       <p className="lead">Connect with language partners around the world!</p>
-// //     </div>
-// //   )
-// // }
-
-// // export default Home
-
-// import React, { useState, useEffect } from 'react';
-// import { useSelector } from 'react-redux';
-// import {
-//   useInitiateCallMutation,
-//   useAcceptCallMutation,
-//   useEndCallMutation,
-//   useExtendCallMutation,
-//   useCancelCallMutation,
-//   useSetOnlineStatusMutation,
-// } from '../redux/services/callApi';
-// import { io } from 'socket.io-client';
-
-// const Home = () => {
-//   const { user, isAuthenticated } = useSelector((state) => state.auth);
-//   const [language, setLanguage] = useState('');
-//   const [callStatus, setCallStatus] = useState(null); // { callId, status, receivers }
-//   const [socket, setSocket] = useState(null);
-//   const [initiateCall] = useInitiateCallMutation();
-//   const [acceptCall] = useAcceptCallMutation();
-//   const [endCall] = useEndCallMutation();
-//   const [extendCall] = useExtendCallMutation();
-//   const [cancelCall] = useCancelCallMutation();
-//   const [setOnlineStatus] = useSetOnlineStatusMutation();
-
-//   useEffect(() => {
-//     if (isAuthenticated && user?._id) {
-//       const newSocket = io('http://localhost:5000', { withCredentials: true });
-//       newSocket.on('connect', () => {
-//         newSocket.emit('register', user._id);
-//         setOnlineStatus({ isOnline: true }); // Set user online on connect
-//       });
-
-//       newSocket.on('call-request', (data) => {
-//         setCallStatus({ callId: data.callId, status: 'pending', caller: data.callerName });
-//       });
-
-//       newSocket.on('call-accepted', (data) => {
-//         setCallStatus((prev) => prev && { ...prev, status: 'active', receiver: data.receiverName });
-//       });
-
-//       newSocket.on('call-cancelled', () => {
-//         setCallStatus(null);
-//       });
-
-//       newSocket.on('call-ended', (data) => {
-//         setCallStatus((prev) => prev && { ...prev, status: data.status });
-//         setTimeout(() => setCallStatus(null), 2000); // Clear after 2s
-//       });
-
-//       newSocket.on('call-extended', () => {
-//         setCallStatus((prev) => prev && { ...prev, extended: true });
-//       });
-
-//       setSocket(newSocket);
-
-//       return () => {
-//         newSocket.disconnect();
-//       };
-//     }
-//   }, [isAuthenticated, user, setOnlineStatus]);
-
-//   const handleInitiateCall = async () => {
-//     try {
-//       const response = await initiateCall(language).unwrap();
-//       setCallStatus({ callId: response.callId, status: 'pending', receivers: response.potentialReceivers });
-//     } catch (error) {
-//       console.error('Initiate call failed:', error);
-//     }
-//   };
-
-//   const handleAcceptCall = async () => {
-//     try {
-//       await acceptCall(callStatus.callId).unwrap();
-//       setCallStatus((prev) => ({ ...prev, status: 'active' }));
-//     } catch (error) {
-//       console.error('Accept call failed:', error);
-//     }
-//   };
-
-//   const handleEndCall = async () => {
-//     try {
-//       await endCall(callStatus.callId).unwrap();
-//     } catch (error) {
-//       console.error('End call failed:', error);
-//     }
-//   };
-
-//   const handleExtendCall = async () => {
-//     try {
-//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
-//     } catch (error) {
-//       console.error('Extend call failed:', error);
-//     }
-//   };
-
-//   const handleCancelCall = async () => {
-//     try {
-//       await cancelCall(callStatus.callId).unwrap();
-//       setCallStatus(null);
-//     } catch (error) {
-//       console.error('Cancel call failed:', error);
-//     }
-//   };
-
-//   return (
-//     <div className="container mt-5 text-center">
-//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
-//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
-
-//       {!isAuthenticated ? (
-//         <div className="alert alert-info">
-//           Please <Link to="/login">login</Link> to start exchanging languages!
-//         </div>
-//       ) : (
-//         <div>
-//           {!callStatus ? (
-//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Start a Language Call</h5>
-//                 <div className="mb-3">
-//                   <input
-//                     type="text"
-//                     className="form-control"
-//                     placeholder="Enter language to learn (e.g., Spanish)"
-//                     value={language}
-//                     onChange={(e) => setLanguage(e.target.value)}
-//                   />
-//                 </div>
-//                 <button
-//                   className="btn btn-primary w-100"
-//                   onClick={handleInitiateCall}
-//                   disabled={!language || user.powerTokens < 1}
-//                 >
-//                   {user.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
-//                 </button>
-//               </div>
-//             </div>
-//           ) : (
-//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Call Status</h5>
-//                 {callStatus.status === 'pending' && callStatus.receivers ? (
-//                   <>
-//                     <p>Waiting for someone to accept your call for {language}...</p>
-//                     <p>Potential Receivers: {callStatus.receivers.map((r) => r.name).join(', ')}</p>
-//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
-//                       Cancel Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'pending' && callStatus.caller ? (
-//                   <>
-//                     <p>Incoming call from {callStatus.caller} for {language}</p>
-//                     <button className="btn btn-success w-100" onClick={handleAcceptCall}>
-//                       Accept Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'active' ? (
-//                   <>
-//                     <p>Active call with {callStatus.receiver || callStatus.receivers?.[0]?.name}</p>
-//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
-//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
-//                       End Call
-//                     </button>
-//                     <button
-//                       className="btn btn-warning w-100"
-//                       onClick={handleExtendCall}
-//                       disabled={user.powerTokens < 1}
-//                     >
-//                       {user.powerTokens < 1 ? 'No Power Tokens' : 'Extend Call'}
-//                     </button>
-//                   </>
-//                 ) : (
-//                   <p>Call {callStatus.status}!</p>
-//                 )}
-//               </div>
-//             </div>
-//           )}
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Home;
-
-// import React, { useState, useEffect } from 'react';
-// import { useSelector } from 'react-redux';
-// import { Link } from 'react-router-dom'; // Add this import
-// import {
-//   useInitiateCallMutation,
-//   useAcceptCallMutation,
-//   useEndCallMutation,
-//   useExtendCallMutation,
-//   useCancelCallMutation,
-//   useSetOnlineStatusMutation,
-// } from '../redux/services/callApi';
-// import { io } from 'socket.io-client';
-
-// const Home = () => {
-//   const { user, isAuthenticated } = useSelector((state) => state.auth);
-//   const [language, setLanguage] = useState('');
-//   const [callStatus, setCallStatus] = useState(null);
-//   const [socket, setSocket] = useState(null);
-//   const [initiateCall] = useInitiateCallMutation();
-//   const [acceptCall] = useAcceptCallMutation();
-//   const [endCall] = useEndCallMutation();
-//   const [extendCall] = useExtendCallMutation();
-//   const [cancelCall] = useCancelCallMutation();
-//   const [setOnlineStatus] = useSetOnlineStatusMutation();
-
-//   useEffect(() => {
-//     if (isAuthenticated && user?._id) {
-//       const newSocket = io('http://localhost:5000', { withCredentials: true });
-//       newSocket.on('connect', () => {
-//         newSocket.emit('register', user._id);
-//         setOnlineStatus({ isOnline: true });
-//       });
-
-//       newSocket.on('call-request', (data) => {
-//         setCallStatus({ callId: data.callId, status: 'pending', caller: data.callerName });
-//       });
-
-//       newSocket.on('call-accepted', (data) => {
-//         setCallStatus((prev) => prev && { ...prev, status: 'active', receiver: data.receiverName });
-//       });
-
-//       newSocket.on('call-cancelled', () => {
-//         setCallStatus(null);
-//       });
-
-//       newSocket.on('call-ended', (data) => {
-//         setCallStatus((prev) => prev && { ...prev, status: data.status });
-//         setTimeout(() => setCallStatus(null), 2000);
-//       });
-
-//       newSocket.on('call-extended', () => {
-//         setCallStatus((prev) => prev && { ...prev, extended: true });
-//       });
-
-//       setSocket(newSocket);
-
-//       return () => {
-//         newSocket.disconnect();
-//       };
-//     }
-//   }, [isAuthenticated, user, setOnlineStatus]);
-
-//   const handleInitiateCall = async () => {
-//     try {
-//       const response = await initiateCall(language).unwrap();
-//       setCallStatus({ callId: response.callId, status: 'pending', receivers: response.potentialReceivers });
-//     } catch (error) {
-//       console.error('Initiate call failed:', error);
-//     }
-//   };
-
-//   const handleAcceptCall = async () => {
-//     try {
-//       await acceptCall(callStatus.callId).unwrap();
-//       setCallStatus((prev) => ({ ...prev, status: 'active' }));
-//     } catch (error) {
-//       console.error('Accept call failed:', error);
-//     }
-//   };
-
-//   const handleEndCall = async () => {
-//     try {
-//       await endCall(callStatus.callId).unwrap();
-//     } catch (error) {
-//       console.error('End call failed:', error);
-//     }
-//   };
-
-//   const handleExtendCall = async () => {
-//     try {
-//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
-//     } catch (error) {
-//       console.error('Extend call failed:', error);
-//     }
-//   };
-
-//   const handleCancelCall = async () => {
-//     try {
-//       await cancelCall(callStatus.callId).unwrap();
-//       setCallStatus(null);
-//     } catch (error) {
-//       console.error('Cancel call failed:', error);
-//     }
-//   };
-
-//   return (
-//     <div className="container mt-5 text-center">
-//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
-//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
-
-//       {!isAuthenticated ? (
-//         <div className="alert alert-info">
-//           Please <Link to="/login">login</Link> to start exchanging languages!
-//         </div>
-//       ) : (
-//         <div>
-//           {!callStatus ? (
-//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Start a Language Call</h5>
-//                 <div className="mb-3">
-//                   <input
-//                     type="text"
-//                     className="form-control"
-//                     placeholder="Enter language to learn (e.g., Spanish)"
-//                     value={language}
-//                     onChange={(e) => setLanguage(e.target.value)}
-//                   />
-//                 </div>
-//                 <button
-//                   className="btn btn-primary w-100"
-//                   onClick={handleInitiateCall}
-//                   disabled={!language || user.powerTokens < 1}
-//                 >
-//                   {user.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
-//                 </button>
-//               </div>
-//             </div>
-//           ) : (
-//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Call Status</h5>
-//                 {callStatus.status === 'pending' && callStatus.receivers ? (
-//                   <>
-//                     <p>Waiting for someone to accept your call for {language}...</p>
-//                     <p>Potential Receivers: {callStatus.receivers.map((r) => r.name).join(', ')}</p>
-//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
-//                       Cancel Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'pending' && callStatus.caller ? (
-//                   <>
-//                     <p>Incoming call from {callStatus.caller} for {language}</p>
-//                     <button className="btn btn-success w-100" onClick={handleAcceptCall}>
-//                       Accept Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'active' ? (
-//                   <>
-//                     <p>Active call with {callStatus.receiver || callStatus.receivers?.[0]?.name}</p>
-//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
-//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
-//                       End Call
-//                     </button>
-//                     <button
-//                       className="btn btn-warning w-100"
-//                       onClick={handleExtendCall}
-//                       disabled={user.powerTokens < 1}
-//                     >
-//                       {user.powerTokens < 1 ? 'No Power Tokens' : 'Extend Call'}
-//                     </button>
-//                   </>
-//                 ) : (
-//                   <p>Call {callStatus.status}!</p>
-//                 )}
-//               </div>
-//             </div>
-//           )}
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Home;
-
-
-
-// import React, { useEffect } from 'react';
-// import { useSelector, useDispatch } from 'react-redux';
-// import { Link } from 'react-router-dom';
-// import {
-//   useInitiateCallMutation,
-//   useAcceptCallMutation,
-//   useEndCallMutation,
-//   useExtendCallMutation,
-//   useCancelCallMutation,
-//   useSetOnlineStatusMutation,
-//   useGetCurrentCallQuery,
-// } from '../redux/services/callApi';
-// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
-// import { io } from 'socket.io-client';
-
-// const Home = () => {
-//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
-//   const dispatch = useDispatch();
-//   const [language, setLanguage] = useState('');
-//   const [socket, setSocket] = useState(null);
-//   const [initiateCall] = useInitiateCallMutation();
-//   const [acceptCall] = useAcceptCallMutation();
-//   const [endCall] = useEndCallMutation();
-//   const [extendCall] = useExtendCallMutation();
-//   const [cancelCall] = useCancelCallMutation();
-//   const [setOnlineStatus] = useSetOnlineStatusMutation();
-//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
-//     skip: !isAuthenticated,
-//   });
-
-//   useEffect(() => {
-//     if (isAuthenticated && user?._id) {
-//       const newSocket = io('http://localhost:5000', { withCredentials: true });
-//       newSocket.on('connect', () => {
-//         newSocket.emit('register', user._id);
-//         setOnlineStatus({ isOnline: true }).catch(err => console.error('Set online failed:', err));
-//       });
-
-//       newSocket.on('call-request', (data) => {
-//         dispatch(setCallStatus({ callId: data.callId, status: 'pending', caller: data.callerName }));
-//       });
-
-//       newSocket.on('call-accepted', (data) => {
-//         dispatch(setCallStatus({ callId: data.callId, status: 'active', receiver: data.receiverName }));
-//       });
-
-//       newSocket.on('call-cancelled', () => {
-//         dispatch(clearCallStatus());
-//       });
-
-//       newSocket.on('call-ended', (data) => {
-//         dispatch(setCallStatus({ callId: data.callId, status: data.status }));
-//         setTimeout(() => dispatch(clearCallStatus()), 2000);
-//       });
-
-//       newSocket.on('call-extended', (data) => {
-//         dispatch(setCallStatus({ ...callStatus, extended: true }));
-//       });
-
-//       setSocket(newSocket);
-
-//       return () => {
-//         newSocket.disconnect();
-//       };
-//     }
-//   }, [isAuthenticated, user, setOnlineStatus, dispatch, callStatus]);
-
-//   useEffect(() => {
-//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
-//     if (currentCallData?.call) {
-//       dispatch(setCallStatus(currentCallData.call));
-//     } else if (!callLoading && !callStatus) {
-//       dispatch(clearCallStatus()); // Ensure reset if no active call
-//     }
-//   }, [currentCallData, callLoading, callError, callStatus, dispatch]);
-
-//   const handleInitiateCall = async () => {
-//     try {
-//       const response = await initiateCall(language).unwrap();
-//       dispatch(setCallStatus({ callId: response.callId, status: 'pending', receivers: response.potentialReceivers }));
-//     } catch (error) {
-//       console.error('Initiate call failed:', error);
-//     }
-//   };
-
-//   const handleAcceptCall = async () => {
-//     try {
-//       await acceptCall(callStatus.callId).unwrap();
-//       dispatch(setCallStatus({ ...callStatus, status: 'active' }));
-//     } catch (error) {
-//       console.error('Accept call failed:', error);
-//     }
-//   };
-
-//   const handleEndCall = async () => {
-//     try {
-//       await endCall(callStatus.callId).unwrap();
-//     } catch (error) {
-//       console.error('End call failed:', error);
-//     }
-//   };
-
-//   const handleExtendCall = async () => {
-//     try {
-//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
-//     } catch (error) {
-//       console.error('Extend call failed:', error);
-//     }
-//   };
-
-//   const handleCancelCall = async () => {
-//     try {
-//       await cancelCall(callStatus.callId).unwrap();
-//       dispatch(clearCallStatus());
-//     } catch (error) {
-//       console.error('Cancel call failed:', error);
-//     }
-//   };
-
-//   if (callLoading) return <div>Loading call status...</div>;
-
-//   return (
-//     <div className="container mt-5 text-center">
-//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
-//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
-
-//       {!isAuthenticated ? (
-//         <div className="alert alert-info">
-//           Please <Link to="/login">login</Link> to start exchanging languages!
-//         </div>
-//       ) : (
-//         <div>
-//           {!callStatus ? (
-//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Start a Language Call</h5>
-//                 <div className="mb-3">
-//                   <input
-//                     type="text"
-//                     className="form-control"
-//                     placeholder="Enter language to learn (e.g., Spanish)"
-//                     value={language}
-//                     onChange={(e) => setLanguage(e.target.value)}
-//                   />
-//                 </div>
-//                 <button
-//                   className="btn btn-primary w-100"
-//                   onClick={handleInitiateCall}
-//                   disabled={!language || user.powerTokens < 1}
-//                 >
-//                   {user.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
-//                 </button>
-//               </div>
-//             </div>
-//           ) : (
-//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Call Status</h5>
-//                 {callStatus.status === 'pending' && callStatus.receivers ? (
-//                   <>
-//                     <p>Waiting for someone to accept your call for {callStatus.language || language}...</p>
-//                     <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id).join(', ')}</p>
-//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
-//                       Cancel Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'pending' && callStatus.caller ? (
-//                   <>
-//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
-//                     <button className="btn btn-success w-100" onClick={handleAcceptCall}>
-//                       Accept Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'active' ? (
-//                   <>
-//                     <p>Active call with {callStatus.receiver || callStatus.receivers?.[0]?.name}</p>
-//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
-//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
-//                       End Call
-//                     </button>
-//                     <button
-//                       className="btn btn-warning w-100"
-//                       onClick={handleExtendCall}
-//                       disabled={user.powerTokens < 1}
-//                     >
-//                       {user.powerTokens < 1 ? 'No Power Tokens' : 'Extend Call'}
-//                     </button>
-//                   </>
-//                 ) : (
-//                   <p>Call {callStatus.status}!</p>
-//                 )}
-//               </div>
-//             </div>
-//           )}
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Home;
-
-
-
-// import React, { useState, useEffect } from 'react'; // Add useState
-// import { useSelector, useDispatch } from 'react-redux';
-// import { Link } from 'react-router-dom';
-// import {
-//   useInitiateCallMutation,
-//   useAcceptCallMutation,
-//   useEndCallMutation,
-//   useExtendCallMutation,
-//   useCancelCallMutation,
-//   useSetOnlineStatusMutation,
-//   useGetCurrentCallQuery,
-// } from '../redux/services/callApi';
-// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
-// import { io } from 'socket.io-client';
-
-// const Home = () => {
-//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
-//   const dispatch = useDispatch();
-//   const [language, setLanguage] = useState(''); // Now valid with useState imported
-//   const [socket, setSocket] = useState(null);
-//   const [initiateCall] = useInitiateCallMutation();
-//   const [acceptCall] = useAcceptCallMutation();
-//   const [endCall] = useEndCallMutation();
-//   const [extendCall] = useExtendCallMutation();
-//   const [cancelCall] = useCancelCallMutation();
-//   const [setOnlineStatus] = useSetOnlineStatusMutation();
-//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
-//     skip: !isAuthenticated,
-//   });
-
-//   useEffect(() => {
-//     if (isAuthenticated && user?._id) {
-//       const newSocket = io('http://localhost:5000', { withCredentials: true });
-//       newSocket.on('connect', () => {
-//         newSocket.emit('register', user._id);
-//         setOnlineStatus({ isOnline: true }).catch(err => console.error('Set online failed:', err));
-//       });
-
-//       newSocket.on('call-request', (data) => {
-//         dispatch(setCallStatus({ callId: data.callId, status: 'pending', caller: data.callerName }));
-//       });
-
-//       newSocket.on('call-accepted', (data) => {
-//         dispatch(setCallStatus({ callId: data.callId, status: 'active', receiver: data.receiverName }));
-//       });
-
-//       newSocket.on('call-cancelled', () => {
-//         dispatch(clearCallStatus());
-//       });
-
-//       newSocket.on('call-ended', (data) => {
-//         dispatch(setCallStatus({ callId: data.callId, status: data.status }));
-//         setTimeout(() => dispatch(clearCallStatus()), 2000);
-//       });
-
-//       newSocket.on('call-extended', (data) => {
-//         dispatch(setCallStatus({ ...callStatus, extended: true }));
-//       });
-
-//       setSocket(newSocket);
-
-//       return () => {
-//         newSocket.disconnect();
-//       };
-//     }
-//   }, [isAuthenticated, user, setOnlineStatus, dispatch, callStatus]);
-
-//   useEffect(() => {
-//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
-//     if (currentCallData?.call) {
-//       dispatch(setCallStatus(currentCallData.call));
-//     } else if (!callLoading && !callStatus) {
-//       dispatch(clearCallStatus());
-//     }
-//   }, [currentCallData, callLoading, callError, callStatus, dispatch]);
-
-//   const handleInitiateCall = async () => {
-//     try {
-//       const response = await initiateCall(language).unwrap();
-//       dispatch(setCallStatus({ callId: response.callId, status: 'pending', receivers: response.potentialReceivers }));
-//     } catch (error) {
-//       console.error('Initiate call failed:', error);
-//     }
-//   };
-
-//   const handleAcceptCall = async () => {
-//     try {
-//       await acceptCall(callStatus.callId).unwrap();
-//       dispatch(setCallStatus({ ...callStatus, status: 'active' }));
-//     } catch (error) {
-//       console.error('Accept call failed:', error);
-//     }
-//   };
-
-//   const handleEndCall = async () => {
-//     try {
-//       await endCall(callStatus.callId).unwrap();
-//     } catch (error) {
-//       console.error('End call failed:', error);
-//     }
-//   };
-
-//   const handleExtendCall = async () => {
-//     try {
-//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
-//     } catch (error) {
-//       console.error('Extend call failed:', error);
-//     }
-//   };
-
-//   const handleCancelCall = async () => {
-//     try {
-//       await cancelCall(callStatus.callId).unwrap();
-//       dispatch(clearCallStatus());
-//     } catch (error) {
-//       console.error('Cancel call failed:', error);
-//     }
-//   };
-
-//   if (callLoading) return <div>Loading call status...</div>;
-
-//   return (
-//     <div className="container mt-5 text-center">
-//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
-//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
-
-//       {!isAuthenticated ? (
-//         <div className="alert alert-info">
-//           Please <Link to="/login">login</Link> to start exchanging languages!
-//         </div>
-//       ) : (
-//         <div>
-//           {!callStatus ? (
-//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Start a Language Call</h5>
-//                 <div className="mb-3">
-//                   <input
-//                     type="text"
-//                     className="form-control"
-//                     placeholder="Enter language to learn (e.g., Spanish)"
-//                     value={language}
-//                     onChange={(e) => setLanguage(e.target.value)}
-//                   />
-//                 </div>
-//                 <button
-//                   className="btn btn-primary w-100"
-//                   onClick={handleInitiateCall}
-//                   disabled={!language || user.powerTokens < 1}
-//                 >
-//                   {user.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
-//                 </button>
-//               </div>
-//             </div>
-//           ) : (
-//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Call Status</h5>
-//                 {callStatus.status === 'pending' && callStatus.receivers ? (
-//                   <>
-//                     <p>Waiting for someone to accept your call for {callStatus.language || language}...</p>
-//                     <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id).join(', ')}</p>
-//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
-//                       Cancel Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'pending' && callStatus.caller ? (
-//                   <>
-//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
-//                     <button className="btn btn-success w-100" onClick={handleAcceptCall}>
-//                       Accept Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'active' ? (
-//                   <>
-//                     <p>Active call with {callStatus.receiver || callStatus.receivers?.[0]?.name}</p>
-//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
-//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
-//                       End Call
-//                     </button>
-//                     <button
-//                       className="btn btn-warning w-100"
-//                       onClick={handleExtendCall}
-//                       disabled={user.powerTokens < 1}
-//                     >
-//                       {user.powerTokens < 1 ? 'No Power Tokens' : 'Extend Call'}
-//                     </button>
-//                   </>
-//                 ) : (
-//                   <p>Call {callStatus.status}!</p>
-//                 )}
-//               </div>
-//             </div>
-//           )}
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Home;
-
-
-// import React, { useState, useEffect } from 'react';
-// import { useSelector, useDispatch } from 'react-redux';
-// import { Link } from 'react-router-dom';
-// import {
-//   useInitiateCallMutation,
-//   useAcceptCallMutation,
-//   useEndCallMutation,
-//   useExtendCallMutation,
-//   useCancelCallMutation,
-//   useSetOnlineStatusMutation,
-//   useGetCurrentCallQuery,
-// } from '../redux/services/callApi';
-// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
-// import { io } from 'socket.io-client';
-
-// const Home = () => {
-//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
-//   const dispatch = useDispatch();
-//   const [language, setLanguage] = useState('');
-//   const [socket, setSocket] = useState(null);
-//   const [initiateCall] = useInitiateCallMutation();
-//   const [acceptCall] = useAcceptCallMutation();
-//   const [endCall] = useEndCallMutation();
-//   const [extendCall] = useExtendCallMutation();
-//   const [cancelCall] = useCancelCallMutation();
-//   const [setOnlineStatus] = useSetOnlineStatusMutation();
-//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
-//     skip: !isAuthenticated,
-//   });
-
-//   useEffect(() => {
-//     if (isAuthenticated && user?._id) {
-//       const newSocket = io('http://localhost:5000', { withCredentials: true });
-//       newSocket.on('connect', () => {
-//         newSocket.emit('register', user._id);
-//         setOnlineStatus({ isOnline: true }).catch(err => console.error('Set online failed:', err));
-//       });
-
-//       newSocket.on('call-request', (data) => {
-//         dispatch(setCallStatus({ callId: data.callId, status: 'pending', caller: data.callerName, language: data.language }));
-//       });
-
-//       newSocket.on('call-accepted', (data) => {
-//         dispatch(setCallStatus({ callId: data.callId, status: 'active', receiver: data.receiverName }));
-//       });
-
-//       newSocket.on('call-cancelled', () => {
-//         dispatch(clearCallStatus());
-//       });
-
-//       newSocket.on('call-ended', (data) => {
-//         dispatch(setCallStatus({ callId: data.callId, status: data.status }));
-//         setTimeout(() => dispatch(clearCallStatus()), 2000);
-//       });
-
-//       newSocket.on('call-extended', (data) => {
-//         dispatch(setCallStatus({ ...callStatus, extended: true }));
-//       });
-
-//       setSocket(newSocket);
-
-//       return () => {
-//         newSocket.disconnect();
-//       };
-//     }
-//   }, [isAuthenticated, user, setOnlineStatus, dispatch, callStatus]);
-
-//   useEffect(() => {
-//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
-//     if (currentCallData?.call) {
-//       dispatch(setCallStatus(currentCallData.call));
-//     } else if (!callLoading && !callStatus) {
-//       dispatch(clearCallStatus());
-//     }
-//   }, [currentCallData, callLoading, callError, callStatus, dispatch]);
-
-//   const handleInitiateCall = async () => {
-//     try {
-//       const response = await initiateCall(language).unwrap();
-//       dispatch(setCallStatus({ callId: response.callId, status: 'pending', receivers: response.potentialReceivers, language }));
-//     } catch (error) {
-//       console.error('Initiate call failed:', error);
-//     }
-//   };
-
-//   const handleAcceptCall = async () => {
-//     try {
-//       await acceptCall(callStatus.callId).unwrap();
-//       dispatch(setCallStatus({ ...callStatus, status: 'active' }));
-//     } catch (error) {
-//       console.error('Accept call failed:', error);
-//       dispatch(clearCallStatus()); // Clear on error to avoid freeze
-//     }
-//   };
-
-//   const handleEndCall = async () => {
-//     try {
-//       await endCall(callStatus.callId).unwrap();
-//     } catch (error) {
-//       console.error('End call failed:', error);
-//     }
-//   };
-
-//   const handleExtendCall = async () => {
-//     try {
-//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
-//     } catch (error) {
-//       console.error('Extend call failed:', error);
-//     }
-//   };
-
-//   const handleCancelCall = async () => {
-//     try {
-//       await cancelCall(callStatus.callId).unwrap();
-//       dispatch(clearCallStatus());
-//     } catch (error) {
-//       console.error('Cancel call failed:', error);
-//     }
-//   };
-
-//   if (callLoading) return <div>Loading call status...</div>;
-
-//   return (
-//     <div className="container mt-5 text-center">
-//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
-//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
-
-//       {!isAuthenticated ? (
-//         <div className="alert alert-info">
-//           Please <Link to="/login">login</Link> to start exchanging languages!
-//         </div>
-//       ) : (
-//         <div>
-//           {!callStatus ? (
-//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Start a Language Call</h5>
-//                 <div className="mb-3">
-//                   <input
-//                     type="text"
-//                     className="form-control"
-//                     placeholder="Enter language to learn (e.g., Spanish)"
-//                     value={language}
-//                     onChange={(e) => setLanguage(e.target.value)}
-//                   />
-//                 </div>
-//                 <button
-//                   className="btn btn-primary w-100"
-//                   onClick={handleInitiateCall}
-//                   disabled={!language || user.powerTokens < 1}
-//                 >
-//                   {user.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
-//                 </button>
-//               </div>
-//             </div>
-//           ) : (
-//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Call Status</h5>
-//                 {callStatus.status === 'pending' && callStatus.receivers && user._id === callStatus.callerId ? (
-//                   <>
-//                     <p>Waiting for someone to accept your call for {callStatus.language || language}...</p>
-//                     <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id).join(', ')}</p>
-//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
-//                       Cancel Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'pending' && callStatus.caller ? (
-//                   <>
-//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
-//                     <button className="btn btn-success w-100" onClick={handleAcceptCall}>
-//                       Accept Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'active' ? (
-//                   <>
-//                     <p>Active call with {callStatus.receiver || callStatus.receivers?.[0]?.name}</p>
-//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
-//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
-//                       End Call
-//                     </button>
-//                     <button
-//                       className="btn btn-warning w-100"
-//                       onClick={handleExtendCall}
-//                       disabled={user.powerTokens < 1}
-//                     >
-//                       {user.powerTokens < 1 ? 'No Power Tokens' : 'Extend Call'}
-//                     </button>
-//                   </>
-//                 ) : (
-//                   <p>Call {callStatus.status}!</p>
-//                 )}
-//               </div>
-//             </div>
-//           )}
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Home;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1020,81 +7,1244 @@
 // import {
 //   useInitiateCallMutation,
 //   useAcceptCallMutation,
+//   useRejectCallMutation,
 //   useEndCallMutation,
 //   useExtendCallMutation,
 //   useCancelCallMutation,
 //   useSetOnlineStatusMutation,
 //   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
 // } from '../redux/services/callApi';
 // import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
 // import { io } from 'socket.io-client';
+// import { toast } from 'react-toastify';
 
 // const Home = () => {
 //   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
 //   const dispatch = useDispatch();
 //   const [language, setLanguage] = useState('');
-//   const [socket, setSocket] = useState(null);
+//   const [extendRequest, setExtendRequest] = useState(null);
+//   const localStream = useRef(null);
+//   const peerConnection = useRef(null);
+//   const remoteAudioRef = useRef(null);
+//   const prevCallStatusRef = useRef(null);
+//   const isWebRTCStarting = useRef(false);
+//   const socketRef = useRef(null); // Store socket instance
+
 //   const [initiateCall] = useInitiateCallMutation();
 //   const [acceptCall] = useAcceptCallMutation();
+//   const [rejectCall] = useRejectCallMutation();
 //   const [endCall] = useEndCallMutation();
 //   const [extendCall] = useExtendCallMutation();
 //   const [cancelCall] = useCancelCallMutation();
 //   const [setOnlineStatus] = useSetOnlineStatusMutation();
+//   const [approveExtendCall] = useApproveExtendCallMutation();
 //   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
 //     skip: !isAuthenticated,
 //     pollingInterval: 5000,
 //   });
-//   const prevCallStatusRef = useRef(null); // Track previous callStatus to avoid loops
 
 //   useEffect(() => {
-//     if (isAuthenticated && user?._id) {
-//       const newSocket = io('http://localhost:5000', { withCredentials: true });
-//       newSocket.on('connect', () => {
-//         console.log('WebSocket connected:', newSocket.id);
-//         newSocket.emit('register', user._id);
-//         setOnlineStatus({ isOnline: true }).catch(err => console.error('Set online failed:', err));
+//     if (isAuthenticated && user && user._id) {
+//       console.log('User in Redux:', user);
+//       socketRef.current = io('http://localhost:5000', {
+//         withCredentials: true,
+//         extraHeaders: { 'Content-Type': 'application/json' },
+//         reconnectionAttempts: 5,
+//         reconnectionDelay: 1000,
 //       });
-
-//       newSocket.on('call-request', (data) => {
+  
+//       const socket = socketRef.current;
+  
+//       socket.on('connect', () => {
+//         console.log('WebSocket connected:', socket.id);
+//         socket.emit('register', user._id);
+//         setOnlineStatus({ isOnline: true })
+//           .unwrap()
+//           .then(() => console.log('Set online status success'))
+//           .catch((err) => console.error('Set online failed:', err));
+//       });
+  
+//       socket.on('call-request', (data) => {
 //         console.log('Call request received:', data);
-//         dispatch(setCallStatus({ 
-//           callId: data.callId, 
-//           status: 'pending', 
-//           caller: data.callerName, 
-//           language: data.language, 
-//           callerId: data.callerId 
+//         dispatch(setCallStatus({
+//           callId: data.callId,
+//           status: 'pending',
+//           caller: data.callerName,
+//           language: data.language,
+//           callerId: data.callerId,
 //         }));
+//         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
 //       });
-
-//       newSocket.on('call-accepted', (data) => {
+  
+//       // socket.on('call-accepted', (data) => {
+//       //   console.log('Call accepted:', data);
+//       //   const updatedCallStatus = {
+//       //     callId: data.callId,
+//       //     status: 'active',
+//       //     receiver: data.receiverName,
+//       //     receiverId: data.receiverId,
+//       //     caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//       //     callerId: user._id === data.receiverId ? data.callerId : user._id,
+//       //   };
+//       //   dispatch(setCallStatus(updatedCallStatus));
+//       //   if (!isWebRTCStarting.current) {
+//       //     console.log('Starting WebRTC after call accepted, isCaller:', user._id === updatedCallStatus.callerId);
+//       //     startWebRTC(socket, user._id === updatedCallStatus.callerId, data.receiverId, data.callId);
+//       //   }
+//       // });
+      
+//       // socket.on('offer', async ({ callId, offer, from }) => {
+//       //   console.log('Received offer:', { callId, offer, from });
+//       //   console.log('Current callStatus on offer:', callStatus);
+//       //   if (callStatus?.callId === callId && !isWebRTCStarting.current) { // Relaxed check
+//       //     console.log('Processing offer for call:', callId);
+//       //     await startWebRTC(socket, false, from || 'unknown', callId, offer); // Fallback for undefined from
+//       //   } else {
+//       //     console.log('Offer ignored: callStatus mismatch or WebRTC already starting', callStatus);
+//       //   }
+//       // });
+//       socket.on('call-accepted', (data) => {
 //         console.log('Call accepted:', data);
-//         dispatch(setCallStatus({ 
-//           callId: data.callId, 
-//           status: 'active', 
-//           receiver: data.receiverName 
-//         }));
+//         const updatedCallStatus = {
+//           callId: data.callId,
+//           status: 'active',
+//           receiver: data.receiverName,
+//           receiverId: data.receiverId,
+//           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//           callerId: user._id === data.receiverId ? data.callerId : user._id,
+//         };
+//         dispatch(setCallStatus(updatedCallStatus));
+//         if (!isWebRTCStarting.current) {
+//           console.log('Starting WebRTC after call accepted, isCaller:', user._id === updatedCallStatus.callerId);
+//           startWebRTC(socket, user._id === updatedCallStatus.callerId, data.receiverId, data.callId);
+//         }
 //       });
-
-//       newSocket.on('call-cancelled', (data) => {
-//         console.log('Call cancelled:', data);
-//         dispatch(clearCallStatus());
+      
+//       socket.on('offer', async ({ callId, offer, from }) => {
+//         console.log('Received offer:', { callId, offer, from });
+//         console.log('Current callStatus on offer:', callStatus);
+//         if (!isWebRTCStarting.current) { // Remove strict callStatus check
+//           console.log('Processing offer for call:', callId);
+//           await startWebRTC(socket, false, from, callId, offer);
+//         } else {
+//           console.log('Offer ignored: WebRTC already starting');
+//         }
 //       });
-
-//       newSocket.on('call-ended', (data) => {
+    
+//       socket.on('answer', ({ callId, answer }) => {
+//         console.log('Received answer:', { callId, answer });
+//         if (callStatus?.callId === callId && peerConnection.current) {
+//           peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
+//             .catch((err) => console.error('Set answer failed:', err));
+//         }
+//       });
+  
+//       socket.on('ice-candidate', ({ callId, candidate }) => {
+//         console.log('Received ICE candidate:', { callId, candidate });
+//         if (callStatus?.callId === callId && peerConnection.current) {
+//           peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate))
+//             .catch((err) => console.error('ICE candidate error:', err));
+//         }
+//       });
+  
+//       socket.on('call-rejected', (data) => {
+//         console.log('Call rejected:', data);
+//         if (callStatus?.callId === data.callId && user?._id === callStatus.callerId) {
+//           toast.warn(`Your call was rejected by ${data.receiverName}`);
+//           dispatch(clearCallStatus());
+//         }
+//       });
+  
+//       socket.on('call-ended', (data) => {
 //         console.log('Call ended:', data);
-//         dispatch(setCallStatus({ callId: data.callId, status: data.status }));
-//         setTimeout(() => dispatch(clearCallStatus()), 2000);
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//         toast.info(`Call ended with status: ${data.status}`);
 //       });
+  
+//       return () => {
+//         socket.disconnect();
+//         cleanupWebRTC();
+//       };
+//     }
+//   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
+//   useEffect(() => {
+//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
+//     if (currentCallData?.call) {
+//       const newCallStatus = {
+//         callId: currentCallData.call._id,
+//         status: currentCallData.call.status,
+//         language: currentCallData.call.language,
+//         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+//         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+//         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+//         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+//         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+//           id: r._id.toString(),
+//           name: r.name || 'Unknown',
+//         })) || callStatus?.receivers || [],
+//         extended: currentCallData.call.extended || callStatus?.extended || false,
+//       };
+//       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
+//         console.log('Restoring call status:', newCallStatus);
+//         dispatch(setCallStatus(newCallStatus));
+//         prevCallStatusRef.current = newCallStatus;
+//       }
+//     } else if (!callLoading && !callError && callStatus) {
+//       console.log('No active call, clearing status');
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       prevCallStatusRef.current = null;
+//     }
+//   }, [currentCallData, callLoading, callError, dispatch, user]);
 
-//       newSocket.on('call-extended', (data) => {
-//         console.log('Call extended:', data);
+//   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+//     if (isWebRTCStarting.current) {
+//       console.log('WebRTC already starting, skipping');
+//       return;
+//     }
+//     isWebRTCStarting.current = true;
+  
+//     const waitForSocket = () => {
+//       return new Promise((resolve) => {
+//         if (socketInstance.connected) {
+//           console.log('Socket already connected');
+//           resolve();
+//         } else {
+//           console.log('Waiting for socket to connect...');
+//           socketInstance.on('connect', () => {
+//             console.log('Socket connected during wait');
+//             resolve();
+//           });
+//           setTimeout(() => {
+//             console.log('Socket wait timeout');
+//             resolve();
+//           }, 5000);
+//         }
+//       });
+//     };
+  
+//     try {
+//       console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+//       console.log('Current callStatus:', callStatus);
+//       await waitForSocket();
+//       if (!socketInstance.connected) {
+//         throw new Error('Socket is not connected after waiting');
+//       }
+  
+//       localStream.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+//       console.log('Local stream obtained:', localStream.current.getTracks());
+//       localStream.current.getTracks().forEach(track => {
+//         console.log('Track details:', track);
+//         track.enabled = true; // Ensure track is enabled
+//         if (track.muted) {
+//           console.warn('Microphone is muted at the source. Please check your device settings.');
+//           toast.warn('Your microphone is muted. Please unmute it in your system settings.');
+//         }
+//       });
+  
+//       peerConnection.current = new RTCPeerConnection({
+//         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+//       });
+  
+//       localStream.current.getTracks().forEach((track) => {
+//         console.log('Adding track:', track);
+//         peerConnection.current.addTrack(track, localStream.current);
+//       });
+  
+//       peerConnection.current.onicecandidate = (event) => {
+//         if (event.candidate && socketInstance.connected) {
+//           console.log('Sending ICE candidate to:', remoteUserId);
+//           socketInstance.emit('ice-candidate', { callId, candidate: event.candidate, to: remoteUserId });
+//         }
+//       };
+  
+//       peerConnection.current.ontrack = (event) => {
+//         console.log('Remote track received:', event.streams[0]);
+//         if (remoteAudioRef.current) {
+//           remoteAudioRef.current.srcObject = event.streams[0];
+//           remoteAudioRef.current.muted = false;
+//           remoteAudioRef.current.play().catch((err) => console.error('Audio play error:', err));
+//         }
+//       };
+  
+//       peerConnection.current.onconnectionstatechange = () => {
+//         console.log('Connection state:', peerConnection.current.connectionState);
+//         if (peerConnection.current.connectionState === 'connected') {
+//           console.log('WebRTC connection established!');
+//         } else if (peerConnection.current.connectionState === 'failed') {
+//           toast.error('WebRTC connection failed');
+//           cleanupWebRTC();
+//         }
+//       };
+  
+//       // if (isCaller) {
+//       //   const offer = await peerConnection.current.createOffer();
+//       //   await peerConnection.current.setLocalDescription(offer);
+//       //   console.log('Sending offer to:', remoteUserId);
+//       //   socketInstance.emit('offer', { callId, offer, to: remoteUserId });
+//       // }
+//       if (isCaller) {
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         console.log('Sending offer to:', remoteUserId);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id }); // Add from
+//       }
+//        else if (offer) {
+//         console.log('Handling offer from:', remoteUserId);
+//         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//         const answer = await peerConnection.current.createAnswer();
+//         await peerConnection.current.setLocalDescription(answer);
+//         console.log('Sending answer to:', remoteUserId);
+//         socketInstance.emit('answer', { callId, answer, to: remoteUserId });
+//       }
+//     } catch (error) {
+//       console.error('WebRTC start error:', error);
+//       toast.error('Failed to start audio call: ' + error.message);
+//       cleanupWebRTC();
+//     } finally {
+//       isWebRTCStarting.current = false;
+//     }
+//   };
+//   const cleanupWebRTC = () => {
+//     console.log('Cleaning up WebRTC');
+//     if (peerConnection.current) {
+//       peerConnection.current.close();
+//       peerConnection.current = null;
+//     }
+//     if (localStream.current) {
+//       localStream.current.getTracks().forEach((track) => track.stop());
+//       localStream.current = null;
+//     }
+//     if (remoteAudioRef.current) {
+//       remoteAudioRef.current.srcObject = null;
+//     }
+//     isWebRTCStarting.current = false;
+//   };
+
+//   const handleInitiateCall = async () => {
+//     if (!language) {
+//       toast.error('Please enter a language');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to initiate a call');
+//       return;
+//     }
+//     console.log('Initiating call with language:', language);
+//     try {
+//       const response = await initiateCall(language).unwrap();
+//       console.log('Initiated call:', response);
+//       dispatch(setCallStatus({
+//         callId: response.callId,
+//         status: 'pending',
+//         receivers: response.potentialReceivers,
+//         language,
+//         callerId: user?._id,
+//         caller: user?.name,
+//       }));
+//       toast.success('Call initiated, waiting for a receiver...');
+//     } catch (error) {
+//       console.error('Initiate call failed:', error);
+//       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleAcceptCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to accept');
+//       return;
+//     }
+//     console.log('Accepting call:', callStatus.callId);
+//     try {
+//       await acceptCall(callStatus.callId).unwrap();
+//       console.log('Call accepted by:', user?.name);
+//       toast.success('Call accepted!');
+//     } catch (error) {
+//       console.error('Accept call failed:', error);
+//       toast.error(`Failed to accept call: ${error.data?.error || error.status || 'Unknown error'}`);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//     }
+//   };
+
+//   const handleRejectCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to reject');
+//       return;
+//     }
+//     console.log('Rejecting call:', callStatus.callId);
+//     try {
+//       await rejectCall(callStatus.callId).unwrap();
+//       console.log('Call rejected by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call rejected');
+//     } catch (error) {
+//       console.error('Reject call failed:', error);
+//       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleEndCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to end');
+//       return;
+//     }
+//     console.log('Ending call:', callStatus.callId);
+//     try {
+//       await endCall(callStatus.callId).unwrap();
+//       console.log('Call ended by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.success('Call ended');
+//     } catch (error) {
+//       console.error('End call failed:', error);
+//       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleExtendCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to extend');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to extend a call');
+//       return;
+//     }
+//     console.log('Extending call:', callStatus.callId);
+//     try {
+//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
+//       toast.info('Extension request sent, awaiting approval...');
+//     } catch (error) {
+//       console.error('Extend call failed:', error);
+//       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleApproveExtend = async (approve) => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to approve extension for');
+//       return;
+//     }
+//     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
+//     try {
+//       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+//       setExtendRequest(null);
+//       if (approve) {
 //         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('You approved the call extension!');
+//       } else {
+//         toast.info('You denied the call extension.');
+//       }
+//     } catch (error) {
+//       console.error('Approve extend call failed:', error);
+//       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+//       setExtendRequest(null);
+//     }
+//   };
+
+//   const handleCancelCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to cancel');
+//       return;
+//     }
+//     console.log('Cancelling call:', callStatus.callId);
+//     try {
+//       await cancelCall(callStatus.callId).unwrap();
+//       console.log('Call cancelled by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call cancelled');
+//     } catch (error) {
+//       console.error('Cancel call failed:', error);
+//       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   if (isAuthenticated && callLoading && !callStatus) {
+//     return <div>Loading call status...</div>;
+//   }
+
+//   return (
+//     <div className="container mt-5 text-center">
+//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
+//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
+
+//       {!isAuthenticated ? (
+//         <div className="alert alert-info">
+//           Please <Link to="/login">login</Link> to start exchanging languages!
+//         </div>
+//       ) : (
+//         <div>
+//           {!callStatus ? (
+//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Start a Language Call</h5>
+//                 <div className="mb-3">
+//                   <input
+//                     type="text"
+//                     className="form-control"
+//                     placeholder="Enter language to learn (e.g., Spanish)"
+//                     value={language}
+//                     onChange={(e) => setLanguage(e.target.value)}
+//                   />
+//                 </div>
+//                 <button
+//                   className="btn btn-primary w-100"
+//                   onClick={handleInitiateCall}
+//                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
+//                 >
+//                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+//                 </button>
+//               </div>
+//             </div>
+//           ) : (
+//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Call Status</h5>
+//                 {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+//                   <>
+//                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
+//                     {callStatus.receivers && (
+//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}</p>
+//                     )}
+//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
+//                       Cancel Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
+//                   <>
+//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
+//                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
+//                       Accept Call
+//                     </button>
+//                     <button className="btn btn-danger w-100" onClick={handleRejectCall}>
+//                       Reject Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'active' ? (
+//                   <>
+//                     <p>
+//                       Active call with {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+//                     </p>
+//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+//                     <audio ref={remoteAudioRef} autoPlay playsInline muted={false} />
+//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
+//                       End Call
+//                     </button>
+//                     <button
+//                       className="btn btn-warning w-100 mb-2"
+//                       onClick={handleExtendCall}
+//                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+//                     >
+//                       {user?.powerTokens < 1 ? 'No Power Tokens' : extendRequest ? 'Awaiting Approval' : 'Extend Call'}
+//                     </button>
+//                     {extendRequest && extendRequest.callId === callStatus.callId && (
+//                       <div>
+//                         <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+//                         <button
+//                           className="btn btn-success w-45 mr-2"
+//                           onClick={() => handleApproveExtend(true)}
+//                         >
+//                           Yes
+//                         </button>
+//                         <button
+//                           className="btn btn-danger w-45"
+//                           onClick={() => handleApproveExtend(false)}
+//                         >
+//                           No
+//                         </button>
+//                       </div>
+//                     )}
+//                   </>
+//                 ) : (
+//                   <p>Call {callStatus.status}!</p>
+//                 )}
+//               </div>
+//             </div>
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default Home;
+
+// *******************************************
+// import React, { useState, useEffect, useRef } from 'react';
+// import { useSelector, useDispatch } from 'react-redux';
+// import { Link } from 'react-router-dom';
+// import {
+//   useInitiateCallMutation,
+//   useAcceptCallMutation,
+//   useRejectCallMutation,
+//   useEndCallMutation,
+//   useExtendCallMutation,
+//   useCancelCallMutation,
+//   useSetOnlineStatusMutation,
+//   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
+// } from '../redux/services/callApi';
+// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
+// import { io } from 'socket.io-client';
+// import { toast } from 'react-toastify';
+// import axios from 'axios';
+
+// // const Home = () => {
+// //   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
+// //   const dispatch = useDispatch();
+// //   const [language, setLanguage] = useState('');
+// //   const [extendRequest, setExtendRequest] = useState(null);
+// //   const [localStream, setLocalStream] = useState(null); // Add state for local stream
+// //   const [remoteStream, setRemoteStream] = useState(null); // Add state for remote stream
+// //   const peerConnection = useRef(null);
+// //   const isWebRTCStarting = useRef(false);
+// //   const socketRef = useRef(null);
+// //   const prevCallStatusRef = useRef(null);
+
+// //   const [initiateCall] = useInitiateCallMutation();
+// //   const [acceptCall] = useAcceptCallMutation();
+// //   const [rejectCall] = useRejectCallMutation();
+// //   const [endCall] = useEndCallMutation();
+// //   const [extendCall] = useExtendCallMutation();
+// //   const [cancelCall] = useCancelCallMutation();
+// //   const [setOnlineStatus] = useSetOnlineStatusMutation();
+// //   const [approveExtendCall] = useApproveExtendCallMutation();
+// //   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
+// //     skip: !isAuthenticated,
+// //     pollingInterval: 5000,
+// //   });
+
+// //   useEffect(() => {
+// //     if (isAuthenticated && user && user._id) {
+// //       console.log('User in Redux:', user);
+// //       socketRef.current = io('http://localhost:5000', {
+// //         withCredentials: true,
+// //         extraHeaders: { 'Content-Type': 'application/json' },
+// //         reconnectionAttempts: 5,
+// //         reconnectionDelay: 1000,
+// //       });
+
+// //       const socket = socketRef.current;
+
+// //       socket.on('connect', () => {
+// //         console.log('WebSocket connected:', socket.id);
+// //         socket.emit('register', user._id);
+// //         setOnlineStatus({ isOnline: true })
+// //           .unwrap()
+// //           .then(() => console.log('Set online status success'))
+// //           .catch((err) => console.error('Set online failed:', err));
+// //       });
+
+// //       socket.on('call-request', (data) => {
+// //         console.log('Call request received:', data);
+// //         dispatch(setCallStatus({
+// //           callId: data.callId,
+// //           status: 'pending',
+// //           caller: data.callerName,
+// //           language: data.language,
+// //           callerId: data.callerId,
+// //         }));
+// //         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
+// //       });
+
+// //       socket.on('call-accepted', (data) => {
+// //         console.log('Call accepted:', data);
+// //         const updatedCallStatus = {
+// //           callId: data.callId,
+// //           status: 'active',
+// //           receiver: data.receiverName,
+// //           receiverId: data.receiverId,
+// //           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+// //           callerId: user._id === data.receiverId ? data.callerId : user._id,
+// //         };
+// //         dispatch(setCallStatus(updatedCallStatus));
+// //         if (!isWebRTCStarting.current) {
+// //           console.log('Starting WebRTC after call accepted, isCaller:', user._id === updatedCallStatus.callerId);
+// //           startWebRTC(socket, user._id === updatedCallStatus.callerId, data.receiverId, data.callId);
+// //         }
+// //       });
+
+// //       socket.on('offer', async ({ callId, offer, from }) => {
+// //         console.log('Received offer:', { callId, offer, from });
+// //         console.log('Current callStatus on offer:', callStatus);
+// //         if (!isWebRTCStarting.current) {
+// //           console.log('Processing offer for call:', callId);
+// //           await startWebRTC(socket, false, from, callId, offer);
+// //         } else {
+// //           console.log('Offer ignored: WebRTC already starting');
+// //         }
+// //       });
+
+// //       socket.on('answer', ({ callId, answer }) => {
+// //         console.log('Received answer:', { callId, answer });
+// //         if (peerConnection.current) {
+// //           peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
+// //             .catch((err) => console.error('Set answer failed:', err));
+// //         }
+// //       });
+
+// //       socket.on('ice-candidate', ({ callId, candidate }) => {
+// //         console.log('Received ICE candidate:', { callId, candidate });
+// //         if (peerConnection.current) {
+// //           peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate))
+// //             .catch((err) => console.error('ICE candidate error:', err));
+// //         }
+// //       });
+
+// //       socket.on('call-rejected', (data) => {
+// //         console.log('Call rejected:', data);
+// //         if (callStatus?.callId === data.callId && user?._id === callStatus.callerId) {
+// //           toast.warn(`Your call was rejected by ${data.receiverName}`);
+// //           dispatch(clearCallStatus());
+// //         }
+// //       });
+
+// //       socket.on('call-ended', (data) => {
+// //         console.log('Call ended:', data);
+// //         dispatch(clearCallStatus());
+// //         cleanupWebRTC();
+// //         toast.info(`Call ended with status: ${data.status}`);
+// //       });
+
+// //       return () => {
+// //         socket.disconnect();
+// //         cleanupWebRTC();
+// //       };
+// //     }
+// //   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
+
+// //   useEffect(() => {
+// //     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
+// //     if (currentCallData?.call) {
+// //       const newCallStatus = {
+// //         callId: currentCallData.call._id,
+// //         status: currentCallData.call.status,
+// //         language: currentCallData.call.language,
+// //         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+// //         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+// //         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+// //         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+// //         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+// //           id: r._id.toString(),
+// //           name: r.name || 'Unknown',
+// //         })) || callStatus?.receivers || [],
+// //         extended: currentCallData.call.extended || callStatus?.extended || false,
+// //       };
+// //       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
+// //         console.log('Restoring call status:', newCallStatus);
+// //         dispatch(setCallStatus(newCallStatus));
+// //         prevCallStatusRef.current = newCallStatus;
+// //       }
+// //     } else if (!callLoading && !callError && callStatus) {
+// //       console.log('No active call, clearing status');
+// //       dispatch(clearCallStatus());
+// //       cleanupWebRTC();
+// //       prevCallStatusRef.current = null;
+// //     }
+// //   }, [currentCallData, callLoading, callError, dispatch, user]);
+
+// //   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+// //     console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+// //     console.log('Current callStatus:', callStatus);
+// //     if (isWebRTCStarting.current) {
+// //       console.log('WebRTC already starting, skipping');
+// //       return;
+// //     }
+// //     isWebRTCStarting.current = true;
+
+// //     if (!socketInstance.connected) {
+// //       console.log('Socket not connected, attempting to reconnect');
+// //       socketInstance.connect();
+// //     } else {
+// //       console.log('Socket already connected');
+// //     }
+
+// //     peerConnection.current = new RTCPeerConnection({
+// //       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+// //     });
+
+// //     peerConnection.current.onicecandidate = (event) => {
+// //       if (event.candidate) {
+// //         console.log('Sending ICE candidate to:', remoteUserId);
+// //         socketInstance.emit('ice-candidate', {
+// //           callId,
+// //           candidate: event.candidate,
+// //           to: remoteUserId,
+// //           from: user._id,
+// //         });
+// //       }
+// //     };
+
+// //     peerConnection.current.ontrack = (event) => {
+// //       console.log('Remote track received:', event.streams[0]);
+// //       setRemoteStream(event.streams[0]);
+// //     };
+
+// //     peerConnection.current.onconnectionstatechange = () => {
+// //       console.log('Connection state:', peerConnection.current.connectionState);
+// //       if (peerConnection.current.connectionState === 'connected') {
+// //         toast.success('Audio call connected!');
+// //       } else if (peerConnection.current.connectionState === 'failed') {
+// //         toast.error('Audio call failed');
+// //         cleanupWebRTC();
+// //       }
+// //     };
+
+// //     try {
+// //       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+// //       console.log('Local stream obtained:', stream.getTracks());
+// //       stream.getTracks().forEach((track) => {
+// //         console.log('Track details:', track);
+// //         console.log('Adding track:', track);
+// //         peerConnection.current.addTrack(track, stream);
+// //       });
+// //       setLocalStream(stream);
+
+// //       if (isCaller) {
+// //         const offer = await peerConnection.current.createOffer();
+// //         await peerConnection.current.setLocalDescription(offer);
+// //         console.log('Sending offer to:', remoteUserId);
+// //         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+// //       } else if (offer) {
+// //         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+// //         const answer = await peerConnection.current.createAnswer();
+// //         await peerConnection.current.setLocalDescription(answer);
+// //         console.log('Sending answer to:', remoteUserId);
+// //         socketInstance.emit('answer', { callId, answer, to: remoteUserId });
+// //       }
+// //     } catch (error) {
+// //       console.error('WebRTC error:', error);
+// //       toast.error('Failed to start audio: ' + error.message);
+// //       isWebRTCStarting.current = false;
+// //     }
+// //   };
+
+// //   const cleanupWebRTC = () => {
+// //     console.log('Cleaning up WebRTC');
+// //     if (peerConnection.current) {
+// //       peerConnection.current.close();
+// //       peerConnection.current = null;
+// //     }
+// //     if (localStream) {
+// //       localStream.getTracks().forEach((track) => track.stop());
+// //       setLocalStream(null);
+// //     }
+// //     setRemoteStream(null);
+// //     isWebRTCStarting.current = false;
+// //   };
+
+// //   const handleInitiateCall = async () => {
+// //     if (!language) {
+// //       toast.error('Please enter a language');
+// //       return;
+// //     }
+// //     if (!user?.powerTokens || user.powerTokens < 1) {
+// //       toast.error('You need at least 1 power token to initiate a call');
+// //       return;
+// //     }
+// //     console.log('Initiating call with language:', language);
+// //     try {
+// //       const response = await initiateCall(language).unwrap();
+// //       console.log('Initiated call:', response);
+// //       dispatch(setCallStatus({
+// //         callId: response.callId,
+// //         status: 'pending',
+// //         receivers: response.potentialReceivers,
+// //         language,
+// //         callerId: user?._id,
+// //         caller: user?.name,
+// //       }));
+// //       toast.success('Call initiated, waiting for a receiver...');
+// //     } catch (error) {
+// //       console.error('Initiate call failed:', error);
+// //       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
+// //     }
+// //   };
+
+// //   const handleAcceptCall = async () => {
+// //     if (!callStatus?.callId) {
+// //       toast.error('No call to accept');
+// //       return;
+// //     }
+// //     console.log('Accepting call:', callStatus.callId);
+// //     try {
+// //       await axios.post(
+// //         'http://localhost:5000/api/calls/accept',
+// //         { callId: callStatus.callId },
+// //         { withCredentials: true }
+// //       );
+// //       console.log('Call accepted by:', user.name);
+// //       const updatedCallStatus = {
+// //         ...callStatus,
+// //         status: 'active',
+// //         receiver: user.name,
+// //         receiverId: user._id,
+// //       };
+// //       dispatch(setCallStatus(updatedCallStatus));
+// //       if (!isWebRTCStarting.current) {
+// //         console.log('Starting WebRTC for receiver after accept');
+// //         startWebRTC(socketRef.current, false, callStatus.callerId, callStatus.callId);
+// //       }
+// //       toast.success('Call accepted!');
+// //     } catch (error) {
+// //       console.error('Accept call error:', error);
+// //       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
+// //       dispatch(clearCallStatus());
+// //       cleanupWebRTC();
+// //     }
+// //   };
+
+// //   const handleRejectCall = async () => {
+// //     if (!callStatus?.callId) {
+// //       toast.error('No call to reject');
+// //       return;
+// //     }
+// //     console.log('Rejecting call:', callStatus.callId);
+// //     try {
+// //       await rejectCall(callStatus.callId).unwrap();
+// //       console.log('Call rejected by:', user?.name);
+// //       dispatch(clearCallStatus());
+// //       cleanupWebRTC();
+// //       toast.info('Call rejected');
+// //     } catch (error) {
+// //       console.error('Reject call failed:', error);
+// //       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
+// //     }
+// //   };
+
+// //   const handleEndCall = async () => {
+// //     if (!callStatus?.callId) {
+// //       toast.error('No call to end');
+// //       return;
+// //     }
+// //     console.log('Ending call:', callStatus.callId);
+// //     try {
+// //       await endCall(callStatus.callId).unwrap();
+// //       console.log('Call ended by:', user?.name);
+// //       dispatch(clearCallStatus());
+// //       cleanupWebRTC();
+// //       toast.success('Call ended');
+// //     } catch (error) {
+// //       console.error('End call failed:', error);
+// //       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
+// //     }
+// //   };
+
+// //   const handleExtendCall = async () => {
+// //     if (!callStatus?.callId) {
+// //       toast.error('No call to extend');
+// //       return;
+// //     }
+// //     if (!user?.powerTokens || user.powerTokens < 1) {
+// //       toast.error('You need at least 1 power token to extend a call');
+// //       return;
+// //     }
+// //     console.log('Extending call:', callStatus.callId);
+// //     try {
+// //       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
+// //       toast.info('Extension request sent, awaiting approval...');
+// //     } catch (error) {
+// //       console.error('Extend call failed:', error);
+// //       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
+// //     }
+// //   };
+
+// //   const handleApproveExtend = async (approve) => {
+// //     if (!callStatus?.callId) {
+// //       toast.error('No call to approve extension for');
+// //       return;
+// //     }
+// //     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
+// //     try {
+// //       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+// //       setExtendRequest(null);
+// //       if (approve) {
+// //         dispatch(setCallStatus({ ...callStatus, extended: true }));
+// //         toast.success('You approved the call extension!');
+// //       } else {
+// //         toast.info('You denied the call extension.');
+// //       }
+// //     } catch (error) {
+// //       console.error('Approve extend call failed:', error);
+// //       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+// //       setExtendRequest(null);
+// //     }
+// //   };
+
+// //   const handleCancelCall = async () => {
+// //     if (!callStatus?.callId) {
+// //       toast.error('No call to cancel');
+// //       return;
+// //     }
+// //     console.log('Cancelling call:', callStatus.callId);
+// //     try {
+// //       await cancelCall(callStatus.callId).unwrap();
+// //       console.log('Call cancelled by:', user?.name);
+// //       dispatch(clearCallStatus());
+// //       cleanupWebRTC();
+// //       toast.info('Call cancelled');
+// //     } catch (error) {
+// //       console.error('Cancel call failed:', error);
+// //       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
+// //     }
+// //   };
+
+// //   if (isAuthenticated && callLoading && !callStatus) {
+// //     return <div>Loading call status...</div>;
+// //   }
+
+// //   return (
+// //     <div className="container mt-5 text-center">
+// //       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
+// //       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
+
+// //       {!isAuthenticated ? (
+// //         <div className="alert alert-info">
+// //           Please <Link to="/login">login</Link> to start exchanging languages!
+// //         </div>
+// //       ) : (
+// //         <div>
+// //           {!callStatus ? (
+// //             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
+// //               <div className="card-body">
+// //                 <h5 className="card-title">Start a Language Call</h5>
+// //                 <div className="mb-3">
+// //                   <input
+// //                     type="text"
+// //                     className="form-control"
+// //                     placeholder="Enter language to learn (e.g., Spanish)"
+// //                     value={language}
+// //                     onChange={(e) => setLanguage(e.target.value)}
+// //                   />
+// //                 </div>
+// //                 <button
+// //                   className="btn btn-primary w-100"
+// //                   onClick={handleInitiateCall}
+// //                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
+// //                 >
+// //                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+// //                 </button>
+// //               </div>
+// //             </div>
+// //           ) : (
+// //             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
+// //               <div className="card-body">
+// //                 <h5 className="card-title">Call Status</h5>
+// //                 {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+// //                   <>
+// //                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
+// //                     {callStatus.receivers && (
+// //                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}</p>
+// //                     )}
+// //                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
+// //                       Cancel Call
+// //                     </button>
+// //                   </>
+// //                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
+// //                   <>
+// //                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
+// //                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
+// //                       Accept Call
+// //                     </button>
+// //                     <button className="btn btn-danger w-100" onClick={handleRejectCall}>
+// //                       Reject Call
+// //                     </button>
+// //                   </>
+// //                 ) : callStatus.status === 'active' ? (
+// //                   <>
+// //                     <p>
+// //                       Active call with {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+// //                     </p>
+// //                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+// //                     <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+// //                     <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
+// //                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
+// //                       End Call
+// //                     </button>
+// //                     <button
+// //                       className="btn btn-warning w-100 mb-2"
+// //                       onClick={handleExtendCall}
+// //                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+// //                     >
+// //                       {user?.powerTokens < 1 ? 'No Power Tokens' : extendRequest ? 'Awaiting Approval' : 'Extend Call'}
+// //                     </button>
+// //                     {extendRequest && extendRequest.callId === callStatus.callId && (
+// //                       <div>
+// //                         <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+// //                         <button
+// //                           className="btn btn-success w-45 mr-2"
+// //                           onClick={() => handleApproveExtend(true)}
+// //                         >
+// //                           Yes
+// //                         </button>
+// //                         <button
+// //                           className="btn btn-danger w-45"
+// //                           onClick={() => handleApproveExtend(false)}
+// //                         >
+// //                           No
+// //                         </button>
+// //                       </div>
+// //                     )}
+// //                   </>
+// //                 ) : (
+// //                   <p>Call {callStatus.status}!</p>
+// //                 )}
+// //               </div>
+// //             </div>
+// //           )}
+// //         </div>
+// //       )}
+// //     </div>
+// //   );
+// // };
+
+// // export default Home;
+
+
+// import React, { useState, useEffect, useRef } from 'react';
+// import { useSelector, useDispatch } from 'react-redux';
+// import { Link } from 'react-router-dom';
+// import {
+//   useInitiateCallMutation,
+//   useAcceptCallMutation,
+//   useRejectCallMutation,
+//   useEndCallMutation,
+//   useExtendCallMutation,
+//   useCancelCallMutation,
+//   useSetOnlineStatusMutation,
+//   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
+// } from '../redux/services/callApi';
+// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
+// import { io } from 'socket.io-client';
+// import { toast } from 'react-toastify';
+// import axios from 'axios';
+
+// const Home = () => {
+//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
+//   const dispatch = useDispatch();
+//   const [language, setLanguage] = useState('');
+//   const [extendRequest, setExtendRequest] = useState(null);
+//   const [localStream, setLocalStream] = useState(null);
+//   const [remoteStream, setRemoteStream] = useState(null);
+//   const peerConnection = useRef(null);
+//   const isWebRTCStarting = useRef(false);
+//   const socketRef = useRef(null);
+//   const prevCallStatusRef = useRef(null);
+
+//   const [initiateCall] = useInitiateCallMutation();
+//   const [acceptCall] = useAcceptCallMutation();
+//   const [rejectCall] = useRejectCallMutation();
+//   const [endCall] = useEndCallMutation();
+//   const [extendCall] = useExtendCallMutation();
+//   const [cancelCall] = useCancelCallMutation();
+//   const [setOnlineStatus] = useSetOnlineStatusMutation();
+//   const [approveExtendCall] = useApproveExtendCallMutation();
+//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
+//     skip: !isAuthenticated,
+//     pollingInterval: 5000,
+//   });
+
+//   useEffect(() => {
+//     if (isAuthenticated && user && user._id) {
+//       console.log('User in Redux:', user);
+//       socketRef.current = io('http://localhost:5000', {
+//         withCredentials: true,
+//         extraHeaders: { 'Content-Type': 'application/json' },
+//         reconnectionAttempts: 5,
+//         reconnectionDelay: 1000,
 //       });
 
-//       setSocket(newSocket);
+//       const socket = socketRef.current;
+
+//       socket.on('connect', () => {
+//         console.log('WebSocket connected:', socket.id);
+//         socket.emit('register', user._id);
+//         setOnlineStatus({ isOnline: true })
+//           .unwrap()
+//           .then(() => console.log('Set online status success'))
+//           .catch((err) => console.error('Set online failed:', err));
+//       });
+
+//       socket.on('call-request', (data) => {
+//         console.log('Call request received:', data);
+//         dispatch(setCallStatus({
+//           callId: data.callId,
+//           status: 'pending',
+//           caller: data.callerName,
+//           language: data.language,
+//           callerId: data.callerId,
+//         }));
+//         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
+//       });
+
+//       socket.on('call-accepted', (data) => {
+//         console.log('Call accepted:', data);
+//         const updatedCallStatus = {
+//           callId: data.callId,
+//           status: 'active',
+//           receiver: data.receiverName,
+//           receiverId: data.receiverId,
+//           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//           callerId: user._id === data.receiverId ? data.callerId : user._id,
+//         };
+//         dispatch(setCallStatus(updatedCallStatus));
+//         if (!isWebRTCStarting.current && user._id === updatedCallStatus.callerId) {
+//           console.log('Starting WebRTC after call accepted, isCaller:', true);
+//           startWebRTC(socket, true, data.receiverId, data.callId);
+//         }
+//       });
+
+//       socket.on('offer', async ({ callId, offer, from }) => {
+//         console.log('Received offer:', { callId, offer, from });
+//         console.log('Current callStatus on offer:', callStatus);
+//         if (callStatus?.callId === callId && !isWebRTCStarting.current) {
+//           console.log('Processing offer for call:', callId);
+//           await startWebRTC(socket, false, from, callId, offer);
+//         } else {
+//           console.log('Offer ignored: callStatus mismatch or WebRTC already starting', callStatus);
+//         }
+//       });
+
+//       socket.on('answer', ({ callId, answer }) => {
+//         console.log('Received answer:', { callId, answer });
+//         if (peerConnection.current) {
+//           peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
+//             .catch((err) => console.error('Set answer failed:', err));
+//         }
+//       });
+
+//       socket.on('ice-candidate', ({ callId, candidate }) => {
+//         console.log('Received ICE candidate:', { callId, candidate });
+//         if (peerConnection.current) {
+//           peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate))
+//             .catch((err) => console.error('ICE candidate error:', err));
+//         }
+//       });
+
+//       socket.on('call-rejected', (data) => {
+//         console.log('Call rejected:', data);
+//         if (callStatus?.callerId === user?._id) {
+//           toast.warn(`Your call was rejected by ${data.receiverName}`);
+//           dispatch(clearCallStatus());
+//         }
+//       });
+
+//       socket.on('call-ended', (data) => {
+//         console.log('Call ended:', data);
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//         toast.info(`Call ended with status: ${data.status}`);
+//       });
 
 //       return () => {
-//         newSocket.disconnect();
+//         socket.disconnect();
+//         cleanupWebRTC();
 //       };
 //     }
 //   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
@@ -1103,650 +1253,286 @@
 //     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
 //     if (currentCallData?.call) {
 //       const newCallStatus = {
-//         callId: currentCallData.call.callId,
+//         callId: currentCallData.call._id,
 //         status: currentCallData.call.status,
 //         language: currentCallData.call.language,
-//         callerId: currentCallData.call.callerId,
-//         ...(currentCallData.call.receivers ? { receivers: currentCallData.call.receivers } : {}),
-//         ...(currentCallData.call.caller ? { caller: currentCallData.call.caller } : {}),
-//         ...(currentCallData.call.receiver ? { receiver: currentCallData.call.receiver } : {}),
-//         ...(currentCallData.call.extended ? { extended: currentCallData.call.extended } : {})
-//       };
-//       // Only update if different to prevent infinite loop
-//       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
-//         console.log('Restoring call status:', newCallStatus);
-//         dispatch(setCallStatus(newCallStatus));
-//         prevCallStatusRef.current = newCallStatus;
-//       }
-//     } else if (!callLoading && !callError && !callStatus) {
-//       console.log('No active call, clearing status');
-//       dispatch(clearCallStatus());
-//       prevCallStatusRef.current = null;
-//     }
-//   }, [currentCallData, callLoading, callError, dispatch]);
-
-//   const handleInitiateCall = async () => {
-//     try {
-//       const response = await initiateCall(language).unwrap();
-//       console.log('Initiated call:', response);
-//       dispatch(setCallStatus({ 
-//         callId: response.callId, 
-//         status: 'pending', 
-//         receivers: response.potentialReceivers, 
-//         language, 
-//         callerId: user._id 
-//       }));
-//     } catch (error) {
-//       console.error('Initiate call failed:', error);
-//     }
-//   };
-
-//   const handleAcceptCall = async () => {
-//     try {
-//       await acceptCall(callStatus.callId).unwrap();
-//       console.log('Call accepted by:', user.name);
-//       dispatch(setCallStatus({ ...callStatus, status: 'active' }));
-//     } catch (error) {
-//       console.error('Accept call failed:', error);
-//       dispatch(clearCallStatus());
-//     }
-//   };
-
-//   const handleEndCall = async () => {
-//     try {
-//       await endCall(callStatus.callId).unwrap();
-//       console.log('Call ended by:', user.name);
-//     } catch (error) {
-//       console.error('End call failed:', error);
-//     }
-//   };
-
-//   const handleExtendCall = async () => {
-//     try {
-//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
-//       console.log('Call extended by:', user.name);
-//     } catch (error) {
-//       console.error('Extend call failed:', error);
-//     }
-//   };
-
-//   const handleCancelCall = async () => {
-//     try {
-//       await cancelCall(callStatus.callId).unwrap();
-//       console.log('Call cancelled by:', user.name);
-//       dispatch(clearCallStatus());
-//     } catch (error) {
-//       console.error('Cancel call failed:', error);
-//     }
-//   };
-
-//   if (callLoading && !callStatus) return <div>Loading call status...</div>;
-
-//   return (
-//     <div className="container mt-5 text-center">
-//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
-//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
-
-//       {!isAuthenticated ? (
-//         <div className="alert alert-info">
-//           Please <Link to="/login">login</Link> to start exchanging languages!
-//         </div>
-//       ) : (
-//         <div>
-//           {!callStatus ? (
-//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Start a Language Call</h5>
-//                 <div className="mb-3">
-//                   <input
-//                     type="text"
-//                     className="form-control"
-//                     placeholder="Enter language to learn (e.g., Spanish)"
-//                     value={language}
-//                     onChange={(e) => setLanguage(e.target.value)}
-//                   />
-//                 </div>
-//                 <button
-//                   className="btn btn-primary w-100"
-//                   onClick={handleInitiateCall}
-//                   disabled={!language || user.powerTokens < 1}
-//                 >
-//                   {user.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
-//                 </button>
-//               </div>
-//             </div>
-//           ) : (
-//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Call Status</h5>
-//                 {callStatus.status === 'pending' && callStatus.callerId === user._id ? (
-//                   <>
-//                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
-//                     {callStatus.receivers && (
-//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id).join(', ')}</p>
-//                     )}
-//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
-//                       Cancel Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user._id ? (
-//                   <>
-//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
-//                     <button className="btn btn-success w-100" onClick={handleAcceptCall}>
-//                       Accept Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'active' ? (
-//                   <>
-//                     <p>Active call with {callStatus.receiver || callStatus.caller}</p>
-//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
-//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
-//                       End Call
-//                     </button>
-//                     <button
-//                       className="btn btn-warning w-100"
-//                       onClick={handleExtendCall}
-//                       disabled={user.powerTokens < 1}
-//                     >
-//                       {user.powerTokens < 1 ? 'No Power Tokens' : 'Extend Call'}
-//                     </button>
-//                   </>
-//                 ) : (
-//                   <p>Call {callStatus.status}!</p>
-//                 )}
-//               </div>
-//             </div>
-//           )}
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Home;
-
-
-
-
-
-
-
-
-
-
-
-
-// import React, { useState, useEffect, useRef } from 'react';
-// import { useSelector, useDispatch } from 'react-redux';
-// import { Link } from 'react-router-dom';
-// import {
-//   useInitiateCallMutation,
-//   useAcceptCallMutation,
-//   useRejectCallMutation,
-//   useEndCallMutation,
-//   useExtendCallMutation,
-//   useCancelCallMutation,
-//   useSetOnlineStatusMutation,
-//   useGetCurrentCallQuery,
-// } from '../redux/services/callApi';
-// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
-// import { io } from 'socket.io-client';
-
-// const Home = () => {
-//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
-//   const dispatch = useDispatch();
-//   const [language, setLanguage] = useState('');
-//   const [socket, setSocket] = useState(null);
-//   const [initiateCall] = useInitiateCallMutation();
-//   const [acceptCall] = useAcceptCallMutation();
-//   const [rejectCall] = useRejectCallMutation();
-//   const [endCall] = useEndCallMutation();
-//   const [extendCall] = useExtendCallMutation();
-//   const [cancelCall] = useCancelCallMutation();
-//   const [setOnlineStatus] = useSetOnlineStatusMutation();
-//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
-//     skip: !isAuthenticated,
-//     pollingInterval: 5000,
-//   });
-//   const prevCallStatusRef = useRef(null);
-
-//   useEffect(() => {
-//     if (isAuthenticated && user?._id) {
-//       const newSocket = io('http://localhost:5000', { withCredentials: true });
-//       newSocket.on('connect', () => {
-//         console.log('WebSocket connected:', newSocket.id);
-//         newSocket.emit('register', user._id);
-//         setOnlineStatus({ isOnline: true }).catch(err => console.error('Set online failed:', err));
-//       });
-
-//       newSocket.on('call-request', (data) => {
-//         console.log('Call request received:', data);
-//         dispatch(setCallStatus({ 
-//           callId: data.callId, 
-//           status: 'pending', 
-//           caller: data.callerName, 
-//           language: data.language, 
-//           callerId: data.callerId 
-//         }));
-//       });
-
-//       newSocket.on('call-accepted', (data) => {
-//         console.log('Call accepted:', data);
-//         dispatch(setCallStatus({ 
-//           callId: data.callId, 
-//           status: 'active', 
-//           receiver: data.receiverName 
-//         }));
-//       });
-
-//       newSocket.on('call-rejected', (data) => {
-//         console.log('Call rejected:', data);
-//         if (callStatus?.callId === data.callId && user._id === data.callerId) {
-//           dispatch(clearCallStatus()); // Clear for caller if all receivers reject
-//         }
-//       });
-
-//       newSocket.on('call-cancelled', (data) => {
-//         console.log('Call cancelled:', data);
-//         dispatch(clearCallStatus());
-//       });
-
-//       newSocket.on('call-ended', (data) => {
-//         console.log('Call ended:', data);
-//         dispatch(setCallStatus({ callId: data.callId, status: data.status }));
-//         setTimeout(() => dispatch(clearCallStatus()), 2000);
-//       });
-
-//       newSocket.on('call-extended', (data) => {
-//         console.log('Call extended:', data);
-//         dispatch(setCallStatus({ ...callStatus, extended: true }));
-//       });
-
-//       setSocket(newSocket);
-
-//       return () => {
-//         newSocket.disconnect();
-//       };
-//     }
-//   }, [isAuthenticated, user, setOnlineStatus, dispatch, callStatus]);
-
-//   useEffect(() => {
-//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
-//     if (currentCallData?.call) {
-//       const newCallStatus = {
-//         callId: currentCallData.call.callId,
-//         status: currentCallData.call.status,
-//         language: currentCallData.call.language,
-//         callerId: currentCallData.call.callerId,
-//         ...(currentCallData.call.receivers ? { receivers: currentCallData.call.receivers } : {}),
-//         ...(currentCallData.call.caller ? { caller: currentCallData.call.caller } : {}),
-//         ...(currentCallData.call.receiver ? { receiver: currentCallData.call.receiver } : {}),
-//         ...(currentCallData.call.extended ? { extended: currentCallData.call.extended } : {})
+//         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+//         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+//         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+//         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+//         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+//           id: r._id.toString(),
+//           name: r.name || 'Unknown',
+//         })) || callStatus?.receivers || [],
+//         extended: currentCallData.call.extended || callStatus?.extended || false,
 //       };
 //       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
 //         console.log('Restoring call status:', newCallStatus);
 //         dispatch(setCallStatus(newCallStatus));
 //         prevCallStatusRef.current = newCallStatus;
 //       }
-//     } else if (!callLoading && !callError && !callStatus) {
+//     } else if (!callLoading && !callError && callStatus) {
 //       console.log('No active call, clearing status');
 //       dispatch(clearCallStatus());
+//       cleanupWebRTC();
 //       prevCallStatusRef.current = null;
 //     }
-//   }, [currentCallData, callLoading, callError, dispatch]);
+//   }, [currentCallData, callLoading, callError, dispatch, user]);
+
+//   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+//     console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+//     console.log('Current callStatus:', callStatus);
+//     if (isWebRTCStarting.current) {
+//       console.log('WebRTC already starting, skipping');
+//       return;
+//     }
+//     isWebRTCStarting.current = true;
+
+//     if (!socketInstance.connected) {
+//       console.log('Socket not connected, attempting to reconnect');
+//       socketInstance.connect();
+//     } else {
+//       console.log('Socket already connected');
+//     }
+
+//     peerConnection.current = new RTCPeerConnection({
+//       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+//     });
+
+//     peerConnection.current.onicecandidate = (event) => {
+//       if (event.candidate) {
+//         console.log('Sending ICE candidate to:', remoteUserId);
+//         socketInstance.emit('ice-candidate', {
+//           callId,
+//           candidate: event.candidate,
+//           to: remoteUserId,
+//           from: user._id,
+//         });
+//       }
+//     };
+
+//     peerConnection.current.ontrack = (event) => {
+//       console.log('Remote track received:', event.streams[0]);
+//       setRemoteStream(event.streams[0]);
+//     };
+
+//     peerConnection.current.onconnectionstatechange = () => {
+//       console.log('Connection state:', peerConnection.current.connectionState);
+//       if (peerConnection.current.connectionState === 'connected') {
+//         toast.success('Audio call connected!');
+//       } else if (peerConnection.current.connectionState === 'failed') {
+//         toast.error('Audio call failed');
+//         cleanupWebRTC();
+//       }
+//     };
+
+//     try {
+//       if (!localStream) {
+//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         console.log('Local stream obtained:', stream.getTracks());
+//         stream.getTracks().forEach((track) => {
+//           console.log('Track details:', track);
+//           console.log('Adding track:', track);
+//           peerConnection.current.addTrack(track, stream);
+//         });
+//         setLocalStream(stream);
+//       } else {
+//         localStream.getTracks().forEach((track) => {
+//           console.log('Adding existing track:', track);
+//           peerConnection.current.addTrack(track, localStream);
+//         });
+//       }
+
+//       if (isCaller) {
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         console.log('Sending offer to:', remoteUserId);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+//       } else if (offer) {
+//         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//         const answer = await peerConnection.current.createAnswer();
+//         await peerConnection.current.setLocalDescription(answer);
+//         console.log('Sending answer to:', remoteUserId);
+//         socketInstance.emit('answer', { callId, answer, to: remoteUserId });
+//       }
+//     } catch (error) {
+//       console.error('WebRTC error:', error);
+//       toast.error('Failed to start audio: ' + error.message);
+//       cleanupWebRTC();
+//     } finally {
+//       isWebRTCStarting.current = false;
+//     }
+//   };
+
+//   const cleanupWebRTC = () => {
+//     console.log('Cleaning up WebRTC');
+//     if (peerConnection.current) {
+//       peerConnection.current.close();
+//       peerConnection.current = null;
+//     }
+//     if (localStream) {
+//       localStream.getTracks().forEach((track) => track.stop());
+//       setLocalStream(null);
+//     }
+//     setRemoteStream(null);
+//     isWebRTCStarting.current = false;
+//   };
 
 //   const handleInitiateCall = async () => {
+//     if (!language) {
+//       toast.error('Please enter a language');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to initiate a call');
+//       return;
+//     }
+//     console.log('Initiating call with language:', language);
 //     try {
 //       const response = await initiateCall(language).unwrap();
 //       console.log('Initiated call:', response);
-//       dispatch(setCallStatus({ 
-//         callId: response.callId, 
-//         status: 'pending', 
-//         receivers: response.potentialReceivers, 
-//         language, 
-//         callerId: user._id 
+//       dispatch(setCallStatus({
+//         callId: response.callId,
+//         status: 'pending',
+//         receivers: response.potentialReceivers,
+//         language,
+//         callerId: user?._id,
+//         caller: user?.name,
 //       }));
+//       toast.success('Call initiated, waiting for a receiver...');
 //     } catch (error) {
 //       console.error('Initiate call failed:', error);
+//       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
 //     }
 //   };
 
 //   const handleAcceptCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to accept');
+//       return;
+//     }
+//     console.log('Accepting call:', callStatus.callId);
 //     try {
-//       await acceptCall(callStatus.callId).unwrap();
+//       await axios.post(
+//         'http://localhost:5000/api/calls/accept',
+//         { callId: callStatus.callId },
+//         { withCredentials: true }
+//       );
 //       console.log('Call accepted by:', user.name);
-//       dispatch(setCallStatus({ ...callStatus, status: 'active' }));
+//       const updatedCallStatus = {
+//         ...callStatus,
+//         status: 'active',
+//         receiver: user.name,
+//         receiverId: user._id,
+//       };
+//       dispatch(setCallStatus(updatedCallStatus));
+//       toast.success('Call accepted! Waiting for caller audio...');
 //     } catch (error) {
-//       console.error('Accept call failed:', error);
+//       console.error('Accept call error:', error);
+//       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
 //       dispatch(clearCallStatus());
+//       cleanupWebRTC();
 //     }
 //   };
 
 //   const handleRejectCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to reject');
+//       return;
+//     }
+//     console.log('Rejecting call:', callStatus.callId);
 //     try {
 //       await rejectCall(callStatus.callId).unwrap();
-//       console.log('Call rejected by:', user.name);
+//       console.log('Call rejected by:', user?.name);
 //       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call rejected');
 //     } catch (error) {
 //       console.error('Reject call failed:', error);
-//       dispatch(clearCallStatus());
+//       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
 //     }
 //   };
 
 //   const handleEndCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to end');
+//       return;
+//     }
+//     console.log('Ending call:', callStatus.callId);
 //     try {
 //       await endCall(callStatus.callId).unwrap();
-//       console.log('Call ended by:', user.name);
+//       console.log('Call ended by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.success('Call ended');
 //     } catch (error) {
 //       console.error('End call failed:', error);
+//       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
 //     }
 //   };
 
 //   const handleExtendCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to extend');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to extend a call');
+//       return;
+//     }
+//     console.log('Extending call:', callStatus.callId);
 //     try {
 //       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
-//       console.log('Call extended by:', user.name);
+//       toast.info('Extension request sent, awaiting approval...');
 //     } catch (error) {
 //       console.error('Extend call failed:', error);
+//       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
 //     }
 //   };
 
-//   const handleCancelCall = async () => {
+//   const handleApproveExtend = async (approve) => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to approve extension for');
+//       return;
+//     }
+//     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
 //     try {
-//       await cancelCall(callStatus.callId).unwrap();
-//       console.log('Call cancelled by:', user.name);
-//       dispatch(clearCallStatus());
-//     } catch (error) {
-//       console.error('Cancel call failed:', error);
-//     }
-//   };
-
-//   if (callLoading && !callStatus) return <div>Loading call status...</div>;
-
-//   return (
-//     <div className="container mt-5 text-center">
-//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
-//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
-
-//       {!isAuthenticated ? (
-//         <div className="alert alert-info">
-//           Please <Link to="/login">login</Link> to start exchanging languages!
-//         </div>
-//       ) : (
-//         <div>
-//           {!callStatus ? (
-//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Start a Language Call</h5>
-//                 <div className="mb-3">
-//                   <input
-//                     type="text"
-//                     className="form-control"
-//                     placeholder="Enter language to learn (e.g., Spanish)"
-//                     value={language}
-//                     onChange={(e) => setLanguage(e.target.value)}
-//                   />
-//                 </div>
-//                 <button
-//                   className="btn btn-primary w-100"
-//                   onClick={handleInitiateCall}
-//                   disabled={!language || user.powerTokens < 1}
-//                 >
-//                   {user.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
-//                 </button>
-//               </div>
-//             </div>
-//           ) : (
-//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Call Status</h5>
-//                 {callStatus.status === 'pending' && callStatus.callerId === user._id ? (
-//                   <>
-//                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
-//                     {callStatus.receivers && (
-//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id).join(', ')}</p>
-//                     )}
-//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
-//                       Cancel Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user._id ? (
-//                   <>
-//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
-//                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
-//                       Accept Call
-//                     </button>
-//                     <button className="btn btn-danger w-100" onClick={handleRejectCall}>
-//                       Reject Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'active' ? (
-//                   <>
-//                     <p>Active call with {callStatus.receiver || callStatus.caller}</p>
-//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
-//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
-//                       End Call
-//                     </button>
-//                     <button
-//                       className="btn btn-warning w-100"
-//                       onClick={handleExtendCall}
-//                       disabled={user.powerTokens < 1}
-//                     >
-//                       {user.powerTokens < 1 ? 'No Power Tokens' : 'Extend Call'}
-//                     </button>
-//                   </>
-//                 ) : (
-//                   <p>Call {callStatus.status}!</p>
-//                 )}
-//               </div>
-//             </div>
-//           )}
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Home;
-
-
-
-
-
-
-
-
-// import React, { useState, useEffect, useRef } from 'react';
-// import { useSelector, useDispatch } from 'react-redux';
-// import { Link } from 'react-router-dom';
-// import {
-//   useInitiateCallMutation,
-//   useAcceptCallMutation,
-//   useRejectCallMutation,
-//   useEndCallMutation,
-//   useExtendCallMutation,
-//   useCancelCallMutation,
-//   useSetOnlineStatusMutation,
-//   useGetCurrentCallQuery,
-// } from '../redux/services/callApi';
-// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
-// import { io } from 'socket.io-client';
-// import { toast } from 'react-toastify'; // Import toast
-
-// const Home = () => {
-//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
-//   const dispatch = useDispatch();
-//   const [language, setLanguage] = useState('');
-//   const [socket, setSocket] = useState(null);
-//   const [initiateCall] = useInitiateCallMutation();
-//   const [acceptCall] = useAcceptCallMutation();
-//   const [rejectCall] = useRejectCallMutation();
-//   const [endCall] = useEndCallMutation();
-//   const [extendCall] = useExtendCallMutation();
-//   const [cancelCall] = useCancelCallMutation();
-//   const [setOnlineStatus] = useSetOnlineStatusMutation();
-//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
-//     skip: !isAuthenticated,
-//     pollingInterval: 5000,
-//   });
-//   const prevCallStatusRef = useRef(null);
-
-//   useEffect(() => {
-//     if (isAuthenticated && user?._id) {
-//       const newSocket = io('http://localhost:5000', { withCredentials: true });
-//       newSocket.on('connect', () => {
-//         console.log('WebSocket connected:', newSocket.id);
-//         newSocket.emit('register', user._id);
-//         setOnlineStatus({ isOnline: true }).catch(err => console.error('Set online failed:', err));
-//       });
-
-//       newSocket.on('call-request', (data) => {
-//         console.log('Call request received:', data);
-//         dispatch(setCallStatus({ 
-//           callId: data.callId, 
-//           status: 'pending', 
-//           caller: data.callerName, 
-//           language: data.language, 
-//           callerId: data.callerId 
-//         }));
-//       });
-
-//       newSocket.on('call-accepted', (data) => {
-//         console.log('Call accepted:', data);
-//         dispatch(setCallStatus({ 
-//           callId: data.callId, 
-//           status: 'active', 
-//           receiver: data.receiverName 
-//         }));
-//       });
-
-//       newSocket.on('call-rejected', (data) => {
-//         console.log('Call rejected:', data);
-//         if (callStatus?.callId === data.callId && user._id === callStatus.callerId) {
-//           toast.warn(`Your call was rejected by ${data.receiverName}`, {
-//             position: "top-right",
-//             autoClose: 3000,
-//           });
-//           setTimeout(() => dispatch(clearCallStatus()), 3000); // Delay to show toast
-//         }
-//       });
-
-//       newSocket.on('call-cancelled', (data) => {
-//         console.log('Call cancelled:', data);
-//         dispatch(clearCallStatus());
-//       });
-
-//       newSocket.on('call-ended', (data) => {
-//         console.log('Call ended:', data);
-//         dispatch(setCallStatus({ callId: data.callId, status: data.status }));
-//         setTimeout(() => dispatch(clearCallStatus()), 2000);
-//       });
-
-//       newSocket.on('call-extended', (data) => {
-//         console.log('Call extended:', data);
+//       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+//       setExtendRequest(null);
+//       if (approve) {
 //         dispatch(setCallStatus({ ...callStatus, extended: true }));
-//       });
-
-//       setSocket(newSocket);
-
-//       return () => {
-//         newSocket.disconnect();
-//       };
-//     }
-//   }, [isAuthenticated, user, setOnlineStatus, dispatch, callStatus]);
-
-//   useEffect(() => {
-//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
-//     if (currentCallData?.call) {
-//       const newCallStatus = {
-//         callId: currentCallData.call.callId,
-//         status: currentCallData.call.status,
-//         language: currentCallData.call.language,
-//         callerId: currentCallData.call.callerId,
-//         ...(currentCallData.call.receivers ? { receivers: currentCallData.call.receivers } : {}),
-//         ...(currentCallData.call.caller ? { caller: currentCallData.call.caller } : {}),
-//         ...(currentCallData.call.receiver ? { receiver: currentCallData.call.receiver } : {}),
-//         ...(currentCallData.call.extended ? { extended: currentCallData.call.extended } : {})
-//       };
-//       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
-//         console.log('Restoring call status:', newCallStatus);
-//         dispatch(setCallStatus(newCallStatus));
-//         prevCallStatusRef.current = newCallStatus;
+//         toast.success('You approved the call extension!');
+//       } else {
+//         toast.info('You denied the call extension.');
 //       }
-//     } else if (!callLoading && !callError && !callStatus) {
-//       console.log('No active call, clearing status');
-//       dispatch(clearCallStatus());
-//       prevCallStatusRef.current = null;
-//     }
-//   }, [currentCallData, callLoading, callError, dispatch]);
-
-//   const handleInitiateCall = async () => {
-//     try {
-//       const response = await initiateCall(language).unwrap();
-//       console.log('Initiated call:', response);
-//       dispatch(setCallStatus({ 
-//         callId: response.callId, 
-//         status: 'pending', 
-//         receivers: response.potentialReceivers, 
-//         language, 
-//         callerId: user._id 
-//       }));
 //     } catch (error) {
-//       console.error('Initiate call failed:', error);
-//     }
-//   };
-
-//   const handleAcceptCall = async () => {
-//     try {
-//       await acceptCall(callStatus.callId).unwrap();
-//       console.log('Call accepted by:', user.name);
-//       dispatch(setCallStatus({ ...callStatus, status: 'active' }));
-//     } catch (error) {
-//       console.error('Accept call failed:', error);
-//       dispatch(clearCallStatus());
-//     }
-//   };
-
-//   const handleRejectCall = async () => {
-//     try {
-//       await rejectCall(callStatus.callId).unwrap();
-//       console.log('Call rejected by:', user.name);
-//       dispatch(clearCallStatus());
-//     } catch (error) {
-//       console.error('Reject call failed:', error);
-//       dispatch(clearCallStatus());
-//     }
-//   };
-
-//   const handleEndCall = async () => {
-//     try {
-//       await endCall(callStatus.callId).unwrap();
-//       console.log('Call ended by:', user.name);
-//     } catch (error) {
-//       console.error('End call failed:', error);
-//     }
-//   };
-
-//   const handleExtendCall = async () => {
-//     try {
-//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
-//       console.log('Call extended by:', user.name);
-//     } catch (error) {
-//       console.error('Extend call failed:', error);
+//       console.error('Approve extend call failed:', error);
+//       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+//       setExtendRequest(null);
 //     }
 //   };
 
 //   const handleCancelCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to cancel');
+//       return;
+//     }
+//     console.log('Cancelling call:', callStatus.callId);
 //     try {
 //       await cancelCall(callStatus.callId).unwrap();
-//       console.log('Call cancelled by:', user.name);
+//       console.log('Call cancelled by:', user?.name);
 //       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call cancelled');
 //     } catch (error) {
 //       console.error('Cancel call failed:', error);
+//       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
 //     }
 //   };
 
-//   if (callLoading && !callStatus) return <div>Loading call status...</div>;
+//   if (isAuthenticated && callLoading && !callStatus) {
+//     return <div>Loading call status...</div>;
+//   }
 
 //   return (
 //     <div className="container mt-5 text-center">
@@ -1775,9 +1561,9 @@
 //                 <button
 //                   className="btn btn-primary w-100"
 //                   onClick={handleInitiateCall}
-//                   disabled={!language || user.powerTokens < 1}
+//                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
 //                 >
-//                   {user.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+//                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
 //                 </button>
 //               </div>
 //             </div>
@@ -1785,303 +1571,17 @@
 //             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
 //               <div className="card-body">
 //                 <h5 className="card-title">Call Status</h5>
-//                 {callStatus.status === 'pending' && callStatus.callerId === user._id ? (
+//                 {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
 //                   <>
 //                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
 //                     {callStatus.receivers && (
-//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id).join(', ')}</p>
+//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}</p>
 //                     )}
 //                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
 //                       Cancel Call
 //                     </button>
 //                   </>
-//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user._id ? (
-//                   <>
-//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
-//                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
-//                       Accept Call
-//                     </button>
-//                     <button className="btn btn-danger w-100" onClick={handleRejectCall}>
-//                       Reject Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'active' ? (
-//                   <>
-//                     <p>Active call with {callStatus.receiver || callStatus.caller}</p>
-//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
-//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
-//                       End Call
-//                     </button>
-//                     <button
-//                       className="btn btn-warning w-100"
-//                       onClick={handleExtendCall}
-//                       disabled={user.powerTokens < 1}
-//                     >
-//                       {user.powerTokens < 1 ? 'No Power Tokens' : 'Extend Call'}
-//                     </button>
-//                   </>
-//                 ) : (
-//                   <p>Call {callStatus.status}!</p>
-//                 )}
-//               </div>
-//             </div>
-//           )}
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Home;
-
-
-
-
-
-
-
-// import React, { useState, useEffect, useRef } from 'react';
-// import { useSelector, useDispatch } from 'react-redux';
-// import { Link } from 'react-router-dom';
-// import {
-//   useInitiateCallMutation,
-//   useAcceptCallMutation,
-//   useRejectCallMutation,
-//   useEndCallMutation,
-//   useExtendCallMutation,
-//   useCancelCallMutation,
-//   useSetOnlineStatusMutation,
-//   useGetCurrentCallQuery,
-// } from '../redux/services/callApi';
-// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
-// import { io } from 'socket.io-client';
-// import { toast } from 'react-toastify';
-
-// const Home = () => {
-//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
-//   const dispatch = useDispatch();
-//   const [language, setLanguage] = useState('');
-//   const [socket, setSocket] = useState(null);
-//   const [initiateCall] = useInitiateCallMutation();
-//   const [acceptCall] = useAcceptCallMutation();
-//   const [rejectCall] = useRejectCallMutation();
-//   const [endCall] = useEndCallMutation();
-//   const [extendCall] = useExtendCallMutation();
-//   const [cancelCall] = useCancelCallMutation();
-//   const [setOnlineStatus] = useSetOnlineStatusMutation();
-//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
-//     skip: !isAuthenticated,
-//     pollingInterval: 5000,
-//   });
-//   const prevCallStatusRef = useRef(null);
-
-//   useEffect(() => {
-//     if (isAuthenticated && user?._id) {
-//       const newSocket = io('http://localhost:5000', { withCredentials: true });
-//       newSocket.on('connect', () => {
-//         console.log('WebSocket connected:', newSocket.id);
-//         newSocket.emit('register', user._id);
-//         setOnlineStatus({ isOnline: true }).catch(err => console.error('Set online failed:', err));
-//       });
-
-//       newSocket.on('call-request', (data) => {
-//         console.log('Call request received:', data);
-//         dispatch(setCallStatus({ 
-//           callId: data.callId, 
-//           status: 'pending', 
-//           caller: data.callerName, 
-//           language: data.language, 
-//           callerId: data.callerId 
-//         }));
-//       });
-
-//       newSocket.on('call-accepted', (data) => {
-//         console.log('Call accepted:', data);
-//         dispatch(setCallStatus({ 
-//           callId: data.callId, 
-//           status: 'active', 
-//           receiver: data.receiverName,
-//           caller: callStatus?.caller // Preserve caller name
-//         }));
-//       });
-
-//       newSocket.on('call-rejected', (data) => {
-//         console.log('Call rejected:', data);
-//         if (callStatus?.callId === data.callId && user._id === callStatus.callerId) {
-//           toast.warn(`Your call was rejected by ${data.receiverName}`, {
-//             position: "top-right",
-//             autoClose: 3000,
-//           });
-//           setTimeout(() => dispatch(clearCallStatus()), 3000);
-//         }
-//       });
-
-//       newSocket.on('call-cancelled', (data) => {
-//         console.log('Call cancelled:', data);
-//         dispatch(clearCallStatus());
-//       });
-
-//       newSocket.on('call-ended', (data) => {
-//         console.log('Call ended:', data);
-//         dispatch(setCallStatus({ callId: data.callId, status: data.status }));
-//         setTimeout(() => dispatch(clearCallStatus()), 2000);
-//       });
-
-//       newSocket.on('call-extended', (data) => {
-//         console.log('Call extended:', data);
-//         dispatch(setCallStatus({ ...callStatus, extended: true }));
-//       });
-
-//       setSocket(newSocket);
-
-//       return () => {
-//         newSocket.disconnect();
-//       };
-//     }
-//   }, [isAuthenticated, user, setOnlineStatus, dispatch, callStatus]);
-
-//   useEffect(() => {
-//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
-//     if (currentCallData?.call) {
-//       const newCallStatus = {
-//         callId: currentCallData.call.callId,
-//         status: currentCallData.call.status,
-//         language: currentCallData.call.language,
-//         callerId: currentCallData.call.callerId,
-//         ...(currentCallData.call.receivers ? { receivers: currentCallData.call.receivers } : {}),
-//         ...(currentCallData.call.caller ? { caller: currentCallData.call.caller } : {}),
-//         ...(currentCallData.call.receiver ? { receiver: currentCallData.call.receiver } : {}),
-//         ...(currentCallData.call.extended ? { extended: currentCallData.call.extended } : {})
-//       };
-//       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
-//         console.log('Restoring call status:', newCallStatus);
-//         dispatch(setCallStatus(newCallStatus));
-//         prevCallStatusRef.current = newCallStatus;
-//       }
-//     } else if (!callLoading && !callError && !callStatus) {
-//       console.log('No active call, clearing status');
-//       dispatch(clearCallStatus());
-//       prevCallStatusRef.current = null;
-//     }
-//   }, [currentCallData, callLoading, callError, dispatch]);
-
-//   const handleInitiateCall = async () => {
-//     try {
-//       const response = await initiateCall(language).unwrap();
-//       console.log('Initiated call:', response);
-//       dispatch(setCallStatus({ 
-//         callId: response.callId, 
-//         status: 'pending', 
-//         receivers: response.potentialReceivers, 
-//         language, 
-//         callerId: user._id,
-//         caller: user.name // Set caller name
-//       }));
-//     } catch (error) {
-//       console.error('Initiate call failed:', error);
-//     }
-//   };
-
-//   const handleAcceptCall = async () => {
-//     try {
-//       await acceptCall(callStatus.callId).unwrap();
-//       console.log('Call accepted by:', user.name);
-//       dispatch(setCallStatus({ ...callStatus, status: 'active', receiver: user.name }));
-//     } catch (error) {
-//       console.error('Accept call failed:', error);
-//       dispatch(clearCallStatus());
-//     }
-//   };
-
-//   const handleRejectCall = async () => {
-//     try {
-//       await rejectCall(callStatus.callId).unwrap();
-//       console.log('Call rejected by:', user.name);
-//       dispatch(clearCallStatus());
-//     } catch (error) {
-//       console.error('Reject call failed:', error);
-//       dispatch(clearCallStatus());
-//     }
-//   };
-
-//   const handleEndCall = async () => {
-//     try {
-//       await endCall(callStatus.callId).unwrap();
-//       console.log('Call ended by:', user.name);
-//     } catch (error) {
-//       console.error('End call failed:', error);
-//     }
-//   };
-
-//   const handleExtendCall = async () => {
-//     try {
-//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
-//       console.log('Call extended by:', user.name);
-//     } catch (error) {
-//       console.error('Extend call failed:', error);
-//     }
-//   };
-
-//   const handleCancelCall = async () => {
-//     try {
-//       await cancelCall(callStatus.callId).unwrap();
-//       console.log('Call cancelled by:', user.name);
-//       dispatch(clearCallStatus());
-//     } catch (error) {
-//       console.error('Cancel call failed:', error);
-//     }
-//   };
-
-//   if (callLoading && !callStatus) return <div>Loading call status...</div>;
-
-//   return (
-//     <div className="container mt-5 text-center">
-//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
-//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
-
-//       {!isAuthenticated ? (
-//         <div className="alert alert-info">
-//           Please <Link to="/login">login</Link> to start exchanging languages!
-//         </div>
-//       ) : (
-//         <div>
-//           {!callStatus ? (
-//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Start a Language Call</h5>
-//                 <div className="mb-3">
-//                   <input
-//                     type="text"
-//                     className="form-control"
-//                     placeholder="Enter language to learn (e.g., Spanish)"
-//                     value={language}
-//                     onChange={(e) => setLanguage(e.target.value)}
-//                   />
-//                 </div>
-//                 <button
-//                   className="btn btn-primary w-100"
-//                   onClick={handleInitiateCall}
-//                   disabled={!language || user.powerTokens < 1}
-//                 >
-//                   {user.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
-//                 </button>
-//               </div>
-//             </div>
-//           ) : (
-//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
-//               <div className="card-body">
-//                 <h5 className="card-title">Call Status</h5>
-//                 {callStatus.status === 'pending' && callStatus.callerId === user._id ? (
-//                   <>
-//                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
-//                     {callStatus.receivers && (
-//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id).join(', ')}</p>
-//                     )}
-//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
-//                       Cancel Call
-//                     </button>
-//                   </>
-//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user._id ? (
+//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
 //                   <>
 //                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
 //                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
@@ -2094,19 +1594,3612 @@
 //                 ) : callStatus.status === 'active' ? (
 //                   <>
 //                     <p>
-//                       Active call with {callStatus.callerId === user._id ? callStatus.receiver : callStatus.caller}
+//                       Active call with {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
 //                     </p>
 //                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+//                     <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+//                     <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
 //                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
 //                       End Call
 //                     </button>
 //                     <button
-//                       className="btn btn-warning w-100"
+//                       className="btn btn-warning w-100 mb-2"
 //                       onClick={handleExtendCall}
-//                       disabled={user.powerTokens < 1}
+//                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
 //                     >
-//                       {user.powerTokens < 1 ? 'No Power Tokens' : 'Extend Call'}
+//                       {user?.powerTokens < 1 ? 'No Power Tokens' : extendRequest ? 'Awaiting Approval' : 'Extend Call'}
 //                     </button>
+//                     {extendRequest && extendRequest.callId === callStatus.callId && (
+//                       <div>
+//                         <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+//                         <button
+//                           className="btn btn-success w-45 mr-2"
+//                           onClick={() => handleApproveExtend(true)}
+//                         >
+//                           Yes
+//                         </button>
+//                         <button
+//                           className="btn btn-danger w-45"
+//                           onClick={() => handleApproveExtend(false)}
+//                         >
+//                           No
+//                         </button>
+//                       </div>
+//                     )}
+//                   </>
+//                 ) : (
+//                   <p>Call {callStatus.status}!</p>
+//                 )}
+//               </div>
+//             </div>
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default Home;
+
+// **************************************************
+// WORKKKKKKKKKKKKKKKKKKKKKKKKKKKKING
+
+
+// import React, { useState, useEffect, useRef } from 'react';
+// import { useSelector, useDispatch } from 'react-redux';
+// import { Link } from 'react-router-dom';
+// import {
+//   useInitiateCallMutation,
+//   useAcceptCallMutation,
+//   useRejectCallMutation,
+//   useEndCallMutation,
+//   useExtendCallMutation,
+//   useCancelCallMutation,
+//   useSetOnlineStatusMutation,
+//   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
+// } from '../redux/services/callApi';
+// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
+// import { io } from 'socket.io-client';
+// import { toast } from 'react-toastify';
+// import axios from 'axios';
+
+// const Home = () => {
+//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
+//   const dispatch = useDispatch();
+//   const [language, setLanguage] = useState('');
+//   const [extendRequest, setExtendRequest] = useState(null);
+//   const [localStream, setLocalStream] = useState(null);
+//   const [remoteStream, setRemoteStream] = useState(null);
+//   const peerConnection = useRef(null);
+//   const isWebRTCStarting = useRef(false);
+//   const socketRef = useRef(null);
+//   const prevCallStatusRef = useRef(null);
+
+//   const [initiateCall] = useInitiateCallMutation();
+//   const [acceptCall] = useAcceptCallMutation();
+//   const [rejectCall] = useRejectCallMutation();
+//   const [endCall] = useEndCallMutation();
+//   const [extendCall] = useExtendCallMutation();
+//   const [cancelCall] = useCancelCallMutation();
+//   const [setOnlineStatus] = useSetOnlineStatusMutation();
+//   const [approveExtendCall] = useApproveExtendCallMutation();
+//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
+//     skip: !isAuthenticated,
+//     pollingInterval: 5000,
+//   });
+
+//   useEffect(() => {
+//     if (isAuthenticated && user && user._id) {
+//       console.log('User in Redux:', user);
+//       socketRef.current = io('http://localhost:5000', {
+//         withCredentials: true,
+//         extraHeaders: { 'Content-Type': 'application/json' },
+//         reconnectionAttempts: 5,
+//         reconnectionDelay: 1000,
+//       });
+
+//       const socket = socketRef.current;
+
+//       socket.on('connect', () => {
+//         console.log('WebSocket connected:', socket.id);
+//         socket.emit('register', user._id);
+//         setOnlineStatus({ isOnline: true })
+//           .unwrap()
+//           .then(() => console.log('Set online status success'))
+//           .catch((err) => console.error('Set online failed:', err));
+//       });
+
+//       socket.on('call-request', (data) => {
+//         console.log('Call request received:', data);
+//         dispatch(setCallStatus({
+//           callId: data.callId,
+//           status: 'pending',
+//           caller: data.callerName,
+//           language: data.language,
+//           callerId: data.callerId,
+//         }));
+//         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
+//       });
+
+//       socket.on('call-accepted', (data) => {
+//         console.log('Call accepted:', data);
+//         const updatedCallStatus = {
+//           callId: data.callId,
+//           status: 'active',
+//           receiver: data.receiverName,
+//           receiverId: data.receiverId,
+//           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//           callerId: user._id === data.receiverId ? data.callerId : user._id,
+//         };
+//         dispatch(setCallStatus(updatedCallStatus));
+//         if (!isWebRTCStarting.current && user._id === updatedCallStatus.callerId) {
+//           console.log('Starting WebRTC after call accepted, isCaller:', true);
+//           startWebRTC(socket, true, data.receiverId, data.callId);
+//         }
+//       });
+
+//       socket.on('offer', async ({ callId, offer, from }) => {
+//         console.log('Received offer:', { callId, offer, from });
+//         console.log('Current callStatus on offer:', callStatus);
+//         if (!isWebRTCStarting.current) {
+//           console.log('Processing offer for call:', callId);
+//           await startWebRTC(socket, false, from, callId, offer);
+//         } else {
+//           console.log('Offer ignored: WebRTC already starting');
+//         }
+//       });
+
+//       socket.on('answer', ({ callId, answer }) => {
+//         console.log('Received answer:', { callId, answer });
+//         if (peerConnection.current) {
+//           peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
+//             .catch((err) => console.error('Set answer failed:', err));
+//         }
+//       });
+
+//       socket.on('ice-candidate', ({ callId, candidate }) => {
+//         console.log('Received ICE candidate:', { callId, candidate });
+//         if (peerConnection.current) {
+//           peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate))
+//             .catch((err) => console.error('ICE candidate error:', err));
+//         }
+//       });
+
+//       socket.on('call-rejected', (data) => {
+//         console.log('Call rejected:', data);
+//         if (callStatus?.callerId === user?._id) {
+//           toast.warn(`Your call was rejected by ${data.receiverName}`);
+//           dispatch(clearCallStatus());
+//         }
+//       });
+
+//       socket.on('call-ended', (data) => {
+//         console.log('Call ended:', data);
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//         toast.info(`Call ended with status: ${data.status}`);
+//       });
+
+//       return () => {
+//         socket.disconnect();
+//         cleanupWebRTC();
+//       };
+//     }
+//   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
+
+//   useEffect(() => {
+//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
+//     if (currentCallData?.call) {
+//       const newCallStatus = {
+//         callId: currentCallData.call._id,
+//         status: currentCallData.call.status,
+//         language: currentCallData.call.language,
+//         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+//         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+//         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+//         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+//         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+//           id: r._id.toString(),
+//           name: r.name || 'Unknown',
+//         })) || callStatus?.receivers || [],
+//         extended: currentCallData.call.extended || callStatus?.extended || false,
+//       };
+//       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
+//         console.log('Restoring call status:', newCallStatus);
+//         dispatch(setCallStatus(newCallStatus));
+//         prevCallStatusRef.current = newCallStatus;
+//       }
+//     } else if (!callLoading && !callError && callStatus) {
+//       console.log('No active call, clearing status');
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       prevCallStatusRef.current = null;
+//     }
+//   }, [currentCallData, callLoading, callError, dispatch, user]);
+
+//   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+//     console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+//     console.log('Current callStatus:', callStatus);
+//     if (isWebRTCStarting.current) {
+//       console.log('WebRTC already starting, skipping');
+//       return;
+//     }
+//     isWebRTCStarting.current = true;
+
+//     if (!socketInstance.connected) {
+//       console.log('Socket not connected, attempting to reconnect');
+//       socketInstance.connect();
+//     } else {
+//       console.log('Socket already connected');
+//     }
+
+//     peerConnection.current = new RTCPeerConnection({
+//       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+//     });
+
+//     peerConnection.current.onicecandidate = (event) => {
+//       if (event.candidate) {
+//         console.log('Sending ICE candidate to:', remoteUserId);
+//         socketInstance.emit('ice-candidate', {
+//           callId,
+//           candidate: event.candidate,
+//           to: remoteUserId,
+//           from: user._id,
+//         });
+//       }
+//     };
+
+//     peerConnection.current.ontrack = (event) => {
+//       console.log('Remote track received:', event.streams[0]);
+//       setRemoteStream(event.streams[0]);
+//     };
+
+//     peerConnection.current.onconnectionstatechange = () => {
+//       console.log('Connection state:', peerConnection.current.connectionState);
+//       if (peerConnection.current.connectionState === 'connected') {
+//         toast.success('Audio call connected!');
+//       } else if (peerConnection.current.connectionState === 'failed') {
+//         toast.error('Audio call failed');
+//         cleanupWebRTC();
+//       }
+//     };
+
+//     try {
+//       if (!localStream) {
+//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         console.log('Local stream obtained:', stream.getTracks());
+//         stream.getTracks().forEach((track) => {
+//           console.log('Track details:', track);
+//           console.log('Adding track:', track);
+//           peerConnection.current.addTrack(track, stream);
+//         });
+//         setLocalStream(stream);
+//       } else {
+//         localStream.getTracks().forEach((track) => {
+//           console.log('Adding existing track:', track);
+//           peerConnection.current.addTrack(track, localStream);
+//         });
+//       }
+
+//       if (isCaller) {
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         console.log('Sending offer to:', remoteUserId);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+//       } else if (offer) {
+//         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//         const answer = await peerConnection.current.createAnswer();
+//         await peerConnection.current.setLocalDescription(answer);
+//         console.log('Sending answer to:', remoteUserId);
+//         socketInstance.emit('answer', { callId, answer, to: remoteUserId });
+//       }
+//     } catch (error) {
+//       console.error('WebRTC error:', error);
+//       toast.error('Failed to start audio: ' + error.message);
+//       cleanupWebRTC();
+//     } finally {
+//       isWebRTCStarting.current = false;
+//     }
+//   };
+
+//   const cleanupWebRTC = () => {
+//     console.log('Cleaning up WebRTC');
+//     if (peerConnection.current) {
+//       peerConnection.current.close();
+//       peerConnection.current = null;
+//     }
+//     if (localStream) {
+//       localStream.getTracks().forEach((track) => track.stop());
+//       setLocalStream(null);
+//     }
+//     setRemoteStream(null);
+//     isWebRTCStarting.current = false;
+//   };
+
+//   const handleInitiateCall = async () => {
+//     if (!language) {
+//       toast.error('Please enter a language');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to initiate a call');
+//       return;
+//     }
+//     console.log('Initiating call with language:', language);
+//     try {
+//       const response = await initiateCall(language).unwrap();
+//       console.log('Initiated call:', response);
+//       dispatch(setCallStatus({
+//         callId: response.callId,
+//         status: 'pending',
+//         receivers: response.potentialReceivers,
+//         language,
+//         callerId: user?._id,
+//         caller: user?.name,
+//       }));
+//       toast.success('Call initiated, waiting for a receiver...');
+//     } catch (error) {
+//       console.error('Initiate call failed:', error);
+//       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleAcceptCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to accept');
+//       return;
+//     }
+//     console.log('Accepting call:', callStatus.callId);
+//     try {
+//       await axios.post(
+//         'http://localhost:5000/api/calls/accept',
+//         { callId: callStatus.callId },
+//         { withCredentials: true }
+//       );
+//       console.log('Call accepted by:', user.name);
+//       const updatedCallStatus = {
+//         ...callStatus,
+//         status: 'active',
+//         receiver: user.name,
+//         receiverId: user._id,
+//       };
+//       dispatch(setCallStatus(updatedCallStatus));
+//       toast.success('Call accepted! Waiting for caller audio...');
+//     } catch (error) {
+//       console.error('Accept call error:', error);
+//       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//     }
+//   };
+
+//   const handleRejectCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to reject');
+//       return;
+//     }
+//     console.log('Rejecting call:', callStatus.callId);
+//     try {
+//       await rejectCall(callStatus.callId).unwrap();
+//       console.log('Call rejected by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call rejected');
+//     } catch (error) {
+//       console.error('Reject call failed:', error);
+//       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleEndCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to end');
+//       return;
+//     }
+//     console.log('Ending call:', callStatus.callId);
+//     try {
+//       await endCall(callStatus.callId).unwrap();
+//       console.log('Call ended by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.success('Call ended');
+//     } catch (error) {
+//       console.error('End call failed:', error);
+//       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleExtendCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to extend');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to extend a call');
+//       return;
+//     }
+//     console.log('Extending call:', callStatus.callId);
+//     try {
+//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
+//       toast.info('Extension request sent, awaiting approval...');
+//     } catch (error) {
+//       console.error('Extend call failed:', error);
+//       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleApproveExtend = async (approve) => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to approve extension for');
+//       return;
+//     }
+//     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
+//     try {
+//       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+//       setExtendRequest(null);
+//       if (approve) {
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('You approved the call extension!');
+//       } else {
+//         toast.info('You denied the call extension.');
+//       }
+//     } catch (error) {
+//       console.error('Approve extend call failed:', error);
+//       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+//       setExtendRequest(null);
+//     }
+//   };
+
+//   const handleCancelCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to cancel');
+//       return;
+//     }
+//     console.log('Cancelling call:', callStatus.callId);
+//     try {
+//       await cancelCall(callStatus.callId).unwrap();
+//       console.log('Call cancelled by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call cancelled');
+//     } catch (error) {
+//       console.error('Cancel call failed:', error);
+//       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   if (isAuthenticated && callLoading && !callStatus) {
+//     return <div>Loading call status...</div>;
+//   }
+
+//   return (
+//     <div className="container mt-5 text-center">
+//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
+//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
+
+//       {!isAuthenticated ? (
+//         <div className="alert alert-info">
+//           Please <Link to="/login">login</Link> to start exchanging languages!
+//         </div>
+//       ) : (
+//         <div>
+//           {!callStatus ? (
+//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Start a Language Call</h5>
+//                 <div className="mb-3">
+//                   <input
+//                     type="text"
+//                     className="form-control"
+//                     placeholder="Enter language to learn (e.g., Spanish)"
+//                     value={language}
+//                     onChange={(e) => setLanguage(e.target.value)}
+//                   />
+//                 </div>
+//                 <button
+//                   className="btn btn-primary w-100"
+//                   onClick={handleInitiateCall}
+//                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
+//                 >
+//                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+//                 </button>
+//               </div>
+//             </div>
+//           ) : (
+//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Call Status</h5>
+//                 {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+//                   <>
+//                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
+//                     {callStatus.receivers && (
+//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}</p>
+//                     )}
+//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
+//                       Cancel Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
+//                   <>
+//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
+//                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
+//                       Accept Call
+//                     </button>
+//                     <button className="btn btn-danger w-100" onClick={handleRejectCall}>
+//                       Reject Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'active' ? (
+//                   <>
+//                     <p>
+//                       Active call with {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+//                     </p>
+//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+//                     <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+//                     <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
+//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
+//                       End Call
+//                     </button>
+//                     <button
+//                       className="btn btn-warning w-100 mb-2"
+//                       onClick={handleExtendCall}
+//                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+//                     >
+//                       {user?.powerTokens < 1 ? 'No Power Tokens' : extendRequest ? 'Awaiting Approval' : 'Extend Call'}
+//                     </button>
+//                     {extendRequest && extendRequest.callId === callStatus.callId && (
+//                       <div>
+//                         <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+//                         <button
+//                           className="btn btn-success w-45 mr-2"
+//                           onClick={() => handleApproveExtend(true)}
+//                         >
+//                           Yes
+//                         </button>
+//                         <button
+//                           className="btn btn-danger w-45"
+//                           onClick={() => handleApproveExtend(false)}
+//                         >
+//                           No
+//                         </button>
+//                       </div>
+//                     )}
+//                   </>
+//                 ) : (
+//                   <p>Call {callStatus.status}!</p>
+//                 )}
+//               </div>
+//             </div>
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default Home;
+// ***************************************************
+
+
+
+// GUDDDDDDDDDDDDDDDD
+
+// import React, { useState, useEffect, useRef } from 'react';
+// import { useSelector, useDispatch } from 'react-redux';
+// import { Link } from 'react-router-dom';
+// import {
+//   useInitiateCallMutation,
+//   useAcceptCallMutation,
+//   useRejectCallMutation,
+//   useEndCallMutation,
+//   useExtendCallMutation,
+//   useCancelCallMutation,
+//   useSetOnlineStatusMutation,
+//   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
+// } from '../redux/services/callApi';
+// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
+// import { io } from 'socket.io-client';
+// import { toast } from 'react-toastify';
+// import axios from 'axios';
+
+// const Home = () => {
+//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
+//   const dispatch = useDispatch();
+//   const [language, setLanguage] = useState('');
+//   const [extendRequest, setExtendRequest] = useState(null);
+//   const [localStream, setLocalStream] = useState(null);
+//   const [remoteStream, setRemoteStream] = useState(null);
+//   const peerConnection = useRef(null);
+//   const isWebRTCStarting = useRef(false);
+//   const socketRef = useRef(null);
+//   const prevCallStatusRef = useRef(null);
+
+//   const [initiateCall] = useInitiateCallMutation();
+//   const [acceptCall] = useAcceptCallMutation();
+//   const [rejectCall] = useRejectCallMutation();
+//   const [endCall] = useEndCallMutation();
+//   const [extendCall] = useExtendCallMutation();
+//   const [cancelCall] = useCancelCallMutation();
+//   const [setOnlineStatus] = useSetOnlineStatusMutation();
+//   const [approveExtendCall] = useApproveExtendCallMutation();
+//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
+//     skip: !isAuthenticated,
+//     pollingInterval: 5000,
+//   });
+
+//   useEffect(() => {
+//     if (isAuthenticated && user && user._id) {
+//       console.log('User in Redux:', user);
+//       socketRef.current = io('http://localhost:5000', {
+//         withCredentials: true,
+//         extraHeaders: { 'Content-Type': 'application/json' },
+//         reconnectionAttempts: 5,
+//         reconnectionDelay: 1000,
+//       });
+
+//       const socket = socketRef.current;
+
+//       socket.on('connect', () => {
+//         console.log('WebSocket connected:', socket.id);
+//         socket.emit('register', user._id);
+//         setOnlineStatus({ isOnline: true })
+//           .unwrap()
+//           .then(() => console.log('Set online status success'))
+//           .catch((err) => console.error('Set online failed:', err));
+//       });
+
+//       socket.on('call-request', (data) => {
+//         console.log('Call request received:', data);
+//         dispatch(setCallStatus({
+//           callId: data.callId,
+//           status: 'pending',
+//           caller: data.callerName,
+//           language: data.language,
+//           callerId: data.callerId,
+//         }));
+//         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
+//       });
+
+//       socket.on('call-accepted', (data) => {
+//         console.log('Call accepted:', data);
+//         const updatedCallStatus = {
+//           callId: data.callId,
+//           status: 'active',
+//           receiver: data.receiverName,
+//           receiverId: data.receiverId,
+//           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//           callerId: user._id === data.receiverId ? data.callerId : user._id,
+//         };
+//         dispatch(setCallStatus(updatedCallStatus));
+//         if (!isWebRTCStarting.current && user._id === updatedCallStatus.callerId) {
+//           console.log('Starting WebRTC after call accepted, isCaller:', true);
+//           startWebRTC(socket, true, data.receiverId, data.callId);
+//         }
+//       });
+
+//       socket.on('offer', async ({ callId, offer, from }) => {
+//         console.log('Received offer:', { callId, offer, from });
+//         console.log('Current callStatus on offer:', callStatus);
+//         if (!isWebRTCStarting.current) {
+//           console.log('Processing offer for call:', callId);
+//           await startWebRTC(socket, false, from, callId, offer);
+//         } else {
+//           console.log('Offer ignored: WebRTC already starting');
+//         }
+//       });
+
+//       socket.on('answer', ({ callId, answer }) => {
+//         console.log('Received answer:', { callId, answer });
+//         if (peerConnection.current) {
+//           peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
+//             .then(() => console.log('Answer set successfully'))
+//             .catch((err) => console.error('Set answer failed:', err));
+//         } else {
+//           console.error('No peerConnection available to set answer');
+//         }
+//       });
+
+//       socket.on('ice-candidate', ({ callId, candidate }) => {
+//         console.log('Received ICE candidate:', { callId, candidate });
+//         if (peerConnection.current) {
+//           peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate))
+//             .catch((err) => console.error('ICE candidate error:', err));
+//         }
+//       });
+
+//       socket.on('call-rejected', (data) => {
+//         console.log('Call rejected:', data);
+//         if (callStatus?.callerId === user?._id) {
+//           toast.warn(`Your call was rejected by ${data.receiverName}`);
+//           dispatch(clearCallStatus());
+//         }
+//       });
+
+//       socket.on('call-ended', (data) => {
+//         console.log('Call ended:', data);
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//         toast.info(`Call ended with status: ${data.status}`);
+//       });
+
+//       return () => {
+//         socket.disconnect();
+//         cleanupWebRTC();
+//       };
+//     }
+//   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
+
+//   useEffect(() => {
+//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
+//     if (currentCallData?.call) {
+//       const newCallStatus = {
+//         callId: currentCallData.call._id,
+//         status: currentCallData.call.status,
+//         language: currentCallData.call.language,
+//         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+//         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+//         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+//         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+//         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+//           id: r._id.toString(),
+//           name: r.name || 'Unknown',
+//         })) || callStatus?.receivers || [],
+//         extended: currentCallData.call.extended || callStatus?.extended || false,
+//       };
+//       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
+//         console.log('Restoring call status:', newCallStatus);
+//         dispatch(setCallStatus(newCallStatus));
+//         prevCallStatusRef.current = newCallStatus;
+//       }
+//     } else if (!callLoading && !callError && callStatus) {
+//       console.log('No active call, clearing status');
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       prevCallStatusRef.current = null;
+//     }
+//   }, [currentCallData, callLoading, callError, dispatch, user]);
+
+//   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+//     console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+//     console.log('Current callStatus:', callStatus);
+//     if (isWebRTCStarting.current) {
+//       console.log('WebRTC already starting, skipping');
+//       return;
+//     }
+//     isWebRTCStarting.current = true;
+
+//     if (!socketInstance.connected) {
+//       console.log('Socket not connected, attempting to reconnect');
+//       socketInstance.connect();
+//     } else {
+//       console.log('Socket already connected');
+//     }
+
+//     peerConnection.current = new RTCPeerConnection({
+//       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+//     });
+
+//     peerConnection.current.onicecandidate = (event) => {
+//       if (event.candidate) {
+//         console.log('Sending ICE candidate to:', remoteUserId);
+//         socketInstance.emit('ice-candidate', {
+//           callId,
+//           candidate: event.candidate,
+//           to: remoteUserId,
+//           from: user._id,
+//         });
+//       }
+//     };
+
+//     peerConnection.current.ontrack = (event) => {
+//       console.log('Remote track received:', event.streams[0]);
+//       setRemoteStream(event.streams[0]);
+//     };
+
+//     peerConnection.current.onconnectionstatechange = () => {
+//       console.log('Connection state:', peerConnection.current.connectionState);
+//       if (peerConnection.current.connectionState === 'connected') {
+//         toast.success('Audio call connected!');
+//       } else if (peerConnection.current.connectionState === 'failed') {
+//         toast.error('Audio call failed');
+//         cleanupWebRTC();
+//       }
+//     };
+
+//     try {
+//       if (!localStream) {
+//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         console.log('Local stream obtained:', stream.getTracks());
+//         stream.getTracks().forEach((track) => {
+//           console.log('Track details:', track);
+//           console.log('Adding track:', track);
+//           peerConnection.current.addTrack(track, stream);
+//         });
+//         setLocalStream(stream);
+//       } else {
+//         localStream.getTracks().forEach((track) => {
+//           console.log('Adding existing track:', track);
+//           peerConnection.current.addTrack(track, localStream);
+//         });
+//       }
+
+//       if (isCaller) {
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         console.log('Sending offer to:', remoteUserId);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+//       } else if (offer) {
+//         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//         const answer = await peerConnection.current.createAnswer();
+//         await peerConnection.current.setLocalDescription(answer);
+//         console.log('Sending answer to:', remoteUserId);
+//         socketInstance.emit('answer', { callId, answer, to: remoteUserId, from: user._id }); // Added 'from'
+//       }
+//     } catch (error) {
+//       console.error('WebRTC error:', error);
+//       toast.error('Failed to start audio: ' + error.message);
+//       cleanupWebRTC();
+//     } finally {
+//       isWebRTCStarting.current = false;
+//     }
+//   };
+
+//   const cleanupWebRTC = () => {
+//     console.log('Cleaning up WebRTC');
+//     if (peerConnection.current) {
+//       peerConnection.current.close();
+//       peerConnection.current = null;
+//     }
+//     if (localStream) {
+//       localStream.getTracks().forEach((track) => track.stop());
+//       setLocalStream(null);
+//     }
+//     setRemoteStream(null);
+//     isWebRTCStarting.current = false;
+//   };
+
+//   const handleInitiateCall = async () => {
+//     if (!language) {
+//       toast.error('Please enter a language');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to initiate a call');
+//       return;
+//     }
+//     console.log('Initiating call with language:', language);
+//     try {
+//       const response = await initiateCall(language).unwrap();
+//       console.log('Initiated call:', response);
+//       dispatch(setCallStatus({
+//         callId: response.callId,
+//         status: 'pending',
+//         receivers: response.potentialReceivers,
+//         language,
+//         callerId: user?._id,
+//         caller: user?.name,
+//       }));
+//       toast.success('Call initiated, waiting for a receiver...');
+//     } catch (error) {
+//       console.error('Initiate call failed:', error);
+//       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleAcceptCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to accept');
+//       return;
+//     }
+//     console.log('Accepting call:', callStatus.callId);
+//     try {
+//       await axios.post(
+//         'http://localhost:5000/api/calls/accept',
+//         { callId: callStatus.callId },
+//         { withCredentials: true }
+//       );
+//       console.log('Call accepted by:', user.name);
+//       const updatedCallStatus = {
+//         ...callStatus,
+//         status: 'active',
+//         receiver: user.name,
+//         receiverId: user._id,
+//       };
+//       dispatch(setCallStatus(updatedCallStatus));
+//       toast.success('Call accepted! Waiting for caller audio...');
+//     } catch (error) {
+//       console.error('Accept call error:', error);
+//       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//     }
+//   };
+
+//   const handleRejectCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to reject');
+//       return;
+//     }
+//     console.log('Rejecting call:', callStatus.callId);
+//     try {
+//       await rejectCall(callStatus.callId).unwrap();
+//       console.log('Call rejected by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call rejected');
+//     } catch (error) {
+//       console.error('Reject call failed:', error);
+//       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleEndCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to end');
+//       return;
+//     }
+//     console.log('Ending call:', callStatus.callId);
+//     try {
+//       await endCall(callStatus.callId).unwrap();
+//       console.log('Call ended by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.success('Call ended');
+//     } catch (error) {
+//       console.error('End call failed:', error);
+//       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleExtendCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to extend');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to extend a call');
+//       return;
+//     }
+//     console.log('Extending call:', callStatus.callId);
+//     try {
+//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
+//       toast.info('Extension request sent, awaiting approval...');
+//     } catch (error) {
+//       console.error('Extend call failed:', error);
+//       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleApproveExtend = async (approve) => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to approve extension for');
+//       return;
+//     }
+//     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
+//     try {
+//       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+//       setExtendRequest(null);
+//       if (approve) {
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('You approved the call extension!');
+//       } else {
+//         toast.info('You denied the call extension.');
+//       }
+//     } catch (error) {
+//       console.error('Approve extend call failed:', error);
+//       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+//       setExtendRequest(null);
+//     }
+//   };
+
+//   const handleCancelCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to cancel');
+//       return;
+//     }
+//     console.log('Cancelling call:', callStatus.callId);
+//     try {
+//       await cancelCall(callStatus.callId).unwrap();
+//       console.log('Call cancelled by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call cancelled');
+//     } catch (error) {
+//       console.error('Cancel call failed:', error);
+//       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   if (isAuthenticated && callLoading && !callStatus) {
+//     return <div>Loading call status...</div>;
+//   }
+
+//   return (
+//     <div className="container mt-5 text-center">
+//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
+//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
+
+//       {!isAuthenticated ? (
+//         <div className="alert alert-info">
+//           Please <Link to="/login">login</Link> to start exchanging languages!
+//         </div>
+//       ) : (
+//         <div>
+//           {!callStatus ? (
+//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Start a Language Call</h5>
+//                 <div className="mb-3">
+//                   <input
+//                     type="text"
+//                     className="form-control"
+//                     placeholder="Enter language to learn (e.g., Spanish)"
+//                     value={language}
+//                     onChange={(e) => setLanguage(e.target.value)}
+//                   />
+//                 </div>
+//                 <button
+//                   className="btn btn-primary w-100"
+//                   onClick={handleInitiateCall}
+//                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
+//                 >
+//                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+//                 </button>
+//               </div>
+//             </div>
+//           ) : (
+//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Call Status</h5>
+//                 {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+//                   <>
+//                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
+//                     {callStatus.receivers && (
+//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}</p>
+//                     )}
+//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
+//                       Cancel Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
+//                   <>
+//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
+//                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
+//                       Accept Call
+//                     </button>
+//                     <button className="btn btn-danger w-100" onClick={handleRejectCall}>
+//                       Reject Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'active' ? (
+//                   <>
+//                     <p>
+//                       Active call with {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+//                     </p>
+//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+//                     <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+//                     <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
+//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
+//                       End Call
+//                     </button>
+//                     <button
+//                       className="btn btn-warning w-100 mb-2"
+//                       onClick={handleExtendCall}
+//                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+//                     >
+//                       {user?.powerTokens < 1 ? 'No Power Tokens' : extendRequest ? 'Awaiting Approval' : 'Extend Call'}
+//                     </button>
+//                     {extendRequest && extendRequest.callId === callStatus.callId && (
+//                       <div>
+//                         <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+//                         <button
+//                           className="btn btn-success w-45 mr-2"
+//                           onClick={() => handleApproveExtend(true)}
+//                         >
+//                           Yes
+//                         </button>
+//                         <button
+//                           className="btn btn-danger w-45"
+//                           onClick={() => handleApproveExtend(false)}
+//                         >
+//                           No
+//                         </button>
+//                       </div>
+//                     )}
+//                   </>
+//                 ) : (
+//                   <p>Call {callStatus.status}!</p>
+//                 )}
+//               </div>
+//             </div>
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default Home;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import React, { useState, useEffect, useRef } from 'react';
+// import { useSelector, useDispatch } from 'react-redux';
+// import { Link } from 'react-router-dom';
+// import {
+//   useInitiateCallMutation,
+//   useAcceptCallMutation,
+//   useRejectCallMutation,
+//   useEndCallMutation,
+//   useExtendCallMutation,
+//   useCancelCallMutation,
+//   useSetOnlineStatusMutation,
+//   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
+// } from '../redux/services/callApi';
+// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
+// import { io } from 'socket.io-client';
+// import { toast } from 'react-toastify';
+// import axios from 'axios';
+
+// const Home = () => {
+//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
+//   const dispatch = useDispatch();
+//   const [language, setLanguage] = useState('');
+//   const [extendRequest, setExtendRequest] = useState(null);
+//   const [localStream, setLocalStream] = useState(null);
+//   const [remoteStream, setRemoteStream] = useState(null);
+//   const [isMuted, setIsMuted] = useState(false); // New: Mic toggle state
+//   const [callDuration, setCallDuration] = useState(0); // New: Call timer
+//   const peerConnection = useRef(null);
+//   const isWebRTCStarting = useRef(false);
+//   const socketRef = useRef(null);
+//   const prevCallStatusRef = useRef(null);
+//   const iceCandidatesQueue = useRef([]); // New: ICE candidate buffer
+
+//   const [initiateCall] = useInitiateCallMutation();
+//   const [acceptCall] = useAcceptCallMutation();
+//   const [rejectCall] = useRejectCallMutation();
+//   const [endCall] = useEndCallMutation();
+//   const [extendCall] = useExtendCallMutation();
+//   const [cancelCall] = useCancelCallMutation();
+//   const [setOnlineStatus] = useSetOnlineStatusMutation();
+//   const [approveExtendCall] = useApproveExtendCallMutation();
+//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
+//     skip: !isAuthenticated,
+//     pollingInterval: 5000,
+//   });
+
+//   useEffect(() => {
+//     if (isAuthenticated && user && user._id) {
+//       console.log('User in Redux:', user);
+//       socketRef.current = io('http://localhost:5000', {
+//         withCredentials: true,
+//         extraHeaders: { 'Content-Type': 'application/json' },
+//         reconnectionAttempts: 5,
+//         reconnectionDelay: 1000,
+//       });
+
+//       const socket = socketRef.current;
+
+//       socket.on('connect', () => {
+//         console.log('WebSocket connected:', socket.id);
+//         socket.emit('register', user._id);
+//         setOnlineStatus({ isOnline: true })
+//           .unwrap()
+//           .then(() => console.log('Set online status success'))
+//           .catch((err) => console.error('Set online failed:', err));
+//       });
+
+//       socket.on('call-request', (data) => {
+//         console.log('Call request received:', data);
+//         dispatch(setCallStatus({
+//           callId: data.callId,
+//           status: 'pending',
+//           caller: data.callerName,
+//           language: data.language,
+//           callerId: data.callerId,
+//         }));
+//         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
+//       });
+
+//       socket.on('call-accepted', (data) => {
+//         console.log('Call accepted:', data);
+//         const updatedCallStatus = {
+//           callId: data.callId,
+//           status: 'active',
+//           receiver: data.receiverName,
+//           receiverId: data.receiverId,
+//           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//           callerId: user._id === data.receiverId ? data.callerId : user._id,
+//         };
+//         dispatch(setCallStatus(updatedCallStatus));
+//         if (!isWebRTCStarting.current && user._id === updatedCallStatus.callerId) {
+//           console.log('Starting WebRTC after call accepted, isCaller:', true);
+//           startWebRTC(socket, true, data.receiverId, data.callId);
+//         }
+//       });
+
+//       socket.on('offer', async ({ callId, offer, from }) => {
+//         console.log('Received offer:', { callId, offer, from });
+//         console.log('Current callStatus on offer:', callStatus);
+//         if (!isWebRTCStarting.current) {
+//           console.log('Processing offer for call:', callId);
+//           await startWebRTC(socket, false, from, callId, offer);
+//         } else {
+//           console.log('Offer ignored: WebRTC already starting');
+//         }
+//       });
+
+//       socket.on('answer', ({ callId, answer }) => {
+//         console.log('Received answer:', { callId, answer });
+//         if (peerConnection.current) {
+//           peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
+//             .then(() => console.log('Answer set successfully'))
+//             .catch((err) => console.error('Set answer failed:', err));
+//         } else {
+//           console.error('No peerConnection available to set answer');
+//         }
+//       });
+
+//       socket.on('ice-candidate', ({ callId, candidate }) => {
+//         console.log('Received ICE candidate:', { callId, candidate });
+//         if (peerConnection.current && peerConnection.current.remoteDescription) {
+//           peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate))
+//             .catch((err) => console.error('ICE candidate error:', err));
+//         } else {
+//           console.log('Buffering ICE candidate:', candidate);
+//           iceCandidatesQueue.current.push(candidate);
+//         }
+//       });
+
+//       socket.on('call-rejected', (data) => {
+//         console.log('Call rejected:', data);
+//         if (callStatus?.callerId === user?._id) {
+//           toast.warn(`Your call was rejected by ${data.receiverName}`);
+//           dispatch(clearCallStatus());
+//         }
+//       });
+
+//       socket.on('call-ended', (data) => {
+//         console.log('Call ended:', data);
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//         toast.info(`Call ended with status: ${data.status}`);
+//       });
+
+//       return () => {
+//         socket.disconnect();
+//         cleanupWebRTC();
+//       };
+//     }
+//   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
+
+//   useEffect(() => {
+//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
+//     if (currentCallData?.call) {
+//       const newCallStatus = {
+//         callId: currentCallData.call._id,
+//         status: currentCallData.call.status,
+//         language: currentCallData.call.language,
+//         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+//         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+//         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+//         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+//         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+//           id: r._id.toString(),
+//           name: r.name || 'Unknown',
+//         })) || callStatus?.receivers || [],
+//         extended: currentCallData.call.extended || callStatus?.extended || false,
+//       };
+//       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
+//         console.log('Restoring call status:', newCallStatus);
+//         dispatch(setCallStatus(newCallStatus));
+//         prevCallStatusRef.current = newCallStatus;
+//       }
+//     } else if (!callLoading && !callError && callStatus) {
+//       console.log('No active call, clearing status');
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       prevCallStatusRef.current = null;
+//     }
+//   }, [currentCallData, callLoading, callError, dispatch, user]);
+
+//   // New: Call duration timer
+//   useEffect(() => {
+//     let interval;
+//     if (callStatus?.status === 'active') {
+//       interval = setInterval(() => setCallDuration((prev) => prev + 1), 1000);
+//     }
+//     return () => clearInterval(interval);
+//   }, [callStatus]);
+
+//   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+//     console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+//     console.log('Current callStatus:', callStatus);
+//     if (isWebRTCStarting.current) {
+//       console.log('WebRTC already starting, skipping');
+//       return;
+//     }
+//     isWebRTCStarting.current = true;
+
+//     if (!socketInstance.connected) {
+//       console.log('Socket not connected, attempting to reconnect');
+//       socketInstance.connect();
+//     } else {
+//       console.log('Socket already connected');
+//     }
+
+//     peerConnection.current = new RTCPeerConnection({
+//       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+//     });
+
+//     peerConnection.current.onicecandidate = (event) => {
+//       if (event.candidate) {
+//         console.log('Sending ICE candidate to:', remoteUserId);
+//         socketInstance.emit('ice-candidate', {
+//           callId,
+//           candidate: event.candidate,
+//           to: remoteUserId,
+//           from: user._id,
+//         });
+//       }
+//     };
+
+//     peerConnection.current.ontrack = (event) => {
+//       console.log('Remote track received:', event.streams[0]);
+//       setRemoteStream(event.streams[0]);
+//     };
+
+//     peerConnection.current.onconnectionstatechange = () => {
+//       console.log('Connection state:', peerConnection.current.connectionState);
+//       if (peerConnection.current.connectionState === 'connected') {
+//         toast.success('Audio call connected!');
+//       } else if (peerConnection.current.connectionState === 'failed') {
+//         toast.error('Audio call failed');
+//         cleanupWebRTC();
+//       }
+//     };
+
+//     try {
+//       if (!localStream) {
+//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         console.log('Local stream obtained:', stream.getTracks());
+//         stream.getTracks().forEach((track) => {
+//           console.log('Track details:', track);
+//           console.log('Adding track:', track);
+//           peerConnection.current.addTrack(track, stream);
+//         });
+//         setLocalStream(stream);
+//       } else {
+//         localStream.getTracks().forEach((track) => {
+//           console.log('Adding existing track:', track);
+//           peerConnection.current.addTrack(track, localStream);
+//         });
+//       }
+
+//       if (isCaller) {
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         console.log('Sending offer to:', remoteUserId);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+//       } else if (offer) {
+//         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//         // Apply buffered ICE candidates
+//         while (iceCandidatesQueue.current.length) {
+//           const candidate = iceCandidatesQueue.current.shift();
+//           console.log('Applying buffered ICE candidate:', candidate);
+//           await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+//         }
+//         const answer = await peerConnection.current.createAnswer();
+//         await peerConnection.current.setLocalDescription(answer);
+//         console.log('Sending answer to:', remoteUserId);
+//         socketInstance.emit('answer', { callId, answer, to: remoteUserId, from: user._id });
+//       }
+//     } catch (error) {
+//       console.error('WebRTC error:', error);
+//       toast.error('Failed to start audio: ' + error.message);
+//       cleanupWebRTC();
+//     } finally {
+//       isWebRTCStarting.current = false;
+//     }
+//   };
+
+//   const cleanupWebRTC = () => {
+//     console.log('Cleaning up WebRTC');
+//     if (peerConnection.current) {
+//       peerConnection.current.close();
+//       peerConnection.current = null;
+//     }
+//     if (localStream) {
+//       localStream.getTracks().forEach((track) => track.stop());
+//       setLocalStream(null);
+//     }
+//     setRemoteStream(null);
+//     setCallDuration(0); // Reset timer
+//     setIsMuted(false); // Reset mute state
+//     isWebRTCStarting.current = false;
+//     iceCandidatesQueue.current = []; // Clear ICE queue
+//   };
+
+//   // New: Toggle microphone mute
+//   const toggleMute = () => {
+//     if (localStream) {
+//       localStream.getAudioTracks().forEach((track) => (track.enabled = !track.enabled));
+//       setIsMuted(!isMuted);
+//       toast.info(isMuted ? 'Microphone unmuted' : 'Microphone muted');
+//     }
+//   };
+
+//   const handleInitiateCall = async () => {
+//     if (!language) {
+//       toast.error('Please enter a language');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to initiate a call');
+//       return;
+//     }
+//     console.log('Initiating call with language:', language);
+//     try {
+//       const response = await initiateCall(language).unwrap();
+//       console.log('Initiated call:', response);
+//       dispatch(setCallStatus({
+//         callId: response.callId,
+//         status: 'pending',
+//         receivers: response.potentialReceivers,
+//         language,
+//         callerId: user?._id,
+//         caller: user?.name,
+//       }));
+//       toast.success('Call initiated, waiting for a receiver...');
+//     } catch (error) {
+//       console.error('Initiate call failed:', error);
+//       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleAcceptCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to accept');
+//       return;
+//     }
+//     console.log('Accepting call:', callStatus.callId);
+//     try {
+//       await axios.post(
+//         'http://localhost:5000/api/calls/accept',
+//         { callId: callStatus.callId },
+//         { withCredentials: true }
+//       );
+//       console.log('Call accepted by:', user.name);
+//       const updatedCallStatus = {
+//         ...callStatus,
+//         status: 'active',
+//         receiver: user.name,
+//         receiverId: user._id,
+//       };
+//       dispatch(setCallStatus(updatedCallStatus));
+//       toast.success('Call accepted! Waiting for caller audio...');
+//     } catch (error) {
+//       console.error('Accept call error:', error);
+//       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//     }
+//   };
+
+//   const handleRejectCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to reject');
+//       return;
+//     }
+//     console.log('Rejecting call:', callStatus.callId);
+//     try {
+//       await rejectCall(callStatus.callId).unwrap();
+//       console.log('Call rejected by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call rejected');
+//     } catch (error) {
+//       console.error('Reject call failed:', error);
+//       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleEndCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to end');
+//       return;
+//     }
+//     console.log('Ending call:', callStatus.callId);
+//     try {
+//       await endCall(callStatus.callId).unwrap();
+//       console.log('Call ended by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.success('Call ended');
+//     } catch (error) {
+//       console.error('End call failed:', error);
+//       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleExtendCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to extend');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to extend a call');
+//       return;
+//     }
+//     console.log('Extending call:', callStatus.callId);
+//     try {
+//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
+//       toast.info('Extension request sent, awaiting approval...');
+//     } catch (error) {
+//       console.error('Extend call failed:', error);
+//       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleApproveExtend = async (approve) => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to approve extension for');
+//       return;
+//     }
+//     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
+//     try {
+//       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+//       setExtendRequest(null);
+//       if (approve) {
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('You approved the call extension!');
+//       } else {
+//         toast.info('You denied the call extension.');
+//       }
+//     } catch (error) {
+//       console.error('Approve extend call failed:', error);
+//       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+//       setExtendRequest(null);
+//     }
+//   };
+
+//   const handleCancelCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to cancel');
+//       return;
+//     }
+//     console.log('Cancelling call:', callStatus.callId);
+//     try {
+//       await cancelCall(callStatus.callId).unwrap();
+//       console.log('Call cancelled by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call cancelled');
+//     } catch (error) {
+//       console.error('Cancel call failed:', error);
+//       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   if (isAuthenticated && callLoading && !callStatus) {
+//     return <div>Loading call status...</div>;
+//   }
+
+//   return (
+//     <div className="container mt-5 text-center">
+//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
+//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
+
+//       {!isAuthenticated ? (
+//         <div className="alert alert-info">
+//           Please <Link to="/login">login</Link> to start exchanging languages!
+//         </div>
+//       ) : (
+//         <div>
+//           {!callStatus ? (
+//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Start a Language Call</h5>
+//                 <div className="mb-3">
+//                   <input
+//                     type="text"
+//                     className="form-control"
+//                     placeholder="Enter language to learn (e.g., Spanish)"
+//                     value={language}
+//                     onChange={(e) => setLanguage(e.target.value)}
+//                   />
+//                 </div>
+//                 <button
+//                   className="btn btn-primary w-100"
+//                   onClick={handleInitiateCall}
+//                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
+//                 >
+//                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+//                 </button>
+//               </div>
+//             </div>
+//           ) : (
+//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Call Status</h5>
+//                 {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+//                   <>
+//                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
+//                     {callStatus.receivers && (
+//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}</p>
+//                     )}
+//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
+//                       Cancel Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
+//                   <>
+//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
+//                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
+//                       Accept Call
+//                     </button>
+//                     <button className="btn btn-danger w-100" onClick={handleRejectCall}>
+//                       Reject Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'active' ? (
+//                   <>
+//                     <p>
+//                       Active call with {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+//                     </p>
+//                     <p>Call Duration: {Math.floor(callDuration / 60)}:{(callDuration % 60).toString().padStart(2, '0')}</p>
+//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+//                     <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+//                     <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
+//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
+//                       End Call
+//                     </button>
+//                     <button className="btn btn-secondary w-100 mb-2" onClick={toggleMute}>
+//                       {isMuted ? 'Unmute' : 'Mute'}
+//                     </button>
+//                     <button
+//                       className="btn btn-warning w-100 mb-2"
+//                       onClick={handleExtendCall}
+//                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+//                     >
+//                       {user?.powerTokens < 1 ? 'No Power Tokens' : extendRequest ? 'Awaiting Approval' : 'Extend Call'}
+//                     </button>
+//                     {extendRequest && extendRequest.callId === callStatus.callId && (
+//                       <div>
+//                         <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+//                         <button
+//                           className="btn btn-success w-45 mr-2"
+//                           onClick={() => handleApproveExtend(true)}
+//                         >
+//                           Yes
+//                         </button>
+//                         <button
+//                           className="btn btn-danger w-45"
+//                           onClick={() => handleApproveExtend(false)}
+//                         >
+//                           No
+//                         </button>
+//                       </div>
+//                     )}
+//                   </>
+//                 ) : (
+//                   <p>Call {callStatus.status}!</p>
+//                 )}
+//               </div>
+//             </div>
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default Home;
+
+
+
+
+
+
+
+
+// import React, { useState, useEffect, useRef } from 'react';
+// import { useSelector, useDispatch } from 'react-redux';
+// import { Link } from 'react-router-dom';
+// import {
+//   useInitiateCallMutation,
+//   useAcceptCallMutation,
+//   useRejectCallMutation,
+//   useEndCallMutation,
+//   useExtendCallMutation,
+//   useCancelCallMutation,
+//   useSetOnlineStatusMutation,
+//   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
+// } from '../redux/services/callApi';
+// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
+// import { io } from 'socket.io-client';
+// import { toast } from 'react-toastify';
+// import axios from 'axios';
+
+// const Home = () => {
+//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
+//   const dispatch = useDispatch();
+//   const [language, setLanguage] = useState('');
+//   const [extendRequest, setExtendRequest] = useState(null);
+//   const [localStream, setLocalStream] = useState(null);
+//   const [remoteStream, setRemoteStream] = useState(null);
+//   const peerConnection = useRef(null);
+//   const isWebRTCStarting = useRef(false);
+//   const socketRef = useRef(null);
+//   const prevCallStatusRef = useRef(null);
+//   const iceCandidatesQueue = useRef([]);
+
+//   const [initiateCall] = useInitiateCallMutation();
+//   const [acceptCall] = useAcceptCallMutation();
+//   const [rejectCall] = useRejectCallMutation();
+//   const [endCall] = useEndCallMutation();
+//   const [extendCall] = useExtendCallMutation();
+//   const [cancelCall] = useCancelCallMutation();
+//   const [setOnlineStatus] = useSetOnlineStatusMutation();
+//   const [approveExtendCall] = useApproveExtendCallMutation();
+//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
+//     skip: !isAuthenticated,
+//     pollingInterval: 5000,
+//   });
+
+//   useEffect(() => {
+//     if (isAuthenticated && user && user._id) {
+//       console.log('User in Redux:', user);
+//       socketRef.current = io('http://localhost:5000', {
+//         withCredentials: true,
+//         extraHeaders: { 'Content-Type': 'application/json' },
+//         reconnectionAttempts: 5,
+//         reconnectionDelay: 1000,
+//       });
+
+//       const socket = socketRef.current;
+
+//       socket.on('connect', () => {
+//         console.log('WebSocket connected:', socket.id);
+//         socket.emit('register', user._id);
+//         setOnlineStatus({ isOnline: true })
+//           .unwrap()
+//           .then(() => console.log('Set online status success'))
+//           .catch((err) => console.error('Set online failed:', err));
+//       });
+
+//       socket.on('call-request', (data) => {
+//         console.log('Call request received:', data);
+//         dispatch(setCallStatus({
+//           callId: data.callId,
+//           status: 'pending',
+//           caller: data.callerName,
+//           language: data.language,
+//           callerId: data.callerId,
+//           isMuted: false, // Initialize mute state
+//         }));
+//         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
+//       });
+
+//       socket.on('call-accepted', (data) => {
+//         console.log('Call accepted:', data);
+//         const updatedCallStatus = {
+//           callId: data.callId,
+//           status: 'active',
+//           receiver: data.receiverName,
+//           receiverId: data.receiverId,
+//           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//           callerId: user._id === data.receiverId ? data.callerId : user._id,
+//           startTime: callStatus?.startTime || new Date().toISOString(),
+//           isMuted: callStatus?.isMuted || false, // Preserve mute state
+//         };
+//         dispatch(setCallStatus(updatedCallStatus));
+//         if (!isWebRTCStarting.current && user._id === updatedCallStatus.callerId) {
+//           console.log('Starting WebRTC after call accepted, isCaller:', true);
+//           startWebRTC(socket, true, data.receiverId, data.callId);
+//         }
+//       });
+
+//       socket.on('offer', async ({ callId, offer, from }) => {
+//         console.log('Received offer:', { callId, offer, from });
+//         if (!isWebRTCStarting.current) {
+//           await startWebRTC(socket, false, from, callId, offer);
+//         }
+//       });
+
+//       socket.on('answer', ({ callId, answer }) => {
+//         console.log('Received answer:', { callId, answer });
+//         if (peerConnection.current) {
+//           peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
+//             .then(() => console.log('Answer set successfully'))
+//             .catch((err) => console.error('Set answer failed:', err));
+//         }
+//       });
+
+//       socket.on('ice-candidate', ({ callId, candidate }) => {
+//         console.log('Received ICE candidate:', { callId, candidate });
+//         if (peerConnection.current && peerConnection.current.remoteDescription) {
+//           peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate))
+//             .catch((err) => console.error('ICE candidate error:', err));
+//         } else {
+//           console.log('Buffering ICE candidate:', candidate);
+//           iceCandidatesQueue.current.push(candidate);
+//         }
+//       });
+
+//       socket.on('call-rejected', (data) => {
+//         console.log('Call rejected:', data);
+//         if (callStatus?.callerId === user?._id) {
+//           toast.warn(`Your call was rejected by ${data.receiverName}`);
+//           dispatch(clearCallStatus());
+//         }
+//       });
+
+//       socket.on('call-ended', (data) => {
+//         console.log('Call ended:', data);
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//         toast.info(`Call ended with status: ${data.status}`);
+//       });
+
+//       socket.on('call-extend-request', (data) => {
+//         console.log('Extend request received:', data);
+//         setExtendRequest(data);
+//         toast.info(`${data.requesterName} wants to extend the call. Approve?`);
+//       });
+
+//       socket.on('call-extended', (data) => {
+//         console.log('Call extended:', data);
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('Call has been extended!');
+//       });
+
+//       socket.on('extend-denied', (data) => {
+//         console.log('Extension denied:', data);
+//         setExtendRequest(null);
+//         toast.info('Call extension was denied.');
+//       });
+
+//       socket.on('call-refreshing', (data) => {
+//         console.log('Other user is refreshing:', data);
+//         toast.info('Your call partner is reconnecting, please wait...');
+//       });
+//       socket.on('call-disconnected', (data) => {
+//         console.log('Call disconnected:', data);
+//         toast.warn('Your call partner disconnected unexpectedly');
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//       });
+//       return () => {
+//         socket.disconnect();
+//         cleanupWebRTC();
+//       };
+//     }
+//   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
+
+//   useEffect(() => {
+//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
+//     if (currentCallData?.call) {
+//       const newCallStatus = {
+//         callId: currentCallData.call._id,
+//         status: currentCallData.call.status,
+//         language: currentCallData.call.language,
+//         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+//         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+//         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+//         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+//         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+//           id: r._id.toString(),
+//           name: r.name || 'Unknown',
+//         })) || callStatus?.receivers || [],
+//         extended: currentCallData.call.extended || callStatus?.extended || false,
+//         startTime: currentCallData.call.startTime || callStatus?.startTime,
+//         isMuted: callStatus?.isMuted || false, // Preserve mute state from Redux
+//       };
+//       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
+//         console.log('Restoring call status:', newCallStatus);
+//         dispatch(setCallStatus(newCallStatus));
+//         prevCallStatusRef.current = newCallStatus;
+//       }
+//       if (currentCallData.call.status === 'active' && !peerConnection.current) {
+//         console.log('Restoring WebRTC for active call:', currentCallData.call._id);
+//         const isCaller = user._id === currentCallData.call.caller._id;
+//         const remoteUserId = isCaller ? currentCallData.call.receiver._id : currentCallData.call.caller._id;
+//         startWebRTC(socketRef.current, isCaller, remoteUserId, currentCallData.call._id);
+//       }
+//     } else if (!callLoading && !callError && callStatus) {
+//       console.log('No active call, clearing status');
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       prevCallStatusRef.current = null;
+//     }
+//   }, [currentCallData, callLoading, callError, dispatch, user]);
+
+//   useEffect(() => {
+//     const handleBeforeUnload = () => {
+//       if (callStatus?.status === 'active') {
+//         socketRef.current.emit('call-refresh', { callId: callStatus.callId, userId: user._id });
+//       }
+//     };
+//     window.addEventListener('beforeunload', handleBeforeUnload);
+//     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+//   }, [callStatus, user]);
+
+//   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+//     console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+//     if (isWebRTCStarting.current) {
+//       console.log('WebRTC already starting, skipping');
+//       return;
+//     }
+//     isWebRTCStarting.current = true;
+
+//     if (!socketInstance.connected) {
+//       console.log('Socket not connected, attempting to reconnect');
+//       socketInstance.connect();
+//     } else {
+//       console.log('Socket already connected');
+//     }
+
+//     peerConnection.current = new RTCPeerConnection({
+//       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+//     });
+
+//     peerConnection.current.onicecandidate = (event) => {
+//       if (event.candidate) {
+//         console.log('Sending ICE candidate to:', remoteUserId);
+//         socketInstance.emit('ice-candidate', {
+//           callId,
+//           candidate: event.candidate,
+//           to: remoteUserId,
+//           from: user._id,
+//         });
+//       }
+//     };
+
+//     peerConnection.current.ontrack = (event) => {
+//       console.log('Remote track received:', event.streams[0]);
+//       event.streams[0].getTracks().forEach(track => console.log('Remote track state:', track.readyState));
+//       setRemoteStream(event.streams[0]);
+//     };
+
+//     peerConnection.current.onconnectionstatechange = () => {
+//       console.log('Connection state:', peerConnection.current.connectionState);
+//       if (peerConnection.current.connectionState === 'connected') {
+//         toast.success('Audio call connected!');
+//       } else if (peerConnection.current.connectionState === 'failed') {
+//         toast.error('Audio call failed');
+//         cleanupWebRTC();
+//       }
+//     };
+
+//     try {
+//       if (!localStream) {
+//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         console.log('Local stream obtained:', stream.getTracks());
+//         stream.getAudioTracks().forEach((track) => {
+//           track.enabled = !callStatus?.isMuted; // Set initial state from Redux
+//           console.log('Adding track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, stream);
+//         });
+//         setLocalStream(stream);
+//       } else {
+//         localStream.getTracks().forEach((track) => {
+//           track.enabled = !callStatus?.isMuted; // Sync existing stream with Redux state
+//           console.log('Adding existing track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, localStream);
+//         });
+//       }
+
+//       if (isCaller) {
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         console.log('Sending offer to:', remoteUserId);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+//       } else if (offer) {
+//         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//         while (iceCandidatesQueue.current.length) {
+//           const candidate = iceCandidatesQueue.current.shift();
+//           console.log('Applying buffered ICE candidate:', candidate);
+//           await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+//         }
+//         const answer = await peerConnection.current.createAnswer();
+//         await peerConnection.current.setLocalDescription(answer);
+//         console.log('Sending answer to:', remoteUserId);
+//         socketInstance.emit('answer', { callId, answer, to: remoteUserId, from: user._id });
+//       }
+//     } catch (error) {
+//       console.error('WebRTC error:', error);
+//       toast.error('Failed to start audio: ' + error.message);
+//       cleanupWebRTC();
+//     } finally {
+//       isWebRTCStarting.current = false;
+//     }
+//   };
+
+//   const cleanupWebRTC = () => {
+//     console.log('Cleaning up WebRTC');
+//     if (peerConnection.current) {
+//       peerConnection.current.close();
+//       peerConnection.current = null;
+//     }
+//     if (localStream) {
+//       localStream.getTracks().forEach((track) => track.stop());
+//       setLocalStream(null);
+//     }
+//     setRemoteStream(null);
+//     iceCandidatesQueue.current = [];
+//   };
+
+//   const toggleMute = () => {
+//     if (localStream) {
+//       const newIsMuted = !callStatus?.isMuted;
+//       localStream.getAudioTracks().forEach((track) => {
+//         track.enabled = !newIsMuted;
+//         console.log('Toggled mute, track enabled:', track.enabled);
+//       });
+//       dispatch(setCallStatus({ ...callStatus, isMuted: newIsMuted }));
+//       toast.info(newIsMuted ? 'Microphone muted' : 'Microphone unmuted');
+//     }
+//   };
+
+//   const getCallDuration = () => {
+//     if (callStatus?.status === 'active' && callStatus?.startTime) {
+//       const start = new Date(callStatus.startTime).getTime();
+//       const now = Date.now();
+//       return Math.floor((now - start) / 1000); // Seconds
+//     }
+//     return 0;
+//   };
+
+//   const handleInitiateCall = async () => {
+//     if (!language) {
+//       toast.error('Please enter a language');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to initiate a call');
+//       return;
+//     }
+//     console.log('Initiating call with language:', language);
+//     try {
+//       const response = await initiateCall(language).unwrap();
+//       console.log('Initiated call:', response);
+//       dispatch(setCallStatus({
+//         callId: response.callId,
+//         status: 'pending',
+//         receivers: response.potentialReceivers,
+//         language,
+//         callerId: user?._id,
+//         caller: user?.name,
+//         startTime: new Date().toISOString(),
+//         isMuted: false, // Initialize mute state
+//       }));
+//       toast.success('Call initiated, waiting for a receiver...');
+//     } catch (error) {
+//       console.error('Initiate call failed:', error);
+//       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleAcceptCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to accept');
+//       return;
+//     }
+//     console.log('Accepting call:', callStatus.callId);
+//     try {
+//       await axios.post(
+//         'http://localhost:5000/api/calls/accept',
+//         { callId: callStatus.callId },
+//         { withCredentials: true }
+//       );
+//       console.log('Call accepted by:', user.name);
+//       const updatedCallStatus = {
+//         ...callStatus,
+//         status: 'active',
+//         receiver: user.name,
+//         receiverId: user._id,
+//         startTime: new Date().toISOString(),
+//         isMuted: callStatus?.isMuted || false, // Preserve mute state
+//       };
+//       dispatch(setCallStatus(updatedCallStatus));
+//       toast.success('Call accepted! Waiting for caller audio...');
+//     } catch (error) {
+//       console.error('Accept call error:', error);
+//       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//     }
+//   };
+
+//   const handleRejectCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to reject');
+//       return;
+//     }
+//     console.log('Rejecting call:', callStatus.callId);
+//     try {
+//       await rejectCall(callStatus.callId).unwrap();
+//       console.log('Call rejected by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call rejected');
+//     } catch (error) {
+//       console.error('Reject call failed:', error);
+//       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleEndCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to end');
+//       return;
+//     }
+//     console.log('Ending call:', callStatus.callId);
+//     try {
+//       await endCall(callStatus.callId).unwrap();
+//       console.log('Call ended by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.success('Call ended');
+//     } catch (error) {
+//       console.error('End call failed:', error);
+//       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleExtendCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to extend');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to extend a call');
+//       return;
+//     }
+//     console.log('Extending call:', callStatus.callId);
+//     try {
+//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
+//       toast.info('Extension request sent, awaiting approval...');
+//     } catch (error) {
+//       console.error('Extend call failed:', error);
+//       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleApproveExtend = async (approve) => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to approve extension for');
+//       return;
+//     }
+//     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
+//     try {
+//       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+//       setExtendRequest(null);
+//       if (approve) {
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('You approved the call extension!');
+//       } else {
+//         toast.info('You denied the call extension.');
+//       }
+//     } catch (error) {
+//       console.error('Approve extend call failed:', error);
+//       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+//       setExtendRequest(null);
+//     }
+//   };
+
+//   const handleCancelCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to cancel');
+//       return;
+//     }
+//     console.log('Cancelling call:', callStatus.callId);
+//     try {
+//       await cancelCall(callStatus.callId).unwrap();
+//       console.log('Call cancelled by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call cancelled');
+//     } catch (error) {
+//       console.error('Cancel call failed:', error);
+//       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   if (isAuthenticated && callLoading && !callStatus) {
+//     return <div>Loading call status...</div>;
+//   }
+
+//   return (
+//     <div className="container mt-5 text-center">
+//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
+//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
+
+//       {!isAuthenticated ? (
+//         <div className="alert alert-info">
+//           Please <Link to="/login">login</Link> to start exchanging languages!
+//         </div>
+//       ) : (
+//         <div>
+//           {!callStatus ? (
+//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Start a Language Call</h5>
+//                 <div className="mb-3">
+//                   <input
+//                     type="text"
+//                     className="form-control"
+//                     placeholder="Enter language to learn (e.g., Spanish)"
+//                     value={language}
+//                     onChange={(e) => setLanguage(e.target.value)}
+//                   />
+//                 </div>
+//                 <button
+//                   className="btn btn-primary w-100"
+//                   onClick={handleInitiateCall}
+//                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
+//                 >
+//                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+//                 </button>
+//               </div>
+//             </div>
+//           ) : (
+//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Call Status</h5>
+//                 {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+//                   <>
+//                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
+//                     {callStatus.receivers && (
+//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}</p>
+//                     )}
+//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
+//                       Cancel Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
+//                   <>
+//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
+//                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
+//                       Accept Call
+//                     </button>
+//                     <button className="btn btn-danger w-100" onClick={handleRejectCall}>
+//                       Reject Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'active' ? (
+//                   <>
+//                     <p>
+//                       Active call with {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+//                     </p>
+//                     <p>Call Duration: {Math.floor(getCallDuration() / 60)}:{(getCallDuration() % 60).toString().padStart(2, '0')}</p>
+//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+//                     <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+//                     <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
+//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
+//                       End Call
+//                     </button>
+//                     <button className="btn btn-secondary w-100 mb-2" onClick={toggleMute}>
+//                       {callStatus.isMuted ? 'Unmute' : 'Mute'}
+//                     </button>
+//                     <button
+//                       className="btn btn-warning w-100 mb-2"
+//                       onClick={handleExtendCall}
+//                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+//                     >
+//                       {user?.powerTokens < 1 ? 'No Power Tokens' : extendRequest ? 'Awaiting Approval' : 'Extend Call'}
+//                     </button>
+//                     {extendRequest && extendRequest.callId === callStatus.callId && (
+//                       <div>
+//                         <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+//                         <button
+//                           className="btn btn-success w-45 mr-2"
+//                           onClick={() => handleApproveExtend(true)}
+//                         >
+//                           Yes
+//                         </button>
+//                         <button
+//                           className="btn btn-danger w-45"
+//                           onClick={() => handleApproveExtend(false)}
+//                         >
+//                           No
+//                         </button>
+//                       </div>
+//                     )}
+//                   </>
+//                 ) : (
+//                   <p>Call {callStatus.status}!</p>
+//                 )}
+//               </div>
+//             </div>
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default Home;
+
+
+// import React, { useState, useEffect, useRef } from 'react';
+// import { useSelector, useDispatch } from 'react-redux';
+// import { Link } from 'react-router-dom';
+// import {
+//   useInitiateCallMutation,
+//   useAcceptCallMutation,
+//   useRejectCallMutation,
+//   useEndCallMutation,
+//   useExtendCallMutation,
+//   useCancelCallMutation,
+//   useSetOnlineStatusMutation,
+//   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
+// } from '../redux/services/callApi';
+// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
+// import { io } from 'socket.io-client';
+// import { toast } from 'react-toastify';
+// import axios from 'axios';
+
+// const Home = () => {
+//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
+//   const dispatch = useDispatch();
+//   const [language, setLanguage] = useState('');
+//   const [extendRequest, setExtendRequest] = useState(null);
+//   const [localStream, setLocalStream] = useState(null);
+//   const [remoteStream, setRemoteStream] = useState(null);
+//   const peerConnection = useRef(null);
+//   const isWebRTCStarting = useRef(false);
+//   const socketRef = useRef(null);
+//   const prevCallStatusRef = useRef(null);
+//   const iceCandidatesQueue = useRef([]);
+
+//   const [initiateCall] = useInitiateCallMutation();
+//   const [acceptCall] = useAcceptCallMutation();
+//   const [rejectCall] = useRejectCallMutation();
+//   const [endCall] = useEndCallMutation();
+//   const [extendCall] = useExtendCallMutation();
+//   const [cancelCall] = useCancelCallMutation();
+//   const [setOnlineStatus] = useSetOnlineStatusMutation();
+//   const [approveExtendCall] = useApproveExtendCallMutation();
+//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
+//     skip: !isAuthenticated,
+//     pollingInterval: 5000,
+//   });
+
+//   // Persist isMuted in localStorage
+//   useEffect(() => {
+//     if (callStatus?.isMuted !== undefined) {
+//       localStorage.setItem(`isMuted_${callStatus.callId}`, JSON.stringify(callStatus.isMuted));
+//     }
+//   }, [callStatus?.isMuted, callStatus?.callId]);
+
+//   useEffect(() => {
+//     if (isAuthenticated && user && user._id) {
+//       console.log('User in Redux:', user);
+//       socketRef.current = io('http://localhost:5000', {
+//         withCredentials: true,
+//         extraHeaders: { 'Content-Type': 'application/json' },
+//         reconnectionAttempts: 5,
+//         reconnectionDelay: 1000,
+//       });
+
+//       const socket = socketRef.current;
+
+//       socket.on('connect', () => {
+//         console.log('WebSocket connected:', socket.id);
+//         socket.emit('register', user._id);
+//         setOnlineStatus({ isOnline: true })
+//           .unwrap()
+//           .then(() => console.log('Set online status success'))
+//           .catch((err) => console.error('Set online failed:', err));
+//       });
+
+//       socket.on('call-request', (data) => {
+//         console.log('Call request received:', data);
+//         dispatch(setCallStatus({
+//           callId: data.callId,
+//           status: 'pending',
+//           caller: data.callerName,
+//           language: data.language,
+//           callerId: data.callerId,
+//           isMuted: false,
+//         }));
+//         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
+//       });
+
+//       socket.on('call-accepted', (data) => {
+//         console.log('Call accepted:', data);
+//         const updatedCallStatus = {
+//           callId: data.callId,
+//           status: 'active',
+//           receiver: data.receiverName,
+//           receiverId: data.receiverId,
+//           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//           callerId: user._id === data.receiverId ? data.callerId : user._id,
+//           startTime: callStatus?.startTime || new Date().toISOString(),
+//           isMuted: callStatus?.isMuted || false,
+//         };
+//         dispatch(setCallStatus(updatedCallStatus));
+//         if (!isWebRTCStarting.current && user._id === updatedCallStatus.callerId) {
+//           console.log('Starting WebRTC after call accepted, isCaller:', true);
+//           startWebRTC(socket, true, data.receiverId, data.callId);
+//         }
+//       });
+
+//       socket.on('offer', async ({ callId, offer, from }) => {
+//         console.log('Received offer:', { callId, offer, from });
+//         if (!isWebRTCStarting.current) {
+//           await startWebRTC(socket, false, from, callId, offer);
+//         }
+//       });
+
+//       socket.on('answer', ({ callId, answer }) => {
+//         console.log('Received answer:', { callId, answer });
+//         if (peerConnection.current) {
+//           peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
+//             .then(() => console.log('Answer set successfully'))
+//             .catch((err) => console.error('Set answer failed:', err));
+//         }
+//       });
+
+//       socket.on('ice-candidate', ({ callId, candidate }) => {
+//         console.log('Received ICE candidate:', { callId, candidate });
+//         if (peerConnection.current && peerConnection.current.remoteDescription) {
+//           peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate))
+//             .catch((err) => console.error('ICE candidate error:', err));
+//         } else {
+//           console.log('Buffering ICE candidate:', candidate);
+//           iceCandidatesQueue.current.push(candidate);
+//         }
+//       });
+
+//       socket.on('call-rejected', (data) => {
+//         console.log('Call rejected:', data);
+//         if (callStatus?.callerId === user?._id) {
+//           toast.warn(`Your call was rejected by ${data.receiverName}`);
+//           dispatch(clearCallStatus());
+//         }
+//       });
+
+//       socket.on('call-ended', (data) => {
+//         console.log('Call ended:', data);
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//         toast.info(`Call ended with status: ${data.status}`);
+//       });
+
+//       socket.on('call-extend-request', (data) => {
+//         console.log('Extend request received:', data);
+//         setExtendRequest(data);
+//         toast.info(`${data.requesterName} wants to extend the call. Approve?`);
+//       });
+
+//       socket.on('call-extended', (data) => {
+//         console.log('Call extended:', data);
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('Call has been extended!');
+//       });
+
+//       socket.on('extend-denied', (data) => {
+//         console.log('Extension denied:', data);
+//         setExtendRequest(null);
+//         toast.info('Call extension was denied.');
+//       });
+
+//       socket.on('call-refreshing', (data) => {
+//         console.log('Other user is refreshing:', data);
+//         toast.info('Your call partner is reconnecting, please wait...');
+//       });
+
+//       socket.on('call-disconnected', (data) => {
+//         console.log('Call disconnected:', data);
+//         toast.warn('Your call partner disconnected unexpectedly');
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//       });
+
+//       return () => {
+//         socket.disconnect();
+//         cleanupWebRTC();
+//       };
+//     }
+//   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
+
+//   useEffect(() => {
+//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
+//     if (currentCallData?.call) {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${currentCallData.call._id}`)) || false;
+//       const newCallStatus = {
+//         callId: currentCallData.call._id,
+//         status: currentCallData.call.status,
+//         language: currentCallData.call.language,
+//         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+//         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+//         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+//         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+//         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+//           id: r._id.toString(),
+//           name: r.name || 'Unknown',
+//         })) || callStatus?.receivers || [],
+//         extended: currentCallData.call.extended || callStatus?.extended || false,
+//         startTime: currentCallData.call.startTime || callStatus?.startTime,
+//         isMuted: persistedIsMuted, // Restore from localStorage
+//       };
+//       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
+//         console.log('Restoring call status:', newCallStatus);
+//         dispatch(setCallStatus(newCallStatus));
+//         prevCallStatusRef.current = newCallStatus;
+//       }
+//       if (currentCallData.call.status === 'active' && !peerConnection.current) {
+//         console.log('Restoring WebRTC for active call:', currentCallData.call._id);
+//         const isCaller = user._id === currentCallData.call.caller._id;
+//         const remoteUserId = isCaller ? currentCallData.call.receiver._id : currentCallData.call.caller._id;
+//         startWebRTC(socketRef.current, isCaller, remoteUserId, currentCallData.call._id);
+//       }
+//     } else if (!callLoading && !callError && callStatus) {
+//       console.log('No active call, clearing status');
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       prevCallStatusRef.current = null;
+//       localStorage.removeItem(`isMuted_${callStatus.callId}`); // Clean up
+//     }
+//   }, [currentCallData, callLoading, callError, dispatch, user]);
+
+//   useEffect(() => {
+//     const handleBeforeUnload = () => {
+//       if (callStatus?.status === 'active') {
+//         socketRef.current.emit('call-refresh', { callId: callStatus.callId, userId: user._id });
+//       }
+//     };
+//     window.addEventListener('beforeunload', handleBeforeUnload);
+//     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+//   }, [callStatus, user]);
+
+//   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+//     console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+//     if (isWebRTCStarting.current) {
+//       console.log('WebRTC already starting, skipping');
+//       return;
+//     }
+//     isWebRTCStarting.current = true;
+
+//     if (!socketInstance.connected) {
+//       console.log('Socket not connected, attempting to reconnect');
+//       socketInstance.connect();
+//     } else {
+//       console.log('Socket already connected');
+//     }
+
+//     peerConnection.current = new RTCPeerConnection({
+//       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+//     });
+
+//     peerConnection.current.onicecandidate = (event) => {
+//       if (event.candidate) {
+//         console.log('Sending ICE candidate to:', remoteUserId);
+//         socketInstance.emit('ice-candidate', {
+//           callId,
+//           candidate: event.candidate,
+//           to: remoteUserId,
+//           from: user._id,
+//         });
+//       }
+//     };
+
+//     peerConnection.current.ontrack = (event) => {
+//       console.log('Remote track received:', event.streams[0]);
+//       event.streams[0].getTracks().forEach(track => console.log('Remote track state:', track.readyState));
+//       setRemoteStream(event.streams[0]);
+//     };
+
+//     peerConnection.current.onconnectionstatechange = () => {
+//       console.log('Connection state:', peerConnection.current.connectionState);
+//       if (peerConnection.current.connectionState === 'connected') {
+//         toast.success('Audio call connected!');
+//       } else if (peerConnection.current.connectionState === 'failed') {
+//         toast.error('Audio call failed');
+//         cleanupWebRTC();
+//       }
+//     };
+
+//     try {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${callId}`)) || false;
+//       if (!localStream) {
+//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         console.log('Local stream obtained:', stream.getTracks());
+//         stream.getAudioTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted; // Use persisted state
+//           console.log('Adding track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, stream);
+//         });
+//         setLocalStream(stream);
+//       } else {
+//         localStream.getTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted; // Sync with persisted state
+//           console.log('Adding existing track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, localStream);
+//         });
+//       }
+
+//       if (isCaller) {
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         console.log('Sending offer to:', remoteUserId);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+//       } else if (offer) {
+//         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//         while (iceCandidatesQueue.current.length) {
+//           const candidate = iceCandidatesQueue.current.shift();
+//           console.log('Applying buffered ICE candidate:', candidate);
+//           await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+//         }
+//         const answer = await peerConnection.current.createAnswer();
+//         await peerConnection.current.setLocalDescription(answer);
+//         console.log('Sending answer to:', remoteUserId);
+//         socketInstance.emit('answer', { callId, answer, to: remoteUserId, from: user._id });
+//       }
+//     } catch (error) {
+//       console.error('WebRTC error:', error);
+//       toast.error('Failed to start audio: ' + error.message);
+//       cleanupWebRTC();
+//     } finally {
+//       isWebRTCStarting.current = false;
+//     }
+//   };
+
+//   const cleanupWebRTC = () => {
+//     console.log('Cleaning up WebRTC');
+//     if (peerConnection.current) {
+//       peerConnection.current.close();
+//       peerConnection.current = null;
+//     }
+//     if (localStream) {
+//       localStream.getTracks().forEach((track) => track.stop());
+//       setLocalStream(null);
+//     }
+//     setRemoteStream(null);
+//     iceCandidatesQueue.current = [];
+//   };
+
+//   const toggleMute = () => {
+//     if (localStream) {
+//       const newIsMuted = !callStatus?.isMuted;
+//       localStream.getAudioTracks().forEach((track) => {
+//         track.enabled = !newIsMuted;
+//         console.log('Toggled mute, track enabled:', track.enabled);
+//       });
+//       dispatch(setCallStatus({ ...callStatus, isMuted: newIsMuted }));
+//       toast.info(newIsMuted ? 'Microphone muted' : 'Microphone unmuted');
+//     }
+//   };
+
+//   const getCallDuration = () => {
+//     if (callStatus?.status === 'active' && callStatus?.startTime) {
+//       const start = new Date(callStatus.startTime).getTime();
+//       const now = Date.now();
+//       return Math.floor((now - start) / 1000); // Seconds
+//     }
+//     return 0;
+//   };
+
+//   const handleInitiateCall = async () => {
+//     if (!language) {
+//       toast.error('Please enter a language');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to initiate a call');
+//       return;
+//     }
+//     console.log('Initiating call with language:', language);
+//     try {
+//       const response = await initiateCall(language).unwrap();
+//       console.log('Initiated call:', response);
+//       dispatch(setCallStatus({
+//         callId: response.callId,
+//         status: 'pending',
+//         receivers: response.potentialReceivers,
+//         language,
+//         callerId: user?._id,
+//         caller: user?.name,
+//         startTime: new Date().toISOString(),
+//         isMuted: false,
+//       }));
+//       toast.success('Call initiated, waiting for a receiver...');
+//     } catch (error) {
+//       console.error('Initiate call failed:', error);
+//       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleAcceptCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to accept');
+//       return;
+//     }
+//     console.log('Accepting call:', callStatus.callId);
+//     try {
+//       await axios.post(
+//         'http://localhost:5000/api/calls/accept',
+//         { callId: callStatus.callId },
+//         { withCredentials: true }
+//       );
+//       console.log('Call accepted by:', user.name);
+//       const updatedCallStatus = {
+//         ...callStatus,
+//         status: 'active',
+//         receiver: user.name,
+//         receiverId: user._id,
+//         startTime: new Date().toISOString(),
+//         isMuted: callStatus?.isMuted || false,
+//       };
+//       dispatch(setCallStatus(updatedCallStatus));
+//       toast.success('Call accepted! Waiting for caller audio...');
+//     } catch (error) {
+//       console.error('Accept call error:', error);
+//       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//     }
+//   };
+
+//   const handleRejectCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to reject');
+//       return;
+//     }
+//     console.log('Rejecting call:', callStatus.callId);
+//     try {
+//       await rejectCall(callStatus.callId).unwrap();
+//       console.log('Call rejected by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call rejected');
+//     } catch (error) {
+//       console.error('Reject call failed:', error);
+//       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleEndCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to end');
+//       return;
+//     }
+//     console.log('Ending call:', callStatus.callId);
+//     try {
+//       await endCall(callStatus.callId).unwrap();
+//       console.log('Call ended by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.success('Call ended');
+//     } catch (error) {
+//       console.error('End call failed:', error);
+//       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleExtendCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to extend');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to extend a call');
+//       return;
+//     }
+//     console.log('Extending call:', callStatus.callId);
+//     try {
+//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
+//       toast.info('Extension request sent, awaiting approval...');
+//     } catch (error) {
+//       console.error('Extend call failed:', error);
+//       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleApproveExtend = async (approve) => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to approve extension for');
+//       return;
+//     }
+//     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
+//     try {
+//       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+//       setExtendRequest(null);
+//       if (approve) {
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('You approved the call extension!');
+//       } else {
+//         toast.info('You denied the call extension.');
+//       }
+//     } catch (error) {
+//       console.error('Approve extend call failed:', error);
+//       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+//       setExtendRequest(null);
+//     }
+//   };
+
+//   const handleCancelCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to cancel');
+//       return;
+//     }
+//     console.log('Cancelling call:', callStatus.callId);
+//     try {
+//       await cancelCall(callStatus.callId).unwrap();
+//       console.log('Call cancelled by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call cancelled');
+//     } catch (error) {
+//       console.error('Cancel call failed:', error);
+//       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   if (isAuthenticated && callLoading && !callStatus) {
+//     return <div>Loading call status...</div>;
+//   }
+
+//   return (
+//     <div className="container mt-5 text-center">
+//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
+//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
+
+//       {!isAuthenticated ? (
+//         <div className="alert alert-info">
+//           Please <Link to="/login">login</Link> to start exchanging languages!
+//         </div>
+//       ) : (
+//         <div>
+//           {!callStatus ? (
+//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Start a Language Call</h5>
+//                 <div className="mb-3">
+//                   <input
+//                     type="text"
+//                     className="form-control"
+//                     placeholder="Enter language to learn (e.g., Spanish)"
+//                     value={language}
+//                     onChange={(e) => setLanguage(e.target.value)}
+//                   />
+//                 </div>
+//                 <button
+//                   className="btn btn-primary w-100"
+//                   onClick={handleInitiateCall}
+//                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
+//                 >
+//                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+//                 </button>
+//               </div>
+//             </div>
+//           ) : (
+//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Call Status</h5>
+//                 {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+//                   <>
+//                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
+//                     {callStatus.receivers && (
+//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}</p>
+//                     )}
+//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
+//                       Cancel Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
+//                   <>
+//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
+//                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
+//                       Accept Call
+//                     </button>
+//                     <button className="btn btn-danger w-100" onClick={handleRejectCall}>
+//                       Reject Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'active' ? (
+//                   <>
+//                     <p>
+//                       Active call with {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+//                     </p>
+//                     <p>Call Duration: {Math.floor(getCallDuration() / 60)}:{(getCallDuration() % 60).toString().padStart(2, '0')}</p>
+//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+//                     <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+//                     <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
+//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
+//                       End Call
+//                     </button>
+//                     <button className="btn btn-secondary w-100 mb-2" onClick={toggleMute}>
+//                       {callStatus.isMuted ? 'Unmute' : 'Mute'}
+//                     </button>
+//                     <button
+//                       className="btn btn-warning w-100 mb-2"
+//                       onClick={handleExtendCall}
+//                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+//                     >
+//                       {user?.powerTokens < 1 ? 'No Power Tokens' : extendRequest ? 'Awaiting Approval' : 'Extend Call'}
+//                     </button>
+//                     {extendRequest && extendRequest.callId === callStatus.callId && (
+//                       <div>
+//                         <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+//                         <button
+//                           className="btn btn-success w-45 mr-2"
+//                           onClick={() => handleApproveExtend(true)}
+//                         >
+//                           Yes
+//                         </button>
+//                         <button
+//                           className="btn btn-danger w-45"
+//                           onClick={() => handleApproveExtend(false)}
+//                         >
+//                           No
+//                         </button>
+//                       </div>
+//                     )}
+//                   </>
+//                 ) : (
+//                   <p>Call {callStatus.status}!</p>
+//                 )}
+//               </div>
+//             </div>
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default Home; 
+
+
+
+
+// import React, { useState, useEffect, useRef } from 'react';
+// import { useSelector, useDispatch } from 'react-redux';
+// import { Link } from 'react-router-dom';
+// import {
+//   useInitiateCallMutation,
+//   useAcceptCallMutation,
+//   useRejectCallMutation,
+//   useEndCallMutation,
+//   useExtendCallMutation,
+//   useCancelCallMutation,
+//   useSetOnlineStatusMutation,
+//   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
+// } from '../redux/services/callApi';
+// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
+// import { io } from 'socket.io-client';
+// import { toast } from 'react-toastify';
+// import axios from 'axios';
+
+// const Home = () => {
+//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
+//   const dispatch = useDispatch();
+//   const [language, setLanguage] = useState('');
+//   const [extendRequest, setExtendRequest] = useState(null);
+//   const [localStream, setLocalStream] = useState(null);
+//   const [remoteStream, setRemoteStream] = useState(null);
+//   const peerConnection = useRef(null);
+//   const isWebRTCStarting = useRef(false);
+//   const socketRef = useRef(null);
+//   const prevCallStatusRef = useRef(null);
+//   const iceCandidatesQueue = useRef([]);
+
+//   const [initiateCall] = useInitiateCallMutation();
+//   const [acceptCall] = useAcceptCallMutation();
+//   const [rejectCall] = useRejectCallMutation();
+//   const [endCall] = useEndCallMutation();
+//   const [extendCall] = useExtendCallMutation();
+//   const [cancelCall] = useCancelCallMutation();
+//   const [setOnlineStatus] = useSetOnlineStatusMutation();
+//   const [approveExtendCall] = useApproveExtendCallMutation();
+//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
+//     skip: !isAuthenticated,
+//     pollingInterval: 5000,
+//   });
+
+//   // Persist isMuted in localStorage
+//   useEffect(() => {
+//     if (callStatus?.isMuted !== undefined) {
+//       localStorage.setItem(`isMuted_${callStatus.callId}`, JSON.stringify(callStatus.isMuted));
+//     }
+//   }, [callStatus?.isMuted, callStatus?.callId]);
+
+//   useEffect(() => {
+//     if (isAuthenticated && user && user._id) {
+//       console.log('User in Redux:', user);
+//       socketRef.current = io('http://localhost:5000', {
+//         withCredentials: true,
+//         extraHeaders: { 'Content-Type': 'application/json' },
+//         reconnectionAttempts: 5,
+//         reconnectionDelay: 1000,
+//       });
+
+//       const socket = socketRef.current;
+
+//       socket.on('connect', () => {
+//         console.log('WebSocket connected:', socket.id);
+//         socket.emit('register', user._id);
+//         setOnlineStatus({ isOnline: true })
+//           .unwrap()
+//           .then(() => console.log('Set online status success'))
+//           .catch((err) => console.error('Set online failed:', err));
+//       });
+
+//       socket.on('call-request', (data) => {
+//         console.log('Call request received:', data);
+//         dispatch(setCallStatus({
+//           callId: data.callId,
+//           status: 'pending',
+//           caller: data.callerName,
+//           language: data.language,
+//           callerId: data.callerId,
+//           isMuted: false,
+//         }));
+//         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
+//       });
+
+//       socket.on('call-accepted', (data) => {
+//         console.log('Call accepted:', data);
+//         const updatedCallStatus = {
+//           callId: data.callId,
+//           status: 'active',
+//           receiver: data.receiverName,
+//           receiverId: data.receiverId,
+//           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//           callerId: user._id === data.receiverId ? data.callerId : user._id,
+//           startTime: callStatus?.startTime || new Date().toISOString(),
+//           isMuted: callStatus?.isMuted || false,
+//         };
+//         dispatch(setCallStatus(updatedCallStatus));
+//         if (!isWebRTCStarting.current && user._id === updatedCallStatus.callerId) {
+//           console.log('Starting WebRTC after call accepted, isCaller:', true);
+//           startWebRTC(socket, true, data.receiverId, data.callId);
+//         }
+//       });
+
+//       socket.on('offer', async ({ callId, offer, from }) => {
+//         console.log('Received offer:', { callId, offer, from });
+//         if (!isWebRTCStarting.current) {
+//           await startWebRTC(socket, false, from, callId, offer);
+//         }
+//       });
+
+//       socket.on('answer', ({ callId, answer }) => {
+//         console.log('Received answer:', { callId, answer });
+//         if (peerConnection.current) {
+//           peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
+//             .then(() => console.log('Answer set successfully'))
+//             .catch((err) => console.error('Set answer failed:', err));
+//         }
+//       });
+
+//       socket.on('ice-candidate', ({ callId, candidate }) => {
+//         console.log('Received ICE candidate:', { callId, candidate });
+//         if (peerConnection.current && peerConnection.current.remoteDescription) {
+//           peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate))
+//             .catch((err) => console.error('ICE candidate error:', err));
+//         } else {
+//           console.log('Buffering ICE candidate:', candidate);
+//           iceCandidatesQueue.current.push(candidate);
+//         }
+//       });
+
+//       socket.on('call-rejected', (data) => {
+//         console.log('Call rejected:', data);
+//         if (callStatus?.callerId === user?._id) {
+//           toast.warn(`Your call was rejected by ${data.receiverName}`);
+//           dispatch(clearCallStatus());
+//         }
+//       });
+
+//       socket.on('call-ended', (data) => {
+//         console.log('Call ended:', data);
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//         toast.info(`Call ended with status: ${data.status}`);
+//       });
+
+//       socket.on('call-extend-request', (data) => {
+//         console.log('Extend request received:', data);
+//         setExtendRequest(data);
+//         toast.info(`${data.requesterName} wants to extend the call. Approve?`);
+//       });
+
+//       socket.on('call-extended', (data) => {
+//         console.log('Call extended:', data);
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('Call has been extended!');
+//       });
+
+//       socket.on('extend-denied', (data) => {
+//         console.log('Extension denied:', data);
+//         setExtendRequest(null);
+//         toast.info('Call extension was denied.');
+//       });
+
+//       socket.on('call-refreshing', (data) => {
+//         console.log('Other user is refreshing:', data);
+//         toast.info('Your call partner is reconnecting, please wait...');
+//       });
+
+//       socket.on('call-disconnected', (data) => {
+//         console.log('Call disconnected:', data);
+//         toast.warn('Your call partner disconnected unexpectedly');
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//       });
+
+//       socket.on('call-reconnect', ({ callId, userId }) => {
+//         console.log('Received reconnect request:', { callId, userId });
+//         if (callStatus?.callId === callId && user._id === callStatus.callerId && !isWebRTCStarting.current) {
+//           console.log('Caller renegotiating WebRTC for call:', callId);
+//           cleanupWebRTC(); // Reset existing connection
+//           startWebRTC(socket, true, userId, callId); // Send new offer
+//         }
+//       });
+
+//       return () => {
+//         socket.disconnect();
+//         cleanupWebRTC();
+//       };
+//     }
+//   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
+
+//   useEffect(() => {
+//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
+//     if (currentCallData?.call) {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${currentCallData.call._id}`)) || false;
+//       const newCallStatus = {
+//         callId: currentCallData.call._id,
+//         status: currentCallData.call.status,
+//         language: currentCallData.call.language,
+//         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+//         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+//         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+//         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+//         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+//           id: r._id.toString(),
+//           name: r.name || 'Unknown',
+//         })) || callStatus?.receivers || [],
+//         extended: currentCallData.call.extended || callStatus?.extended || false,
+//         startTime: currentCallData.call.startTime || callStatus?.startTime,
+//         isMuted: persistedIsMuted,
+//       };
+//       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
+//         console.log('Restoring call status:', newCallStatus);
+//         dispatch(setCallStatus(newCallStatus));
+//         prevCallStatusRef.current = newCallStatus;
+//       }
+//       if (currentCallData.call.status === 'active' && !peerConnection.current) {
+//         console.log('Restoring WebRTC for active call:', currentCallData.call._id);
+//         const isCaller = user._id === currentCallData.call.caller._id;
+//         const remoteUserId = isCaller ? currentCallData.call.receiver._id : currentCallData.call.caller._id;
+//         startWebRTC(socketRef.current, isCaller, remoteUserId, currentCallData.call._id);
+//       }
+//     } else if (!callLoading && !callError && callStatus) {
+//       console.log('No active call, clearing status');
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       prevCallStatusRef.current = null;
+//       localStorage.removeItem(`isMuted_${callStatus.callId}`);
+//     }
+//   }, [currentCallData, callLoading, callError, dispatch, user]);
+
+//   useEffect(() => {
+//     const handleBeforeUnload = () => {
+//       if (callStatus?.status === 'active') {
+//         socketRef.current.emit('call-refresh', { callId: callStatus.callId, userId: user._id });
+//       }
+//     };
+//     window.addEventListener('beforeunload', handleBeforeUnload);
+//     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+//   }, [callStatus, user]);
+
+//   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+//     console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+//     if (isWebRTCStarting.current) {
+//       console.log('WebRTC already starting, skipping');
+//       return;
+//     }
+//     isWebRTCStarting.current = true;
+
+//     if (!socketInstance.connected) {
+//       console.log('Socket not connected, attempting to reconnect');
+//       socketInstance.connect();
+//     } else {
+//       console.log('Socket already connected');
+//     }
+
+//     peerConnection.current = new RTCPeerConnection({
+//       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+//     });
+
+//     peerConnection.current.onicecandidate = (event) => {
+//       if (event.candidate) {
+//         console.log('Sending ICE candidate to:', remoteUserId);
+//         socketInstance.emit('ice-candidate', {
+//           callId,
+//           candidate: event.candidate,
+//           to: remoteUserId,
+//           from: user._id,
+//         });
+//       }
+//     };
+
+//     peerConnection.current.ontrack = (event) => {
+//       console.log('Remote track received:', event.streams[0]);
+//       event.streams[0].getTracks().forEach(track => console.log('Remote track state:', track.readyState));
+//       setRemoteStream(event.streams[0]);
+//     };
+
+//     peerConnection.current.onconnectionstatechange = () => {
+//       console.log('Connection state:', peerConnection.current.connectionState);
+//       if (peerConnection.current.connectionState === 'connected') {
+//         toast.success('Audio call connected!');
+//       } else if (peerConnection.current.connectionState === 'failed') {
+//         toast.error('Audio call failed');
+//         cleanupWebRTC();
+//       }
+//     };
+
+//     try {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${callId}`)) || false;
+//       if (!localStream) {
+//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         console.log('Local stream obtained:', stream.getTracks());
+//         stream.getAudioTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted;
+//           console.log('Adding track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, stream);
+//         });
+//         setLocalStream(stream);
+//       } else {
+//         localStream.getTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted;
+//           console.log('Adding existing track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, localStream);
+//         });
+//       }
+
+//       if (isCaller) {
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         console.log('Sending offer to:', remoteUserId);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+//       } else if (offer) {
+//         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//         while (iceCandidatesQueue.current.length) {
+//           const candidate = iceCandidatesQueue.current.shift();
+//           console.log('Applying buffered ICE candidate:', candidate);
+//           await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+//         }
+//         const answer = await peerConnection.current.createAnswer();
+//         await peerConnection.current.setLocalDescription(answer);
+//         console.log('Sending answer to:', remoteUserId);
+//         socketInstance.emit('answer', { callId, answer, to: remoteUserId, from: user._id });
+//       }
+//     } catch (error) {
+//       console.error('WebRTC error:', error);
+//       toast.error('Failed to start audio: ' + error.message);
+//       cleanupWebRTC();
+//     } finally {
+//       isWebRTCStarting.current = false;
+//     }
+//   };
+
+//   const cleanupWebRTC = () => {
+//     console.log('Cleaning up WebRTC');
+//     if (peerConnection.current) {
+//       peerConnection.current.close();
+//       peerConnection.current = null;
+//     }
+//     if (localStream) {
+//       localStream.getTracks().forEach((track) => track.stop());
+//       setLocalStream(null);
+//     }
+//     setRemoteStream(null);
+//     iceCandidatesQueue.current = [];
+//   };
+
+//   const toggleMute = () => {
+//     if (localStream) {
+//       const newIsMuted = !callStatus?.isMuted;
+//       localStream.getAudioTracks().forEach((track) => {
+//         track.enabled = !newIsMuted;
+//         console.log('Toggled mute, track enabled:', track.enabled);
+//       });
+//       dispatch(setCallStatus({ ...callStatus, isMuted: newIsMuted }));
+//       toast.info(newIsMuted ? 'Microphone muted' : 'Microphone unmuted');
+//     }
+//   };
+
+//   const getCallDuration = () => {
+//     if (callStatus?.status === 'active' && callStatus?.startTime) {
+//       const start = new Date(callStatus.startTime).getTime();
+//       const now = Date.now();
+//       return Math.floor((now - start) / 1000); // Seconds
+//     }
+//     return 0;
+//   };
+
+//   const handleInitiateCall = async () => {
+//     if (!language) {
+//       toast.error('Please enter a language');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to initiate a call');
+//       return;
+//     }
+//     console.log('Initiating call with language:', language);
+//     try {
+//       const response = await initiateCall(language).unwrap();
+//       console.log('Initiated call:', response);
+//       dispatch(setCallStatus({
+//         callId: response.callId,
+//         status: 'pending',
+//         receivers: response.potentialReceivers,
+//         language,
+//         callerId: user?._id,
+//         caller: user?.name,
+//         startTime: new Date().toISOString(),
+//         isMuted: false,
+//       }));
+//       toast.success('Call initiated, waiting for a receiver...');
+//     } catch (error) {
+//       console.error('Initiate call failed:', error);
+//       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleAcceptCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to accept');
+//       return;
+//     }
+//     console.log('Accepting call:', callStatus.callId);
+//     try {
+//       await axios.post(
+//         'http://localhost:5000/api/calls/accept',
+//         { callId: callStatus.callId },
+//         { withCredentials: true }
+//       );
+//       console.log('Call accepted by:', user.name);
+//       const updatedCallStatus = {
+//         ...callStatus,
+//         status: 'active',
+//         receiver: user.name,
+//         receiverId: user._id,
+//         startTime: new Date().toISOString(),
+//         isMuted: callStatus?.isMuted || false,
+//       };
+//       dispatch(setCallStatus(updatedCallStatus));
+//       toast.success('Call accepted! Waiting for caller audio...');
+//     } catch (error) {
+//       console.error('Accept call error:', error);
+//       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//     }
+//   };
+
+//   const handleRejectCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to reject');
+//       return;
+//     }
+//     console.log('Rejecting call:', callStatus.callId);
+//     try {
+//       await rejectCall(callStatus.callId).unwrap();
+//       console.log('Call rejected by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call rejected');
+//     } catch (error) {
+//       console.error('Reject call failed:', error);
+//       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleEndCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to end');
+//       return;
+//     }
+//     console.log('Ending call:', callStatus.callId);
+//     try {
+//       await endCall(callStatus.callId).unwrap();
+//       console.log('Call ended by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.success('Call ended');
+//     } catch (error) {
+//       console.error('End call failed:', error);
+//       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleExtendCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to extend');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to extend a call');
+//       return;
+//     }
+//     console.log('Extending call:', callStatus.callId);
+//     try {
+//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
+//       toast.info('Extension request sent, awaiting approval...');
+//     } catch (error) {
+//       console.error('Extend call failed:', error);
+//       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleApproveExtend = async (approve) => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to approve extension for');
+//       return;
+//     }
+//     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
+//     try {
+//       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+//       setExtendRequest(null);
+//       if (approve) {
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('You approved the call extension!');
+//       } else {
+//         toast.info('You denied the call extension.');
+//       }
+//     } catch (error) {
+//       console.error('Approve extend call failed:', error);
+//       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+//       setExtendRequest(null);
+//     }
+//   };
+
+//   const handleCancelCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to cancel');
+//       return;
+//     }
+//     console.log('Cancelling call:', callStatus.callId);
+//     try {
+//       await cancelCall(callStatus.callId).unwrap();
+//       console.log('Call cancelled by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call cancelled');
+//     } catch (error) {
+//       console.error('Cancel call failed:', error);
+//       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   if (isAuthenticated && callLoading && !callStatus) {
+//     return <div>Loading call status...</div>;
+//   }
+
+//   return (
+//     <div className="container mt-5 text-center">
+//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
+//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
+
+//       {!isAuthenticated ? (
+//         <div className="alert alert-info">
+//           Please <Link to="/login">login</Link> to start exchanging languages!
+//         </div>
+//       ) : (
+//         <div>
+//           {!callStatus ? (
+//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Start a Language Call</h5>
+//                 <div className="mb-3">
+//                   <input
+//                     type="text"
+//                     className="form-control"
+//                     placeholder="Enter language to learn (e.g., Spanish)"
+//                     value={language}
+//                     onChange={(e) => setLanguage(e.target.value)}
+//                   />
+//                 </div>
+//                 <button
+//                   className="btn btn-primary w-100"
+//                   onClick={handleInitiateCall}
+//                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
+//                 >
+//                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+//                 </button>
+//               </div>
+//             </div>
+//           ) : (
+//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Call Status</h5>
+//                 {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+//                   <>
+//                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
+//                     {callStatus.receivers && (
+//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}</p>
+//                     )}
+//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
+//                       Cancel Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
+//                   <>
+//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
+//                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
+//                       Accept Call
+//                     </button>
+//                     <button className="btn btn-danger w-100" onClick={handleRejectCall}>
+//                       Reject Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'active' ? (
+//                   <>
+//                     <p>
+//                       Active call with {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+//                     </p>
+//                     <p>Call Duration: {Math.floor(getCallDuration() / 60)}:{(getCallDuration() % 60).toString().padStart(2, '0')}</p>
+//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+//                     <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+//                     <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
+//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
+//                       End Call
+//                     </button>
+//                     <button className="btn btn-secondary w-100 mb-2" onClick={toggleMute}>
+//                       {callStatus.isMuted ? 'Unmute' : 'Mute'}
+//                     </button>
+//                     <button
+//                       className="btn btn-warning w-100 mb-2"
+//                       onClick={handleExtendCall}
+//                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+//                     >
+//                       {user?.powerTokens < 1 ? 'No Power Tokens' : extendRequest ? 'Awaiting Approval' : 'Extend Call'}
+//                     </button>
+//                     {extendRequest && extendRequest.callId === callStatus.callId && (
+//                       <div>
+//                         <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+//                         <button
+//                           className="btn btn-success w-45 mr-2"
+//                           onClick={() => handleApproveExtend(true)}
+//                         >
+//                           Yes
+//                         </button>
+//                         <button
+//                           className="btn btn-danger w-45"
+//                           onClick={() => handleApproveExtend(false)}
+//                         >
+//                           No
+//                         </button>
+//                       </div>
+//                     )}
 //                   </>
 //                 ) : (
 //                   <p>Call {callStatus.status}!</p>
@@ -2137,16 +5230,26 @@
 //   useCancelCallMutation,
 //   useSetOnlineStatusMutation,
 //   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
 // } from '../redux/services/callApi';
 // import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
 // import { io } from 'socket.io-client';
 // import { toast } from 'react-toastify';
+// import axios from 'axios';
 
 // const Home = () => {
 //   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
 //   const dispatch = useDispatch();
 //   const [language, setLanguage] = useState('');
-//   const [socket, setSocket] = useState(null);
+//   const [extendRequest, setExtendRequest] = useState(null);
+//   const [localStream, setLocalStream] = useState(null);
+//   const [remoteStream, setRemoteStream] = useState(null);
+//   const peerConnection = useRef(null);
+//   const isWebRTCStarting = useRef(false);
+//   const socketRef = useRef(null);
+//   const prevCallStatusRef = useRef(null);
+//   const iceCandidatesQueue = useRef([]);
+
 //   const [initiateCall] = useInitiateCallMutation();
 //   const [acceptCall] = useAcceptCallMutation();
 //   const [rejectCall] = useRejectCallMutation();
@@ -2154,174 +5257,511 @@
 //   const [extendCall] = useExtendCallMutation();
 //   const [cancelCall] = useCancelCallMutation();
 //   const [setOnlineStatus] = useSetOnlineStatusMutation();
+//   const [approveExtendCall] = useApproveExtendCallMutation();
 //   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
 //     skip: !isAuthenticated,
 //     pollingInterval: 5000,
 //   });
-//   const prevCallStatusRef = useRef(null);
+
+//   // Persist isMuted in localStorage
+//   useEffect(() => {
+//     if (callStatus?.isMuted !== undefined) {
+//       localStorage.setItem(`isMuted_${callStatus.callId}`, JSON.stringify(callStatus.isMuted));
+//     }
+//   }, [callStatus?.isMuted, callStatus?.callId]);
 
 //   useEffect(() => {
-//     if (isAuthenticated && user?._id) {
-//       const newSocket = io('http://localhost:5000', { withCredentials: true });
-//       newSocket.on('connect', () => {
-//         console.log('WebSocket connected:', newSocket.id);
-//         newSocket.emit('register', user._id);
-//         setOnlineStatus({ isOnline: true }).catch(err => console.error('Set online failed:', err));
+//     if (isAuthenticated && user && user._id) {
+//       console.log('User in Redux:', user);
+//       socketRef.current = io('http://localhost:5000', {
+//         withCredentials: true,
+//         extraHeaders: { 'Content-Type': 'application/json' },
+//         reconnectionAttempts: 5,
+//         reconnectionDelay: 1000,
 //       });
 
-//       newSocket.on('call-request', (data) => {
+//       const socket = socketRef.current;
+
+//       socket.on('connect', () => {
+//         console.log('WebSocket connected:', socket.id);
+//         socket.emit('register', user._id);
+//         setOnlineStatus({ isOnline: true })
+//           .unwrap()
+//           .then(() => console.log('Set online status success'))
+//           .catch((err) => console.error('Set online failed:', err));
+//       });
+
+//       socket.on('call-request', (data) => {
 //         console.log('Call request received:', data);
-//         dispatch(setCallStatus({ 
-//           callId: data.callId, 
-//           status: 'pending', 
-//           caller: data.callerName, 
-//           language: data.language, 
-//           callerId: data.callerId 
+//         dispatch(setCallStatus({
+//           callId: data.callId,
+//           status: 'pending',
+//           caller: data.callerName,
+//           language: data.language,
+//           callerId: data.callerId,
+//           isMuted: false,
 //         }));
+//         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
 //       });
 
-//       newSocket.on('call-accepted', (data) => {
+//       socket.on('call-accepted', (data) => {
 //         console.log('Call accepted:', data);
-//         dispatch(setCallStatus({ 
-//           callId: data.callId, 
-//           status: 'active', 
+//         const updatedCallStatus = {
+//           callId: data.callId,
+//           status: 'active',
 //           receiver: data.receiverName,
-//           caller: callStatus?.caller || 'Unknown Caller', // Preserve caller name
-//         }));
-//       });
-
-//       newSocket.on('call-rejected', (data) => {
-//         console.log('Call rejected:', data);
-//         if (callStatus?.callId === data.callId && user._id === callStatus.callerId) {
-//           toast.warn(`Your call was rejected by ${data.receiverName}`, {
-//             position: "top-right",
-//             autoClose: 3000,
-//           });
-//           setTimeout(() => dispatch(clearCallStatus()), 3000);
+//           receiverId: data.receiverId,
+//           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//           callerId: user._id === data.receiverId ? data.callerId : user._id,
+//           startTime: callStatus?.startTime || new Date().toISOString(),
+//           isMuted: callStatus?.isMuted || false,
+//         };
+//         dispatch(setCallStatus(updatedCallStatus));
+//         if (!isWebRTCStarting.current && user._id === updatedCallStatus.callerId) {
+//           console.log('Starting WebRTC after call accepted, isCaller:', true);
+//           startWebRTC(socket, true, data.receiverId, data.callId);
 //         }
 //       });
 
-//       newSocket.on('call-cancelled', (data) => {
-//         console.log('Call cancelled:', data);
-//         dispatch(clearCallStatus());
+//       socket.on('offer', async ({ callId, offer, from }) => {
+//         console.log('Received offer:', { callId, offer, from });
+//         if (!isWebRTCStarting.current) {
+//           await startWebRTC(socket, false, from, callId, offer);
+//         }
 //       });
 
-//       newSocket.on('call-ended', (data) => {
+//       socket.on('answer', ({ callId, answer }) => {
+//         console.log('Received answer:', { callId, answer });
+//         if (peerConnection.current) {
+//           peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
+//             .then(() => console.log('Answer set successfully'))
+//             .catch((err) => console.error('Set answer failed:', err));
+//         }
+//       });
+
+//       socket.on('ice-candidate', ({ callId, candidate }) => {
+//         console.log('Received ICE candidate:', { callId, candidate });
+//         if (peerConnection.current && peerConnection.current.remoteDescription) {
+//           peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate))
+//             .catch((err) => console.error('ICE candidate error:', err));
+//         } else {
+//           console.log('Buffering ICE candidate:', candidate);
+//           iceCandidatesQueue.current.push(candidate);
+//         }
+//       });
+
+//       socket.on('call-rejected', (data) => {
+//         console.log('Call rejected:', data);
+//         if (callStatus?.callerId === user?._id) {
+//           toast.warn(`Your call was rejected by ${data.receiverName}`);
+//           dispatch(clearCallStatus());
+//         }
+//       });
+
+//       socket.on('call-ended', (data) => {
 //         console.log('Call ended:', data);
-//         dispatch(setCallStatus({ callId: data.callId, status: data.status }));
-//         setTimeout(() => dispatch(clearCallStatus()), 2000);
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//         toast.info(`Call ended with status: ${data.status}`);
 //       });
 
-//       newSocket.on('call-extended', (data) => {
+//       socket.on('call-extend-request', (data) => {
+//         console.log('Extend request received:', data);
+//         setExtendRequest(data);
+//         toast.info(`${data.requesterName} wants to extend the call. Approve?`);
+//       });
+
+//       socket.on('call-extended', (data) => {
 //         console.log('Call extended:', data);
 //         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('Call has been extended!');
 //       });
 
-//       setSocket(newSocket);
+//       socket.on('extend-denied', (data) => {
+//         console.log('Extension denied:', data);
+//         setExtendRequest(null);
+//         toast.info('Call extension was denied.');
+//       });
+
+//       socket.on('call-refreshing', (data) => {
+//         console.log('Other user is refreshing:', data);
+//         toast.info('Your call partner is reconnecting, please wait...');
+//       });
+
+//       socket.on('call-disconnected', (data) => {
+//         console.log('Call disconnected:', data);
+//         toast.warn('Your call partner disconnected unexpectedly');
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//       });
+
+//       socket.on('call-reconnect', async ({ callId, userId }) => {
+//         console.log('Received reconnect request:', { callId, userId });
+//         if (callId !== callStatus?.callId || userId === user._id) return;
+
+//         // Clean up existing WebRTC if it exists
+//         if (peerConnection.current) {
+//           peerConnection.current.onicecandidate = null;
+//           peerConnection.current.ontrack = null;
+//           peerConnection.current.onconnectionstatechange = null;
+//           peerConnection.current.close();
+//           peerConnection.current = null;
+//           setRemoteStream(null);
+//           console.log('Cleaned up existing WebRTC connection');
+//         }
+
+//         // Restart WebRTC as caller
+//         if (user._id === callStatus.callerId && !isWebRTCStarting.current) {
+//           console.log('Caller restarting WebRTC for call:', callId);
+//           await startWebRTC(socket, true, callStatus.receiverId, callId);
+//         }
+//       });
 
 //       return () => {
-//         newSocket.disconnect();
+//         socket.disconnect();
+//         cleanupWebRTC();
 //       };
 //     }
-//   }, [isAuthenticated, user, setOnlineStatus, dispatch, callStatus]);
+//   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
 
 //   useEffect(() => {
 //     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
 //     if (currentCallData?.call) {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${currentCallData.call._id}`)) || false;
 //       const newCallStatus = {
-//         callId: currentCallData.call.callId,
+//         callId: currentCallData.call._id,
 //         status: currentCallData.call.status,
 //         language: currentCallData.call.language,
-//         callerId: currentCallData.call.callerId,
-//         ...(currentCallData.call.receivers ? { receivers: currentCallData.call.receivers } : {}),
-//         ...(currentCallData.call.caller ? { caller: currentCallData.call.caller } : {}),
-//         ...(currentCallData.call.receiver ? { receiver: currentCallData.call.receiver } : {}),
-//         ...(currentCallData.call.extended ? { extended: currentCallData.call.extended } : {})
+//         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+//         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+//         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+//         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+//         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+//           id: r._id.toString(),
+//           name: r.name || 'Unknown',
+//         })) || callStatus?.receivers || [],
+//         extended: currentCallData.call.extended || callStatus?.extended || false,
+//         startTime: currentCallData.call.startTime || callStatus?.startTime,
+//         isMuted: persistedIsMuted,
 //       };
 //       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
 //         console.log('Restoring call status:', newCallStatus);
 //         dispatch(setCallStatus(newCallStatus));
 //         prevCallStatusRef.current = newCallStatus;
 //       }
-//     } else if (!callLoading && !callError && !callStatus) {
+//       if (currentCallData.call.status === 'active' && !peerConnection.current) {
+//         console.log('Restoring WebRTC for active call:', currentCallData.call._id);
+//         const isCaller = user._id === currentCallData.call.caller._id;
+//         const remoteUserId = isCaller ? currentCallData.call.receiver._id : currentCallData.call.caller._id;
+//         startWebRTC(socketRef.current, isCaller, remoteUserId, currentCallData.call._id);
+//       }
+//     } else if (!callLoading && !callError && callStatus) {
 //       console.log('No active call, clearing status');
 //       dispatch(clearCallStatus());
+//       cleanupWebRTC();
 //       prevCallStatusRef.current = null;
+//       localStorage.removeItem(`isMuted_${callStatus.callId}`);
 //     }
-//   }, [currentCallData, callLoading, callError, dispatch]);
+//   }, [currentCallData, callLoading, callError, dispatch, user]);
+
+//   useEffect(() => {
+//     const handleBeforeUnload = () => {
+//       if (callStatus?.status === 'active') {
+//         socketRef.current.emit('call-refresh', { callId: callStatus.callId, userId: user._id });
+//       }
+//     };
+//     window.addEventListener('beforeunload', handleBeforeUnload);
+//     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+//   }, [callStatus, user]);
+
+//   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+//     console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+//     if (isWebRTCStarting.current) {
+//       console.log('WebRTC already starting, skipping');
+//       return;
+//     }
+//     isWebRTCStarting.current = true;
+
+//     if (!socketInstance.connected) {
+//       console.log('Socket not connected, attempting to reconnect');
+//       socketInstance.connect();
+//     } else {
+//       console.log('Socket already connected');
+//     }
+
+//     const configuration = {
+//       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+//     };
+
+//     peerConnection.current = new RTCPeerConnection(configuration);
+
+//     peerConnection.current.onicecandidate = (event) => {
+//       if (event.candidate) {
+//         console.log('Sending ICE candidate to:', remoteUserId);
+//         socketInstance.emit('ice-candidate', {
+//           callId,
+//           to: remoteUserId,
+//           candidate: event.candidate,
+//           from: user._id,
+//         });
+//       }
+//     };
+
+//     peerConnection.current.ontrack = (event) => {
+//       console.log('Remote track received:', event.streams[0]);
+//       event.streams[0].getTracks().forEach(track => console.log('Remote track state:', track.readyState));
+//       setRemoteStream(event.streams[0]);
+//     };
+
+//     peerConnection.current.onconnectionstatechange = () => {
+//       console.log('Connection state:', peerConnection.current.connectionState);
+//       if (peerConnection.current.connectionState === 'connected') {
+//         toast.success('Audio call connected!');
+//       } else if (peerConnection.current.connectionState === 'failed' || peerConnection.current.connectionState === 'disconnected') {
+//         console.log('Connection failed or disconnected, cleaning up');
+//         cleanupWebRTC();
+//       }
+//     };
+
+//     try {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${callId}`)) || false;
+//       if (!localStream) {
+//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         console.log('Local stream obtained:', stream.getTracks());
+//         stream.getAudioTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted;
+//           console.log('Adding track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, stream);
+//         });
+//         setLocalStream(stream);
+//       } else {
+//         localStream.getTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted;
+//           console.log('Adding existing track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, localStream);
+//         });
+//       }
+
+//       if (isCaller) {
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         console.log('Sending offer to:', remoteUserId);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+//       } else if (offer) {
+//         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//         while (iceCandidatesQueue.current.length) {
+//           const candidate = iceCandidatesQueue.current.shift();
+//           console.log('Applying buffered ICE candidate:', candidate);
+//           await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+//         }
+//         const answer = await peerConnection.current.createAnswer();
+//         await peerConnection.current.setLocalDescription(answer);
+//         console.log('Sending answer to:', remoteUserId);
+//         socketInstance.emit('answer', { callId, answer, to: remoteUserId, from: user._id });
+//       }
+//     } catch (error) {
+//       console.error('WebRTC error:', error);
+//       toast.error('Failed to start audio: ' + error.message);
+//       cleanupWebRTC();
+//     } finally {
+//       isWebRTCStarting.current = false;
+//     }
+//   };
+
+//   const cleanupWebRTC = () => {
+//     console.log('Cleaning up WebRTC');
+//     if (peerConnection.current) {
+//       peerConnection.current.close();
+//       peerConnection.current = null;
+//     }
+//     if (localStream) {
+//       localStream.getTracks().forEach((track) => track.stop());
+//       setLocalStream(null);
+//     }
+//     setRemoteStream(null);
+//     iceCandidatesQueue.current = [];
+//   };
+
+//   const toggleMute = () => {
+//     if (localStream) {
+//       const newIsMuted = !callStatus?.isMuted;
+//       localStream.getAudioTracks().forEach((track) => {
+//         track.enabled = !newIsMuted;
+//         console.log('Toggled mute, track enabled:', track.enabled);
+//       });
+//       dispatch(setCallStatus({ ...callStatus, isMuted: newIsMuted }));
+//       toast.info(newIsMuted ? 'Microphone muted' : 'Microphone unmuted');
+//     }
+//   };
+
+//   const getCallDuration = () => {
+//     if (callStatus?.status === 'active' && callStatus?.startTime) {
+//       const start = new Date(callStatus.startTime).getTime();
+//       const now = Date.now();
+//       return Math.floor((now - start) / 1000); // Seconds
+//     }
+//     return 0;
+//   };
 
 //   const handleInitiateCall = async () => {
+//     if (!language) {
+//       toast.error('Please enter a language');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to initiate a call');
+//       return;
+//     }
+//     console.log('Initiating call with language:', language);
 //     try {
 //       const response = await initiateCall(language).unwrap();
 //       console.log('Initiated call:', response);
-//       dispatch(setCallStatus({ 
-//         callId: response.callId, 
-//         status: 'pending', 
-//         receivers: response.potentialReceivers, 
-//         language, 
-//         callerId: user._id,
-//         caller: user.name // Set caller name
+//       dispatch(setCallStatus({
+//         callId: response.callId,
+//         status: 'pending',
+//         receivers: response.potentialReceivers,
+//         language,
+//         callerId: user?._id,
+//         caller: user?.name,
+//         startTime: new Date().toISOString(),
+//         isMuted: false,
 //       }));
+//       toast.success('Call initiated, waiting for a receiver...');
 //     } catch (error) {
 //       console.error('Initiate call failed:', error);
+//       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
 //     }
 //   };
 
 //   const handleAcceptCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to accept');
+//       return;
+//     }
+//     console.log('Accepting call:', callStatus.callId);
 //     try {
-//       await acceptCall(callStatus.callId).unwrap();
+//       await axios.post(
+//         'http://localhost:5000/api/calls/accept',
+//         { callId: callStatus.callId },
+//         { withCredentials: true }
+//       );
 //       console.log('Call accepted by:', user.name);
-//       dispatch(setCallStatus({ 
-//         ...callStatus, 
-//         status: 'active', 
-//         receiver: user.name // Set receiver name for caller’s view
-//       }));
+//       const updatedCallStatus = {
+//         ...callStatus,
+//         status: 'active',
+//         receiver: user.name,
+//         receiverId: user._id,
+//         startTime: new Date().toISOString(),
+//         isMuted: callStatus?.isMuted || false,
+//       };
+//       dispatch(setCallStatus(updatedCallStatus));
+//       toast.success('Call accepted! Waiting for caller audio...');
 //     } catch (error) {
-//       console.error('Accept call failed:', error);
+//       console.error('Accept call error:', error);
+//       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
 //       dispatch(clearCallStatus());
+//       cleanupWebRTC();
 //     }
 //   };
 
 //   const handleRejectCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to reject');
+//       return;
+//     }
+//     console.log('Rejecting call:', callStatus.callId);
 //     try {
 //       await rejectCall(callStatus.callId).unwrap();
-//       console.log('Call rejected by:', user.name);
+//       console.log('Call rejected by:', user?.name);
 //       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call rejected');
 //     } catch (error) {
 //       console.error('Reject call failed:', error);
-//       dispatch(clearCallStatus());
+//       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
 //     }
 //   };
 
 //   const handleEndCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to end');
+//       return;
+//     }
+//     console.log('Ending call:', callStatus.callId);
 //     try {
 //       await endCall(callStatus.callId).unwrap();
-//       console.log('Call ended by:', user.name);
+//       console.log('Call ended by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.success('Call ended');
 //     } catch (error) {
 //       console.error('End call failed:', error);
+//       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
 //     }
 //   };
 
 //   const handleExtendCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to extend');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to extend a call');
+//       return;
+//     }
+//     console.log('Extending call:', callStatus.callId);
 //     try {
 //       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
-//       console.log('Call extended by:', user.name);
+//       toast.info('Extension request sent, awaiting approval...');
 //     } catch (error) {
 //       console.error('Extend call failed:', error);
+//       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleApproveExtend = async (approve) => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to approve extension for');
+//       return;
+//     }
+//     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
+//     try {
+//       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+//       setExtendRequest(null);
+//       if (approve) {
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('You approved the call extension!');
+//       } else {
+//         toast.info('You denied the call extension.');
+//       }
+//     } catch (error) {
+//       console.error('Approve extend call failed:', error);
+//       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+//       setExtendRequest(null);
 //     }
 //   };
 
 //   const handleCancelCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to cancel');
+//       return;
+//     }
+//     console.log('Cancelling call:', callStatus.callId);
 //     try {
 //       await cancelCall(callStatus.callId).unwrap();
-//       console.log('Call cancelled by:', user.name);
+//       console.log('Call cancelled by:', user?.name);
 //       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call cancelled');
 //     } catch (error) {
 //       console.error('Cancel call failed:', error);
+//       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
 //     }
 //   };
 
-//   if (callLoading && !callStatus) return <div>Loading call status...</div>;
+//   if (isAuthenticated && callLoading && !callStatus) {
+//     return <div>Loading call status...</div>;
+//   }
 
 //   return (
 //     <div className="container mt-5 text-center">
@@ -2350,9 +5790,9 @@
 //                 <button
 //                   className="btn btn-primary w-100"
 //                   onClick={handleInitiateCall}
-//                   disabled={!language || user.powerTokens < 1}
+//                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
 //                 >
-//                   {user.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+//                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
 //                 </button>
 //               </div>
 //             </div>
@@ -2360,17 +5800,17 @@
 //             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
 //               <div className="card-body">
 //                 <h5 className="card-title">Call Status</h5>
-//                 {callStatus.status === 'pending' && callStatus.callerId === user._id ? (
+//                 {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
 //                   <>
 //                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
 //                     {callStatus.receivers && (
-//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id).join(', ')}</p>
+//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}</p>
 //                     )}
 //                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
 //                       Cancel Call
 //                     </button>
 //                   </>
-//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user._id ? (
+//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
 //                   <>
 //                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
 //                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
@@ -2383,19 +5823,42 @@
 //                 ) : callStatus.status === 'active' ? (
 //                   <>
 //                     <p>
-//                       Active call with {callStatus.callerId === user._id ? callStatus.receiver : callStatus.caller}
+//                       Active call with {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
 //                     </p>
+//                     <p>Call Duration: {Math.floor(getCallDuration() / 60)}:{(getCallDuration() % 60).toString().padStart(2, '0')}</p>
 //                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+//                     <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+//                     <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
 //                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
 //                       End Call
 //                     </button>
-//                     <button
-//                       className="btn btn-warning w-100"
-//                       onClick={handleExtendCall}
-//                       disabled={user.powerTokens < 1}
-//                     >
-//                       {user.powerTokens < 1 ? 'No Power Tokens' : 'Extend Call'}
+//                     <button className="btn btn-secondary w-100 mb-2" onClick={toggleMute}>
+//                       {callStatus.isMuted ? 'Unmute' : 'Mute'}
 //                     </button>
+//                     <button
+//                       className="btn btn-warning w-100 mb-2"
+//                       onClick={handleExtendCall}
+//                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+//                     >
+//                       {user?.powerTokens < 1 ? 'No Power Tokens' : extendRequest ? 'Awaiting Approval' : 'Extend Call'}
+//                     </button>
+//                     {extendRequest && extendRequest.callId === callStatus.callId && (
+//                       <div>
+//                         <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+//                         <button
+//                           className="btn btn-success w-45 mr-2"
+//                           onClick={() => handleApproveExtend(true)}
+//                         >
+//                           Yes
+//                         </button>
+//                         <button
+//                           className="btn btn-danger w-45"
+//                           onClick={() => handleApproveExtend(false)}
+//                         >
+//                           No
+//                         </button>
+//                       </div>
+//                     )}
 //                   </>
 //                 ) : (
 //                   <p>Call {callStatus.status}!</p>
@@ -2411,6 +5874,3437 @@
 
 // export default Home;
 
+
+
+// import React, { useState, useEffect, useRef } from 'react';
+// import { useSelector, useDispatch } from 'react-redux';
+// import { Link } from 'react-router-dom';
+// import {
+//   useInitiateCallMutation,
+//   useAcceptCallMutation,
+//   useRejectCallMutation,
+//   useEndCallMutation,
+//   useExtendCallMutation,
+//   useCancelCallMutation,
+//   useSetOnlineStatusMutation,
+//   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
+// } from '../redux/services/callApi';
+// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
+// import { io } from 'socket.io-client';
+// import { toast } from 'react-toastify';
+// import axios from 'axios';
+
+// const Home = () => {
+//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
+//   const dispatch = useDispatch();
+//   const [language, setLanguage] = useState('');
+//   const [extendRequest, setExtendRequest] = useState(null);
+//   const [localStream, setLocalStream] = useState(null);
+//   const [remoteStream, setRemoteStream] = useState(null);
+//   const peerConnection = useRef(null);
+//   const isWebRTCStarting = useRef(false);
+//   const socketRef = useRef(null);
+//   const prevCallStatusRef = useRef(null);
+//   const iceCandidatesQueue = useRef([]);
+
+//   const [initiateCall] = useInitiateCallMutation();
+//   const [acceptCall] = useAcceptCallMutation();
+//   const [rejectCall] = useRejectCallMutation();
+//   const [endCall] = useEndCallMutation();
+//   const [extendCall] = useExtendCallMutation();
+//   const [cancelCall] = useCancelCallMutation();
+//   const [setOnlineStatus] = useSetOnlineStatusMutation();
+//   const [approveExtendCall] = useApproveExtendCallMutation();
+//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
+//     skip: !isAuthenticated,
+//     pollingInterval: 5000,
+//   });
+
+//   useEffect(() => {
+//     if (callStatus?.isMuted !== undefined) {
+//       localStorage.setItem(`isMuted_${callStatus.callId}`, JSON.stringify(callStatus.isMuted));
+//     }
+//   }, [callStatus?.isMuted, callStatus?.callId]);
+
+//   useEffect(() => {
+//     if (isAuthenticated && user && user._id) {
+//       console.log('User in Redux:', user);
+//       socketRef.current = io('http://localhost:5000', {
+//         withCredentials: true,
+//         extraHeaders: { 'Content-Type': 'application/json' },
+//         reconnectionAttempts: 5,
+//         reconnectionDelay: 1000,
+//       });
+
+//       const socket = socketRef.current;
+
+//       socket.on('connect', () => {
+//         console.log('WebSocket connected:', socket.id);
+//         socket.emit('register', user._id);
+//         setOnlineStatus({ isOnline: true })
+//           .unwrap()
+//           .then(() => console.log('Set online status success'))
+//           .catch((err) => console.error('Set online failed:', err));
+//       });
+
+//       socket.on('call-request', (data) => {
+//         console.log('Call request received:', data);
+//         dispatch(setCallStatus({
+//           callId: data.callId,
+//           status: 'pending',
+//           caller: data.callerName,
+//           language: data.language,
+//           callerId: data.callerId,
+//           isMuted: false,
+//         }));
+//         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
+//       });
+
+//       socket.on('call-accepted', (data) => {
+//         console.log('Call accepted:', data);
+//         const updatedCallStatus = {
+//           callId: data.callId,
+//           status: 'active',
+//           receiver: data.receiverName,
+//           receiverId: data.receiverId,
+//           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//           callerId: user._id === data.receiverId ? data.callerId : user._id,
+//           startTime: callStatus?.startTime || new Date().toISOString(),
+//           isMuted: callStatus?.isMuted || false,
+//         };
+//         dispatch(setCallStatus(updatedCallStatus));
+//         if (!isWebRTCStarting.current && user._id === updatedCallStatus.callerId) {
+//           console.log('Starting WebRTC after call accepted, isCaller:', true);
+//           startWebRTC(socket, true, data.receiverId, data.callId);
+//         }
+//       });
+
+//       socket.on('offer', async ({ callId, offer, from }) => {
+//         console.log('Received offer:', { callId, offer, from });
+//         if (!isWebRTCStarting.current) {
+//           await startWebRTC(socket, false, from, callId, offer);
+//         }
+//       });
+
+//       socket.on('answer', ({ callId, answer }) => {
+//         console.log('Received answer:', { callId, answer });
+//         if (peerConnection.current) {
+//           peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
+//             .then(() => console.log('Answer set successfully'))
+//             .catch((err) => console.error('Set answer failed:', err));
+//         }
+//       });
+
+//       socket.on('ice-candidate', ({ callId, candidate }) => {
+//         console.log('Received ICE candidate:', { callId, candidate });
+//         if (peerConnection.current && peerConnection.current.remoteDescription) {
+//           peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate))
+//             .catch((err) => console.error('ICE candidate error:', err));
+//         } else {
+//           console.log('Buffering ICE candidate:', candidate);
+//           iceCandidatesQueue.current.push(candidate);
+//         }
+//       });
+
+//       socket.on('call-rejected', (data) => {
+//         console.log('Call rejected:', data);
+//         if (callStatus?.callerId === user?._id) {
+//           toast.warn(`Your call was rejected by ${data.receiverName}`);
+//           dispatch(clearCallStatus());
+//         }
+//       });
+
+//       socket.on('call-ended', (data) => {
+//         console.log('Call ended:', data);
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//         toast.info(`Call ended with status: ${data.status}`);
+//       });
+
+//       socket.on('call-extend-request', (data) => {
+//         console.log('Extend request received:', data);
+//         setExtendRequest(data);
+//         toast.info(`${data.requesterName} wants to extend the call. Approve?`);
+//       });
+
+//       socket.on('call-extended', (data) => {
+//         console.log('Call extended:', data);
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('Call has been extended!');
+//       });
+
+//       socket.on('extend-denied', (data) => {
+//         console.log('Extension denied:', data);
+//         setExtendRequest(null);
+//         toast.info('Call extension was denied.');
+//       });
+
+//       socket.on('call-refreshing', (data) => {
+//         console.log('Other user is refreshing:', data);
+//         toast.info('Your call partner is reconnecting, please wait...');
+//       });
+
+//       socket.on('call-disconnected', (data) => {
+//         console.log('Call disconnected:', data);
+//         toast.warn('Your call partner disconnected unexpectedly');
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//       });
+
+//       socket.on('call-reconnect', async ({ callId, userId }) => {
+//         console.log('Received reconnect request:', { callId, userId });
+//         if (callId !== callStatus?.callId || userId === user._id) return;
+
+//         // Clean up existing WebRTC if it exists
+//         if (peerConnection.current) {
+//           console.log('Cleaning up existing WebRTC before reconnect');
+//           peerConnection.current.onicecandidate = null;
+//           peerConnection.current.ontrack = null;
+//           peerConnection.current.onconnectionstatechange = null;
+//           peerConnection.current.close();
+//           peerConnection.current = null;
+//           setRemoteStream(null);
+//         }
+
+//         // Restart WebRTC as caller if this user is the caller
+//         if (user._id === callStatus.callerId) {
+//           console.log('Caller restarting WebRTC for call:', callId);
+//           await startWebRTC(socket, true, callStatus.receiverId, callId);
+//         }
+//       });
+
+//       return () => {
+//         socket.disconnect();
+//         cleanupWebRTC();
+//       };
+//     }
+//   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
+
+//   useEffect(() => {
+//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
+//     if (currentCallData?.call) {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${currentCallData.call._id}`)) || false;
+//       const newCallStatus = {
+//         callId: currentCallData.call._id,
+//         status: currentCallData.call.status,
+//         language: currentCallData.call.language,
+//         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+//         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+//         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+//         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+//         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+//           id: r._id.toString(),
+//           name: r.name || 'Unknown',
+//         })) || callStatus?.receivers || [],
+//         extended: currentCallData.call.extended || callStatus?.extended || false,
+//         startTime: currentCallData.call.startTime || callStatus?.startTime,
+//         isMuted: persistedIsMuted,
+//       };
+//       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
+//         console.log('Restoring call status:', newCallStatus);
+//         dispatch(setCallStatus(newCallStatus));
+//         prevCallStatusRef.current = newCallStatus;
+//       }
+//       if (currentCallData.call.status === 'active' && !peerConnection.current) {
+//         console.log('Restoring WebRTC for active call:', currentCallData.call._id);
+//         const isCaller = user._id === currentCallData.call.caller._id;
+//         const remoteUserId = isCaller ? currentCallData.call.receiver._id : currentCallData.call.caller._id;
+//         startWebRTC(socketRef.current, isCaller, remoteUserId, currentCallData.call._id);
+//       }
+//     } else if (!callLoading && !callError && callStatus) {
+//       console.log('No active call, clearing status');
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       prevCallStatusRef.current = null;
+//       localStorage.removeItem(`isMuted_${callStatus.callId}`);
+//     }
+//   }, [currentCallData, callLoading, callError, dispatch, user]);
+
+//   useEffect(() => {
+//     const handleBeforeUnload = () => {
+//       if (callStatus?.status === 'active') {
+//         socketRef.current.emit('call-refresh', { callId: callStatus.callId, userId: user._id });
+//       }
+//     };
+//     window.addEventListener('beforeunload', handleBeforeUnload);
+//     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+//   }, [callStatus, user]);
+
+//   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+//     console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+//     if (isWebRTCStarting.current) {
+//       console.log('WebRTC already starting, skipping');
+//       return;
+//     }
+//     isWebRTCStarting.current = true;
+
+//     if (!socketInstance.connected) {
+//       console.log('Socket not connected, attempting to reconnect');
+//       socketInstance.connect();
+//     } else {
+//       console.log('Socket already connected');
+//     }
+
+//     const configuration = {
+//       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+//     };
+
+//     peerConnection.current = new RTCPeerConnection(configuration);
+
+//     peerConnection.current.onicecandidate = (event) => {
+//       if (event.candidate) {
+//         console.log('Sending ICE candidate to:', remoteUserId);
+//         socketInstance.emit('ice-candidate', {
+//           callId,
+//           to: remoteUserId,
+//           candidate: event.candidate,
+//           from: user._id,
+//         });
+//       }
+//     };
+
+//     peerConnection.current.ontrack = (event) => {
+//       console.log('Remote track received:', event.streams[0]);
+//       event.streams[0].getTracks().forEach(track => console.log('Remote track state:', track.readyState));
+//       setRemoteStream(event.streams[0]);
+//     };
+
+//     peerConnection.current.onconnectionstatechange = () => {
+//       console.log('Connection state:', peerConnection.current.connectionState);
+//       if (peerConnection.current.connectionState === 'connected') {
+//         toast.success('Audio call connected!');
+//       } else if (
+//         (peerConnection.current.connectionState === 'failed' || 
+//          peerConnection.current.connectionState === 'disconnected') && 
+//         callStatus?.status !== 'active'
+//       ) {
+//         console.log('Connection failed or disconnected, cleaning up');
+//         cleanupWebRTC();
+//       }
+//     };
+
+//     try {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${callId}`)) || false;
+//       if (!localStream) {
+//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         console.log('Local stream obtained:', stream.getTracks());
+//         stream.getAudioTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted;
+//           console.log('Adding track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, stream);
+//         });
+//         setLocalStream(stream);
+//       } else {
+//         localStream.getTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted;
+//           console.log('Adding existing track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, localStream);
+//         });
+//       }
+
+//       if (isCaller) {
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         console.log('Sending offer to:', remoteUserId);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+//       } else if (offer) {
+//         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//         while (iceCandidatesQueue.current.length) {
+//           const candidate = iceCandidatesQueue.current.shift();
+//           console.log('Applying buffered ICE candidate:', candidate);
+//           await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+//         }
+//         const answer = await peerConnection.current.createAnswer();
+//         await peerConnection.current.setLocalDescription(answer);
+//         console.log('Sending answer to:', remoteUserId);
+//         socketInstance.emit('answer', { callId, answer, to: remoteUserId, from: user._id });
+//       }
+//     } catch (error) {
+//       console.error('WebRTC error:', error);
+//       toast.error('Failed to start audio: ' + error.message);
+//       cleanupWebRTC();
+//     } finally {
+//       isWebRTCStarting.current = false;
+//     }
+//   };
+
+//   const cleanupWebRTC = () => {
+//     console.log('Cleaning up WebRTC');
+//     if (peerConnection.current) {
+//       peerConnection.current.close();
+//       peerConnection.current = null;
+//     }
+//     if (localStream) {
+//       localStream.getTracks().forEach((track) => track.stop());
+//       setLocalStream(null);
+//     }
+//     setRemoteStream(null);
+//     iceCandidatesQueue.current = [];
+//   };
+
+//   const toggleMute = () => {
+//     if (localStream) {
+//       const newIsMuted = !callStatus?.isMuted;
+//       localStream.getAudioTracks().forEach((track) => {
+//         track.enabled = !newIsMuted;
+//         console.log('Toggled mute, track enabled:', track.enabled);
+//       });
+//       dispatch(setCallStatus({ ...callStatus, isMuted: newIsMuted }));
+//       toast.info(newIsMuted ? 'Microphone muted' : 'Microphone unmuted');
+//     }
+//   };
+
+//   const getCallDuration = () => {
+//     if (callStatus?.status === 'active' && callStatus?.startTime) {
+//       const start = new Date(callStatus.startTime).getTime();
+//       const now = Date.now();
+//       return Math.floor((now - start) / 1000); // Seconds
+//     }
+//     return 0;
+//   };
+
+//   const handleInitiateCall = async () => {
+//     if (!language) {
+//       toast.error('Please enter a language');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to initiate a call');
+//       return;
+//     }
+//     console.log('Initiating call with language:', language);
+//     try {
+//       const response = await initiateCall(language).unwrap();
+//       console.log('Initiated call:', response);
+//       dispatch(setCallStatus({
+//         callId: response.callId,
+//         status: 'pending',
+//         receivers: response.potentialReceivers,
+//         language,
+//         callerId: user?._id,
+//         caller: user?.name,
+//         startTime: new Date().toISOString(),
+//         isMuted: false,
+//       }));
+//       toast.success('Call initiated, waiting for a receiver...');
+//     } catch (error) {
+//       console.error('Initiate call failed:', error);
+//       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleAcceptCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to accept');
+//       return;
+//     }
+//     console.log('Accepting call:', callStatus.callId);
+//     try {
+//       await axios.post(
+//         'http://localhost:5000/api/calls/accept',
+//         { callId: callStatus.callId },
+//         { withCredentials: true }
+//       );
+//       console.log('Call accepted by:', user.name);
+//       const updatedCallStatus = {
+//         ...callStatus,
+//         status: 'active',
+//         receiver: user.name,
+//         receiverId: user._id,
+//         startTime: new Date().toISOString(),
+//         isMuted: callStatus?.isMuted || false,
+//       };
+//       dispatch(setCallStatus(updatedCallStatus));
+//       toast.success('Call accepted! Waiting for caller audio...');
+//     } catch (error) {
+//       console.error('Accept call error:', error);
+//       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//     }
+//   };
+
+//   const handleRejectCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to reject');
+//       return;
+//     }
+//     console.log('Rejecting call:', callStatus.callId);
+//     try {
+//       await rejectCall(callStatus.callId).unwrap();
+//       console.log('Call rejected by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call rejected');
+//     } catch (error) {
+//       console.error('Reject call failed:', error);
+//       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleEndCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to end');
+//       return;
+//     }
+//     console.log('Ending call:', callStatus.callId);
+//     try {
+//       await endCall(callStatus.callId).unwrap();
+//       console.log('Call ended by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.success('Call ended');
+//     } catch (error) {
+//       console.error('End call failed:', error);
+//       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleExtendCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to extend');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to extend a call');
+//       return;
+//     }
+//     console.log('Extending call:', callStatus.callId);
+//     try {
+//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
+//       toast.info('Extension request sent, awaiting approval...');
+//     } catch (error) {
+//       console.error('Extend call failed:', error);
+//       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleApproveExtend = async (approve) => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to approve extension for');
+//       return;
+//     }
+//     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
+//     try {
+//       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+//       setExtendRequest(null);
+//       if (approve) {
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('You approved the call extension!');
+//       } else {
+//         toast.info('You denied the call extension.');
+//       }
+//     } catch (error) {
+//       console.error('Approve extend call failed:', error);
+//       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+//       setExtendRequest(null);
+//     }
+//   };
+
+//   const handleCancelCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to cancel');
+//       return;
+//     }
+//     console.log('Cancelling call:', callStatus.callId);
+//     try {
+//       await cancelCall(callStatus.callId).unwrap();
+//       console.log('Call cancelled by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call cancelled');
+//     } catch (error) {
+//       console.error('Cancel call failed:', error);
+//       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   if (isAuthenticated && callLoading && !callStatus) {
+//     return <div>Loading call status...</div>;
+//   }
+
+//   return (
+//     <div className="container mt-5 text-center">
+//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
+//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
+
+//       {!isAuthenticated ? (
+//         <div className="alert alert-info">
+//           Please <Link to="/login">login</Link> to start exchanging languages!
+//         </div>
+//       ) : (
+//         <div>
+//           {!callStatus ? (
+//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Start a Language Call</h5>
+//                 <div className="mb-3">
+//                   <input
+//                     type="text"
+//                     className="form-control"
+//                     placeholder="Enter language to learn (e.g., Spanish)"
+//                     value={language}
+//                     onChange={(e) => setLanguage(e.target.value)}
+//                   />
+//                 </div>
+//                 <button
+//                   className="btn btn-primary w-100"
+//                   onClick={handleInitiateCall}
+//                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
+//                 >
+//                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+//                 </button>
+//               </div>
+//             </div>
+//           ) : (
+//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Call Status</h5>
+//                 {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+//                   <>
+//                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
+//                     {callStatus.receivers && (
+//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}</p>
+//                     )}
+//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
+//                       Cancel Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
+//                   <>
+//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
+//                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
+//                       Accept Call
+//                     </button>
+//                     <button className="btn btn-danger w-100" onClick={handleRejectCall}>
+//                       Reject Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'active' ? (
+//                   <>
+//                     <p>
+//                       Active call with {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+//                     </p>
+//                     <p>Call Duration: {Math.floor(getCallDuration() / 60)}:{(getCallDuration() % 60).toString().padStart(2, '0')}</p>
+//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+//                     <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+//                     <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
+//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
+//                       End Call
+//                     </button>
+//                     <button className="btn btn-secondary w-100 mb-2" onClick={toggleMute}>
+//                       {callStatus.isMuted ? 'Unmute' : 'Mute'}
+//                     </button>
+//                     <button
+//                       className="btn btn-warning w-100 mb-2"
+//                       onClick={handleExtendCall}
+//                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+//                     >
+//                       {user?.powerTokens < 1 ? 'No Power Tokens' : extendRequest ? 'Awaiting Approval' : 'Extend Call'}
+//                     </button>
+//                     {extendRequest && extendRequest.callId === callStatus.callId && (
+//                       <div>
+//                         <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+//                         <button
+//                           className="btn btn-success w-45 mr-2"
+//                           onClick={() => handleApproveExtend(true)}
+//                         >
+//                           Yes
+//                         </button>
+//                         <button
+//                           className="btn btn-danger w-45"
+//                           onClick={() => handleApproveExtend(false)}
+//                         >
+//                           No
+//                         </button>
+//                       </div>
+//                     )}
+//                   </>
+//                 ) : (
+//                   <p>Call {callStatus.status}!</p>
+//                 )}
+//               </div>
+//             </div>
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default Home;
+
+
+// import React, { useState, useEffect, useRef } from 'react';
+// import { useSelector, useDispatch } from 'react-redux';
+// import { Link } from 'react-router-dom';
+// import {
+//   useInitiateCallMutation,
+//   useAcceptCallMutation,
+//   useRejectCallMutation,
+//   useEndCallMutation,
+//   useExtendCallMutation,
+//   useCancelCallMutation,
+//   useSetOnlineStatusMutation,
+//   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
+// } from '../redux/services/callApi';
+// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
+// import { io } from 'socket.io-client';
+// import { toast } from 'react-toastify';
+// import axios from 'axios';
+
+// const Home = () => {
+//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
+//   const dispatch = useDispatch();
+//   const [language, setLanguage] = useState('');
+//   const [extendRequest, setExtendRequest] = useState(null);
+//   const [localStream, setLocalStream] = useState(null);
+//   const [remoteStream, setRemoteStream] = useState(null);
+//   const peerConnection = useRef(null);
+//   const isWebRTCStarting = useRef(false);
+//   const isReconnecting = useRef(false); // Added to track reconnect state
+//   const socketRef = useRef(null);
+//   const prevCallStatusRef = useRef(null);
+//   const iceCandidatesQueue = useRef([]);
+
+//   const [initiateCall] = useInitiateCallMutation();
+//   const [acceptCall] = useAcceptCallMutation();
+//   const [rejectCall] = useRejectCallMutation();
+//   const [endCall] = useEndCallMutation();
+//   const [extendCall] = useExtendCallMutation();
+//   const [cancelCall] = useCancelCallMutation();
+//   const [setOnlineStatus] = useSetOnlineStatusMutation();
+//   const [approveExtendCall] = useApproveExtendCallMutation();
+//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
+//     skip: !isAuthenticated,
+//     pollingInterval: 5000,
+//   });
+
+//   useEffect(() => {
+//     if (callStatus?.isMuted !== undefined) {
+//       localStorage.setItem(`isMuted_${callStatus.callId}`, JSON.stringify(callStatus.isMuted));
+//     }
+//   }, [callStatus?.isMuted, callStatus?.callId]);
+
+//   useEffect(() => {
+//     if (isAuthenticated && user && user._id) {
+//       console.log('User in Redux:', user);
+//       socketRef.current = io('http://localhost:5000', {
+//         withCredentials: true,
+//         extraHeaders: { 'Content-Type': 'application/json' },
+//         reconnectionAttempts: 5,
+//         reconnectionDelay: 1000,
+//       });
+
+//       const socket = socketRef.current;
+
+//       socket.on('connect', () => {
+//         console.log('WebSocket connected:', socket.id);
+//         socket.emit('register', user._id);
+//         setOnlineStatus({ isOnline: true })
+//           .unwrap()
+//           .then(() => console.log('Set online status success'))
+//           .catch((err) => console.error('Set online failed:', err));
+//       });
+
+//       socket.on('call-request', (data) => {
+//         console.log('Call request received:', data);
+//         dispatch(
+//           setCallStatus({
+//             callId: data.callId,
+//             status: 'pending',
+//             caller: data.callerName,
+//             language: data.language,
+//             callerId: data.callerId,
+//             isMuted: false,
+//           })
+//         );
+//         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
+//       });
+
+//       socket.on('call-accepted', (data) => {
+//         console.log('Call accepted:', data);
+//         const updatedCallStatus = {
+//           callId: data.callId,
+//           status: 'active',
+//           receiver: data.receiverName,
+//           receiverId: data.receiverId,
+//           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//           callerId: user._id === data.receiverId ? data.callerId : user._id,
+//           startTime: callStatus?.startTime || new Date().toISOString(),
+//           isMuted: callStatus?.isMuted || false,
+//         };
+//         dispatch(setCallStatus(updatedCallStatus));
+//         if (!isWebRTCStarting.current && user._id === updatedCallStatus.callerId) {
+//           console.log('Starting WebRTC after call accepted, isCaller:', true);
+//           startWebRTC(socket, true, data.receiverId, data.callId);
+//         }
+//       });
+
+//       socket.on('offer', async ({ callId, offer, from }) => {
+//         console.log('Received offer:', { callId, offer, from });
+//         if (!isWebRTCStarting.current) {
+//           await startWebRTC(socket, false, from, callId, offer);
+//         }
+//       });
+
+//       socket.on('answer', ({ callId, answer }) => {
+//         console.log('Received answer:', { callId, answer });
+//         if (peerConnection.current) {
+//           peerConnection.current
+//             .setRemoteDescription(new RTCSessionDescription(answer))
+//             .then(() => console.log('Answer set successfully'))
+//             .catch((err) => console.error('Set answer failed:', err));
+//         }
+//       });
+
+//       socket.on('ice-candidate', ({ callId, candidate }) => {
+//         console.log('Received ICE candidate:', { callId, candidate });
+//         if (peerConnection.current && peerConnection.current.remoteDescription) {
+//           peerConnection.current
+//             .addIceCandidate(new RTCIceCandidate(candidate))
+//             .catch((err) => console.error('ICE candidate error:', err));
+//         } else {
+//           console.log('Buffering ICE candidate:', candidate);
+//           iceCandidatesQueue.current.push(candidate);
+//         }
+//       });
+
+//       socket.on('call-rejected', (data) => {
+//         console.log('Call rejected:', data);
+//         if (callStatus?.callerId === user?._id) {
+//           toast.warn(`Your call was rejected by ${data.receiverName}`);
+//           dispatch(clearCallStatus());
+//         }
+//       });
+
+//       socket.on('call-ended', (data) => {
+//         console.log('Call ended:', data);
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//         toast.info(`Call ended with status: ${data.status}`);
+//       });
+
+//       socket.on('call-extend-request', (data) => {
+//         console.log('Extend request received:', data);
+//         setExtendRequest(data);
+//         toast.info(`${data.requesterName} wants to extend the call. Approve?`);
+//       });
+
+//       socket.on('call-extended', (data) => {
+//         console.log('Call extended:', data);
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('Call has been extended!');
+//       });
+
+//       socket.on('extend-denied', (data) => {
+//         console.log('Extension denied:', data);
+//         setExtendRequest(null);
+//         toast.info('Call extension was denied.');
+//       });
+
+//       socket.on('call-refreshing', (data) => {
+//         console.log('Other user is refreshing:', data);
+//         toast.info('Your call partner is reconnecting, please wait...');
+//       });
+
+//       socket.on('call-disconnected', (data) => {
+//         console.log('Call disconnected:', data);
+//         toast.warn('Your call partner disconnected unexpectedly');
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//       });
+
+//       socket.on('call-reconnect', async ({ callId, userId }) => {
+//         console.log('Received reconnect request:', { callId, userId });
+//         if (callId !== callStatus?.callId || userId === user._id) return;
+
+//         isReconnecting.current = true; // Mark as reconnecting
+
+//         // Clean up existing WebRTC if it exists
+//         if (peerConnection.current) {
+//           console.log('Cleaning up existing WebRTC before reconnect');
+//           peerConnection.current.onicecandidate = null;
+//           peerConnection.current.ontrack = null;
+//           peerConnection.current.onconnectionstatechange = null;
+//           peerConnection.current.close();
+//           peerConnection.current = null;
+//           setRemoteStream(null);
+//         }
+
+//         // Restart WebRTC as caller if this user is the caller
+//         if (user._id === callStatus.callerId) {
+//           console.log('Caller restarting WebRTC for call:', callId);
+//           await startWebRTC(socket, true, callStatus.receiverId, callId);
+//         }
+
+//         isReconnecting.current = false; // Reset after reconnect
+//       });
+
+//       return () => {
+//         socket.disconnect();
+//         cleanupWebRTC();
+//       };
+//     }
+//   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
+
+//   useEffect(() => {
+//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
+//     if (currentCallData?.call) {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${currentCallData.call._id}`)) || false;
+//       const newCallStatus = {
+//         callId: currentCallData.call._id,
+//         status: currentCallData.call.status,
+//         language: currentCallData.call.language,
+//         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+//         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+//         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+//         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+//         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+//           id: r._id.toString(),
+//           name: r.name || 'Unknown',
+//         })) || callStatus?.receivers || [],
+//         extended: currentCallData.call.extended || callStatus?.extended || false,
+//         startTime: currentCallData.call.startTime || callStatus?.startTime,
+//         isMuted: persistedIsMuted,
+//       };
+//       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
+//         console.log('Restoring call status:', newCallStatus);
+//         dispatch(setCallStatus(newCallStatus));
+//         prevCallStatusRef.current = newCallStatus;
+//       }
+//       if (currentCallData.call.status === 'active' && !peerConnection.current) {
+//         console.log('Restoring WebRTC for active call:', currentCallData.call._id);
+//         const isCaller = user._id === currentCallData.call.caller._id;
+//         const remoteUserId = isCaller ? currentCallData.call.receiver._id : currentCallData.call.caller._id;
+//         startWebRTC(socketRef.current, isCaller, remoteUserId, currentCallData.call._id);
+//       }
+//     } else if (!callLoading && !callError && callStatus) {
+//       console.log('No active call, clearing status');
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       prevCallStatusRef.current = null;
+//       localStorage.removeItem(`isMuted_${callStatus.callId}`);
+//     }
+//   }, [currentCallData, callLoading, callError, dispatch, user]);
+
+//   useEffect(() => {
+//     const handleBeforeUnload = () => {
+//       if (callStatus?.status === 'active') {
+//         socketRef.current.emit('call-refresh', { callId: callStatus.callId, userId: user._id });
+//       }
+//     };
+//     window.addEventListener('beforeunload', handleBeforeUnload);
+//     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+//   }, [callStatus, user]);
+
+//   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+//     console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+//     if (isWebRTCStarting.current) {
+//       console.log('WebRTC already starting, skipping');
+//       return;
+//     }
+//     isWebRTCStarting.current = true;
+
+//     if (!socketInstance.connected) {
+//       console.log('Socket not connected, attempting to reconnect');
+//       socketInstance.connect();
+//     } else {
+//       console.log('Socket already connected');
+//     }
+
+//     const configuration = {
+//       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+//     };
+
+//     peerConnection.current = new RTCPeerConnection(configuration);
+
+//     peerConnection.current.onicecandidate = (event) => {
+//       if (event.candidate) {
+//         console.log('Sending ICE candidate to:', remoteUserId);
+//         socketInstance.emit('ice-candidate', {
+//           callId,
+//           to: remoteUserId,
+//           candidate: event.candidate,
+//           from: user._id,
+//         });
+//       }
+//     };
+
+//     peerConnection.current.ontrack = (event) => {
+//       console.log('Remote track received:', event.streams[0]);
+//       event.streams[0].getTracks().forEach((track) => console.log('Remote track state:', track.readyState));
+//       setRemoteStream(event.streams[0]);
+//     };
+
+//     peerConnection.current.onconnectionstatechange = () => {
+//       console.log('Connection state:', peerConnection.current.connectionState);
+//       if (peerConnection.current.connectionState === 'connected') {
+//         toast.success('Audio call connected!');
+//       } else if (
+//         (peerConnection.current.connectionState === 'failed' ||
+//           peerConnection.current.connectionState === 'disconnected') &&
+//         callStatus?.status !== 'active' &&
+//         !isReconnecting.current // Skip cleanup during reconnect
+//       ) {
+//         console.log('Connection failed or disconnected, cleaning up');
+//         cleanupWebRTC();
+//       }
+//     };
+
+//     try {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${callId}`)) || false;
+//       if (!localStream) {
+//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         console.log('Local stream obtained:', stream.getTracks());
+//         stream.getAudioTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted;
+//           console.log('Adding track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, stream);
+//         });
+//         setLocalStream(stream);
+//       } else {
+//         localStream.getTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted;
+//           console.log('Adding existing track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, localStream);
+//         });
+//       }
+
+//       if (isCaller) {
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         console.log('Sending offer to:', remoteUserId);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+//       } else if (offer) {
+//         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//         while (iceCandidatesQueue.current.length) {
+//           const candidate = iceCandidatesQueue.current.shift();
+//           console.log('Applying buffered ICE candidate:', candidate);
+//           await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+//         }
+//         const answer = await peerConnection.current.createAnswer();
+//         await peerConnection.current.setLocalDescription(answer);
+//         console.log('Sending answer to:', remoteUserId);
+//         socketInstance.emit('answer', { callId, answer, to: remoteUserId, from: user._id });
+//       }
+//     } catch (error) {
+//       console.error('WebRTC error:', error);
+//       toast.error('Failed to start audio: ' + error.message);
+//       cleanupWebRTC();
+//     } finally {
+//       isWebRTCStarting.current = false;
+//     }
+//   };
+
+//   const cleanupWebRTC = () => {
+//     console.log('Cleaning up WebRTC');
+//     if (peerConnection.current) {
+//       peerConnection.current.close();
+//       peerConnection.current = null;
+//     }
+//     if (localStream) {
+//       localStream.getTracks().forEach((track) => track.stop());
+//       setLocalStream(null);
+//     }
+//     setRemoteStream(null);
+//     iceCandidatesQueue.current = [];
+//   };
+
+//   const toggleMute = () => {
+//     if (localStream) {
+//       const newIsMuted = !callStatus?.isMuted;
+//       localStream.getAudioTracks().forEach((track) => {
+//         track.enabled = !newIsMuted;
+//         console.log('Toggled mute, track enabled:', track.enabled);
+//       });
+//       dispatch(setCallStatus({ ...callStatus, isMuted: newIsMuted }));
+//       toast.info(newIsMuted ? 'Microphone muted' : 'Microphone unmuted');
+//     }
+//   };
+
+//   const getCallDuration = () => {
+//     if (callStatus?.status === 'active' && callStatus?.startTime) {
+//       const start = new Date(callStatus.startTime).getTime();
+//       const now = Date.now();
+//       return Math.floor((now - start) / 1000); // Seconds
+//     }
+//     return 0;
+//   };
+
+//   const handleInitiateCall = async () => {
+//     if (!language) {
+//       toast.error('Please enter a language');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to initiate a call');
+//       return;
+//     }
+//     console.log('Initiating call with language:', language);
+//     try {
+//       const response = await initiateCall(language).unwrap();
+//       console.log('Initiated call:', response);
+//       dispatch(
+//         setCallStatus({
+//           callId: response.callId,
+//           status: 'pending',
+//           receivers: response.potentialReceivers,
+//           language,
+//           callerId: user?._id,
+//           caller: user?.name,
+//           startTime: new Date().toISOString(),
+//           isMuted: false,
+//         })
+//       );
+//       toast.success('Call initiated, waiting for a receiver...');
+//     } catch (error) {
+//       console.error('Initiate call failed:', error);
+//       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleAcceptCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to accept');
+//       return;
+//     }
+//     console.log('Accepting call:', callStatus.callId);
+//     try {
+//       await axios.post(
+//         'http://localhost:5000/api/calls/accept',
+//         { callId: callStatus.callId },
+//         { withCredentials: true }
+//       );
+//       console.log('Call accepted by:', user.name);
+//       const updatedCallStatus = {
+//         ...callStatus,
+//         status: 'active',
+//         receiver: user.name,
+//         receiverId: user._id,
+//         startTime: new Date().toISOString(),
+//         isMuted: callStatus?.isMuted || false,
+//       };
+//       dispatch(setCallStatus(updatedCallStatus));
+//       toast.success('Call accepted! Waiting for caller audio...');
+//     } catch (error) {
+//       console.error('Accept call error:', error);
+//       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//     }
+//   };
+
+//   const handleRejectCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to reject');
+//       return;
+//     }
+//     console.log('Rejecting call:', callStatus.callId);
+//     try {
+//       await rejectCall(callStatus.callId).unwrap();
+//       console.log('Call rejected by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call rejected');
+//     } catch (error) {
+//       console.error('Reject call failed:', error);
+//       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleEndCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to end');
+//       return;
+//     }
+//     console.log('Ending call:', callStatus.callId);
+//     try {
+//       await endCall(callStatus.callId).unwrap();
+//       console.log('Call ended by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.success('Call ended');
+//     } catch (error) {
+//       console.error('End call failed:', error);
+//       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleExtendCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to extend');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to extend a call');
+//       return;
+//     }
+//     console.log('Extending call:', callStatus.callId);
+//     try {
+//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
+//       toast.info('Extension request sent, awaiting approval...');
+//     } catch (error) {
+//       console.error('Extend call failed:', error);
+//       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleApproveExtend = async (approve) => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to approve extension for');
+//       return;
+//     }
+//     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
+//     try {
+//       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+//       setExtendRequest(null);
+//       if (approve) {
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('You approved the call extension!');
+//       } else {
+//         toast.info('You denied the call extension.');
+//       }
+//     } catch (error) {
+//       console.error('Approve extend call failed:', error);
+//       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+//       setExtendRequest(null);
+//     }
+//   };
+
+//   const handleCancelCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to cancel');
+//       return;
+//     }
+//     console.log('Cancelling call:', callStatus.callId);
+//     try {
+//       await cancelCall(callStatus.callId).unwrap();
+//       console.log('Call cancelled by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call cancelled');
+//     } catch (error) {
+//       console.error('Cancel call failed:', error);
+//       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   if (isAuthenticated && callLoading && !callStatus) {
+//     return <div>Loading call status...</div>;
+//   }
+
+//   return (
+//     <div className="container mt-5 text-center">
+//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
+//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
+
+//       {!isAuthenticated ? (
+//         <div className="alert alert-info">
+//           Please <Link to="/login">login</Link> to start exchanging languages!
+//         </div>
+//       ) : (
+//         <div>
+//           {!callStatus ? (
+//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Start a Language Call</h5>
+//                 <div className="mb-3">
+//                   <input
+//                     type="text"
+//                     className="form-control"
+//                     placeholder="Enter language to learn (e.g., Spanish)"
+//                     value={language}
+//                     onChange={(e) => setLanguage(e.target.value)}
+//                   />
+//                 </div>
+//                 <button
+//                   className="btn btn-primary w-100"
+//                   onClick={handleInitiateCall}
+//                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
+//                 >
+//                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+//                 </button>
+//               </div>
+//             </div>
+//           ) : (
+//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Call Status</h5>
+//                 {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+//                   <>
+//                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
+//                     {callStatus.receivers && (
+//                       <p>
+//                         Potential Receivers:{' '}
+//                         {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}
+//                       </p>
+//                     )}
+//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
+//                       Cancel Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
+//                   <>
+//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
+//                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
+//                       Accept Call
+//                     </button>
+//                     <button className="btn btn-danger w-100" onClick={handleRejectCall}>
+//                       Reject Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'active' ? (
+//                   <>
+//                     <p>
+//                       Active call with{' '}
+//                       {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+//                     </p>
+//                     <p>
+//                       Call Duration: {Math.floor(getCallDuration() / 60)}:
+//                       {(getCallDuration() % 60).toString().padStart(2, '0')}
+//                     </p>
+//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+//                     <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+//                     <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
+//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
+//                       End Call
+//                     </button>
+//                     <button className="btn btn-secondary w-100 mb-2" onClick={toggleMute}>
+//                       {callStatus.isMuted ? 'Unmute' : 'Mute'}
+//                     </button>
+//                     <button
+//                       className="btn btn-warning w-100 mb-2"
+//                       onClick={handleExtendCall}
+//                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+//                     >
+//                       {user?.powerTokens < 1
+//                         ? 'No Power Tokens'
+//                         : extendRequest
+//                         ? 'Awaiting Approval'
+//                         : 'Extend Call'}
+//                     </button>
+//                     {extendRequest && extendRequest.callId === callStatus.callId && (
+//                       <div>
+//                         <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+//                         <button
+//                           className="btn btn-success w-45 mr-2"
+//                           onClick={() => handleApproveExtend(true)}
+//                         >
+//                           Yes
+//                         </button>
+//                         <button className="btn btn-danger w-45" onClick={() => handleApproveExtend(false)}>
+//                           No
+//                         </button>
+//                       </div>
+//                     )}
+//                   </>
+//                 ) : (
+//                   <p>Call {callStatus.status}!</p>
+//                 )}
+//               </div>
+//             </div>
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default Home;
+
+
+// import React, { useState, useEffect, useRef } from 'react';
+// import { useSelector, useDispatch } from 'react-redux';
+// import { Link } from 'react-router-dom';
+// import {
+//   useInitiateCallMutation,
+//   useAcceptCallMutation,
+//   useRejectCallMutation,
+//   useEndCallMutation,
+//   useExtendCallMutation,
+//   useCancelCallMutation,
+//   useSetOnlineStatusMutation,
+//   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
+// } from '../redux/services/callApi';
+// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
+// import { io } from 'socket.io-client';
+// import { toast } from 'react-toastify';
+// import axios from 'axios';
+
+// const Home = () => {
+//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
+//   const dispatch = useDispatch();
+//   const [language, setLanguage] = useState('');
+//   const [extendRequest, setExtendRequest] = useState(null);
+//   const [localStream, setLocalStream] = useState(null);
+//   const [remoteStream, setRemoteStream] = useState(null);
+//   const peerConnection = useRef(null);
+//   const isWebRTCStarting = useRef(false);
+//   const isReconnecting = useRef(false); // Tracks reconnect state
+//   const socketRef = useRef(null);
+//   const prevCallStatusRef = useRef(null);
+//   const iceCandidatesQueue = useRef([]);
+
+//   const [initiateCall] = useInitiateCallMutation();
+//   const [acceptCall] = useAcceptCallMutation();
+//   const [rejectCall] = useRejectCallMutation();
+//   const [endCall] = useEndCallMutation();
+//   const [extendCall] = useExtendCallMutation();
+//   const [cancelCall] = useCancelCallMutation();
+//   const [setOnlineStatus] = useSetOnlineStatusMutation();
+//   const [approveExtendCall] = useApproveExtendCallMutation();
+//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
+//     skip: !isAuthenticated,
+//     pollingInterval: 5000,
+//   });
+
+//   useEffect(() => {
+//     if (callStatus?.isMuted !== undefined) {
+//       localStorage.setItem(`isMuted_${callStatus.callId}`, JSON.stringify(callStatus.isMuted));
+//     }
+//   }, [callStatus?.isMuted, callStatus?.callId]);
+
+//   useEffect(() => {
+//     if (isAuthenticated && user && user._id) {
+//       console.log('User in Redux:', user);
+//       socketRef.current = io('http://localhost:5000', {
+//         withCredentials: true,
+//         extraHeaders: { 'Content-Type': 'application/json' },
+//         reconnectionAttempts: 5,
+//         reconnectionDelay: 1000,
+//       });
+
+//       const socket = socketRef.current;
+
+//       socket.on('connect', () => {
+//         console.log('WebSocket connected:', socket.id);
+//         socket.emit('register', user._id);
+//         setOnlineStatus({ isOnline: true })
+//           .unwrap()
+//           .then(() => console.log('Set online status success'))
+//           .catch((err) => console.error('Set online failed:', err));
+//       });
+
+//       socket.on('call-request', (data) => {
+//         console.log('Call request received:', data);
+//         dispatch(
+//           setCallStatus({
+//             callId: data.callId,
+//             status: 'pending',
+//             caller: data.callerName,
+//             language: data.language,
+//             callerId: data.callerId,
+//             isMuted: false,
+//           })
+//         );
+//         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
+//       });
+
+//       socket.on('call-accepted', (data) => {
+//         console.log('Call accepted:', data);
+//         const updatedCallStatus = {
+//           callId: data.callId,
+//           status: 'active',
+//           receiver: data.receiverName,
+//           receiverId: data.receiverId,
+//           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//           callerId: user._id === data.receiverId ? data.callerId : user._id,
+//           startTime: callStatus?.startTime || new Date().toISOString(),
+//           isMuted: callStatus?.isMuted || false,
+//         };
+//         dispatch(setCallStatus(updatedCallStatus));
+//         if (!isWebRTCStarting.current && user._id === updatedCallStatus.callerId) {
+//           console.log('Starting WebRTC after call accepted, isCaller:', true);
+//           startWebRTC(socket, true, data.receiverId, data.callId);
+//         }
+//       });
+
+//       socket.on('offer', async ({ callId, offer, from }) => {
+//         console.log('Received offer:', { callId, offer, from });
+//         if (!isWebRTCStarting.current) {
+//           await startWebRTC(socket, false, from, callId, offer);
+//         }
+//       });
+
+//       socket.on('answer', ({ callId, answer }) => {
+//         console.log('Received answer:', { callId, answer });
+//         if (peerConnection.current) {
+//           peerConnection.current
+//             .setRemoteDescription(new RTCSessionDescription(answer))
+//             .then(() => console.log('Answer set successfully'))
+//             .catch((err) => console.error('Set answer failed:', err));
+//         }
+//       });
+
+//       socket.on('ice-candidate', ({ callId, candidate }) => {
+//         console.log('Received ICE candidate:', { callId, candidate });
+//         if (peerConnection.current && peerConnection.current.remoteDescription) {
+//           peerConnection.current
+//             .addIceCandidate(new RTCIceCandidate(candidate))
+//             .catch((err) => console.error('ICE candidate error:', err));
+//         } else {
+//           console.log('Buffering ICE candidate:', candidate);
+//           iceCandidatesQueue.current.push(candidate);
+//         }
+//       });
+
+//       socket.on('call-rejected', (data) => {
+//         console.log('Call rejected:', data);
+//         if (callStatus?.callerId === user?._id) {
+//           toast.warn(`Your call was rejected by ${data.receiverName}`);
+//           dispatch(clearCallStatus());
+//         }
+//       });
+
+//       socket.on('call-ended', (data) => {
+//         console.log('Call ended:', data);
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//         toast.info(`Call ended with status: ${data.status}`);
+//       });
+
+//       socket.on('call-extend-request', (data) => {
+//         console.log('Extend request received:', data);
+//         setExtendRequest(data);
+//         toast.info(`${data.requesterName} wants to extend the call. Approve?`);
+//       });
+
+//       socket.on('call-extended', (data) => {
+//         console.log('Call extended:', data);
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('Call has been extended!');
+//       });
+
+//       socket.on('extend-denied', (data) => {
+//         console.log('Extension denied:', data);
+//         setExtendRequest(null);
+//         toast.info('Call extension was denied.');
+//       });
+
+//       socket.on('call-refreshing', (data) => {
+//         console.log('Other user is refreshing:', data);
+//         toast.info('Your call partner is reconnecting, please wait...');
+//       });
+
+//       socket.on('call-disconnected', (data) => {
+//         console.log('Call disconnected:', data);
+//         toast.warn('Your call partner disconnected unexpectedly');
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//       });
+
+//       socket.on('call-reconnect', async ({ callId, userId }) => {
+//         console.log('Received reconnect request:', { callId, userId });
+//         if (callId !== callStatus?.callId || userId === user._id) return;
+
+//         isReconnecting.current = true; // Mark as reconnecting
+
+//         if (peerConnection.current) {
+//           console.log('Cleaning up existing WebRTC before reconnect');
+//           peerConnection.current.onicecandidate = null;
+//           peerConnection.current.ontrack = null;
+//           peerConnection.current.onconnectionstatechange = null;
+//           peerConnection.current.close();
+//           peerConnection.current = null;
+//           setRemoteStream(null);
+//         }
+
+//         if (user._id === callStatus.callerId) {
+//           console.log('Caller restarting WebRTC for call:', callId);
+//           await startWebRTC(socket, true, callStatus.receiverId, callId);
+//         }
+
+//         isReconnecting.current = false; // Reset after reconnect
+//       });
+
+//       return () => {
+//         socket.disconnect();
+//         cleanupWebRTC();
+//       };
+//     }
+//   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
+
+//   useEffect(() => {
+//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
+//     if (currentCallData?.call) {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${currentCallData.call._id}`)) || false;
+//       const newCallStatus = {
+//         callId: currentCallData.call._id,
+//         status: currentCallData.call.status,
+//         language: currentCallData.call.language,
+//         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+//         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+//         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+//         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+//         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+//           id: r._id.toString(),
+//           name: r.name || 'Unknown',
+//         })) || callStatus?.receivers || [],
+//         extended: currentCallData.call.extended || callStatus?.extended || false,
+//         startTime: currentCallData.call.startTime || callStatus?.startTime,
+//         isMuted: persistedIsMuted,
+//       };
+//       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
+//         console.log('Restoring call status:', newCallStatus);
+//         dispatch(setCallStatus(newCallStatus));
+//         prevCallStatusRef.current = newCallStatus;
+//       }
+//       if (currentCallData.call.status === 'active' && !peerConnection.current && !isReconnecting.current) {
+//         console.log('Restoring WebRTC for active call:', currentCallData.call._id);
+//         const isCaller = user._id === currentCallData.call.caller._id;
+//         const remoteUserId = isCaller ? currentCallData.call.receiver._id : currentCallData.call.caller._id;
+//         startWebRTC(socketRef.current, isCaller, remoteUserId, currentCallData.call._id);
+//       }
+//     } else if (!callLoading && !callError && callStatus && !isReconnecting.current) {
+//       console.log('No active call, clearing status');
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       prevCallStatusRef.current = null;
+//       localStorage.removeItem(`isMuted_${callStatus.callId}`);
+//     }
+//   }, [currentCallData, callLoading, callError, dispatch, user]);
+
+//   useEffect(() => {
+//     const handleBeforeUnload = () => {
+//       if (callStatus?.status === 'active') {
+//         socketRef.current.emit('call-refresh', { callId: callStatus.callId, userId: user._id });
+//       }
+//     };
+//     window.addEventListener('beforeunload', handleBeforeUnload);
+//     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+//   }, [callStatus, user]);
+
+//   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+//     console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+//     if (isWebRTCStarting.current) {
+//       console.log('WebRTC already starting, skipping');
+//       return;
+//     }
+//     isWebRTCStarting.current = true;
+
+//     if (!socketInstance.connected) {
+//       console.log('Socket not connected, attempting to reconnect');
+//       socketInstance.connect();
+//     } else {
+//       console.log('Socket already connected');
+//     }
+
+//     const configuration = {
+//       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+//     };
+
+//     peerConnection.current = new RTCPeerConnection(configuration);
+
+//     peerConnection.current.onicecandidate = (event) => {
+//       if (event.candidate) {
+//         console.log('Sending ICE candidate to:', remoteUserId);
+//         socketInstance.emit('ice-candidate', {
+//           callId,
+//           to: remoteUserId,
+//           candidate: event.candidate,
+//           from: user._id,
+//         });
+//       }
+//     };
+
+//     peerConnection.current.ontrack = (event) => {
+//       console.log('Remote track received:', event.streams[0]);
+//       event.streams[0].getTracks().forEach((track) => console.log('Remote track state:', track.readyState));
+//       setRemoteStream(event.streams[0]);
+//     };
+
+//     peerConnection.current.onconnectionstatechange = () => {
+//       console.log('Connection state:', peerConnection.current.connectionState);
+//       if (peerConnection.current.connectionState === 'connected') {
+//         toast.success('Audio call connected!');
+//       } else if (
+//         (peerConnection.current.connectionState === 'failed' ||
+//           peerConnection.current.connectionState === 'disconnected') &&
+//         callStatus?.status !== 'active' &&
+//         !isReconnecting.current
+//       ) {
+//         console.log('Connection failed or disconnected, cleaning up');
+//         cleanupWebRTC();
+//       }
+//     };
+
+//     try {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${callId}`)) || false;
+//       if (!localStream) {
+//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         console.log('Local stream obtained:', stream.getTracks());
+//         stream.getAudioTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted;
+//           console.log('Adding track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, stream);
+//         });
+//         setLocalStream(stream);
+//       } else {
+//         localStream.getTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted;
+//           console.log('Adding existing track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, localStream);
+//         });
+//       }
+
+//       if (isCaller) {
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         console.log('Sending offer to:', remoteUserId);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+//       } else if (offer) {
+//         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//         while (iceCandidatesQueue.current.length) {
+//           const candidate = iceCandidatesQueue.current.shift();
+//           console.log('Applying buffered ICE candidate:', candidate);
+//           await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+//         }
+//         const answer = await peerConnection.current.createAnswer();
+//         await peerConnection.current.setLocalDescription(answer);
+//         console.log('Sending answer to:', remoteUserId);
+//         socketInstance.emit('answer', { callId, answer, to: remoteUserId, from: user._id });
+//       }
+//     } catch (error) {
+//       console.error('WebRTC error:', error);
+//       toast.error('Failed to start audio: ' + error.message);
+//       cleanupWebRTC();
+//     } finally {
+//       isWebRTCStarting.current = false;
+//     }
+//   };
+
+//   const cleanupWebRTC = () => {
+//     console.log('Cleaning up WebRTC');
+//     if (peerConnection.current) {
+//       peerConnection.current.close();
+//       peerConnection.current = null;
+//     }
+//     if (localStream) {
+//       localStream.getTracks().forEach((track) => track.stop());
+//       setLocalStream(null);
+//     }
+//     setRemoteStream(null);
+//     iceCandidatesQueue.current = [];
+//   };
+
+//   const toggleMute = () => {
+//     if (localStream) {
+//       const newIsMuted = !callStatus?.isMuted;
+//       localStream.getAudioTracks().forEach((track) => {
+//         track.enabled = !newIsMuted;
+//         console.log('Toggled mute, track enabled:', track.enabled);
+//       });
+//       dispatch(setCallStatus({ ...callStatus, isMuted: newIsMuted }));
+//       toast.info(newIsMuted ? 'Microphone muted' : 'Microphone unmuted');
+//     }
+//   };
+
+//   const getCallDuration = () => {
+//     if (callStatus?.status === 'active' && callStatus?.startTime) {
+//       const start = new Date(callStatus.startTime).getTime();
+//       const now = Date.now();
+//       return Math.floor((now - start) / 1000); // Seconds
+//     }
+//     return 0;
+//   };
+
+//   const handleInitiateCall = async () => {
+//     if (!language) {
+//       toast.error('Please enter a language');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to initiate a call');
+//       return;
+//     }
+//     console.log('Initiating call with language:', language);
+//     try {
+//       const response = await initiateCall(language).unwrap();
+//       console.log('Initiated call:', response);
+//       dispatch(
+//         setCallStatus({
+//           callId: response.callId,
+//           status: 'pending',
+//           receivers: response.potentialReceivers,
+//           language,
+//           callerId: user?._id,
+//           caller: user?.name,
+//           startTime: new Date().toISOString(),
+//           isMuted: false,
+//         })
+//       );
+//       toast.success('Call initiated, waiting for a receiver...');
+//     } catch (error) {
+//       console.error('Initiate call failed:', error);
+//       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleAcceptCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to accept');
+//       return;
+//     }
+//     console.log('Accepting call:', callStatus.callId);
+//     try {
+//       await axios.post(
+//         'http://localhost:5000/api/calls/accept',
+//         { callId: callStatus.callId },
+//         { withCredentials: true }
+//       );
+//       console.log('Call accepted by:', user.name);
+//       const updatedCallStatus = {
+//         ...callStatus,
+//         status: 'active',
+//         receiver: user.name,
+//         receiverId: user._id,
+//         startTime: new Date().toISOString(),
+//         isMuted: callStatus?.isMuted || false,
+//       };
+//       dispatch(setCallStatus(updatedCallStatus));
+//       toast.success('Call accepted! Waiting for caller audio...');
+//     } catch (error) {
+//       console.error('Accept call error:', error);
+//       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//     }
+//   };
+
+//   const handleRejectCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to reject');
+//       return;
+//     }
+//     console.log('Rejecting call:', callStatus.callId);
+//     try {
+//       await rejectCall(callStatus.callId).unwrap();
+//       console.log('Call rejected by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call rejected');
+//     } catch (error) {
+//       console.error('Reject call failed:', error);
+//       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleEndCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to end');
+//       return;
+//     }
+//     console.log('Ending call:', callStatus.callId);
+//     try {
+//       await endCall(callStatus.callId).unwrap();
+//       console.log('Call ended by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.success('Call ended');
+//     } catch (error) {
+//       console.error('End call failed:', error);
+//       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleExtendCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to extend');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to extend a call');
+//       return;
+//     }
+//     console.log('Extending call:', callStatus.callId);
+//     try {
+//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
+//       toast.info('Extension request sent, awaiting approval...');
+//     } catch (error) {
+//       console.error('Extend call failed:', error);
+//       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleApproveExtend = async (approve) => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to approve extension for');
+//       return;
+//     }
+//     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
+//     try {
+//       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+//       setExtendRequest(null);
+//       if (approve) {
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('You approved the call extension!');
+//       } else {
+//         toast.info('You denied the call extension.');
+//       }
+//     } catch (error) {
+//       console.error('Approve extend call failed:', error);
+//       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+//       setExtendRequest(null);
+//     }
+//   };
+
+//   const handleCancelCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to cancel');
+//       return;
+//     }
+//     console.log('Cancelling call:', callStatus.callId);
+//     try {
+//       await cancelCall(callStatus.callId).unwrap();
+//       console.log('Call cancelled by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call cancelled');
+//     } catch (error) {
+//       console.error('Cancel call failed:', error);
+//       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   if (isAuthenticated && callLoading && !callStatus) {
+//     return <div>Loading call status...</div>;
+//   }
+
+//   return (
+//     <div className="container mt-5 text-center">
+//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
+//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
+
+//       {!isAuthenticated ? (
+//         <div className="alert alert-info">
+//           Please <Link to="/login">login</Link> to start exchanging languages!
+//         </div>
+//       ) : (
+//         <div>
+//           {!callStatus ? (
+//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Start a Language Call</h5>
+//                 <div className="mb-3">
+//                   <input
+//                     type="text"
+//                     className="form-control"
+//                     placeholder="Enter language to learn (e.g., Spanish)"
+//                     value={language}
+//                     onChange={(e) => setLanguage(e.target.value)}
+//                   />
+//                 </div>
+//                 <button
+//                   className="btn btn-primary w-100"
+//                   onClick={handleInitiateCall}
+//                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
+//                 >
+//                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+//                 </button>
+//               </div>
+//             </div>
+//           ) : (
+//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Call Status</h5>
+//                 {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+//                   <>
+//                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
+//                     {callStatus.receivers && (
+//                       <p>
+//                         Potential Receivers:{' '}
+//                         {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}
+//                       </p>
+//                     )}
+//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
+//                       Cancel Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
+//                   <>
+//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
+//                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
+//                       Accept Call
+//                     </button>
+//                     <button className="btn btn-danger w-100" onClick={handleRejectCall}>
+//                       Reject Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'active' ? (
+//                   <>
+//                     <p>
+//                       Active call with{' '}
+//                       {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+//                     </p>
+//                     <p>
+//                       Call Duration: {Math.floor(getCallDuration() / 60)}:
+//                       {(getCallDuration() % 60).toString().padStart(2, '0')}
+//                     </p>
+//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+//                     <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+//                     <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
+//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
+//                       End Call
+//                     </button>
+//                     <button className="btn btn-secondary w-100 mb-2" onClick={toggleMute}>
+//                       {callStatus.isMuted ? 'Unmute' : 'Mute'}
+//                     </button>
+//                     <button
+//                       className="btn btn-warning w-100 mb-2"
+//                       onClick={handleExtendCall}
+//                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+//                     >
+//                       {user?.powerTokens < 1
+//                         ? 'No Power Tokens'
+//                         : extendRequest
+//                         ? 'Awaiting Approval'
+//                         : 'Extend Call'}
+//                     </button>
+//                     {extendRequest && extendRequest.callId === callStatus.callId && (
+//                       <div>
+//                         <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+//                         <button
+//                           className="btn btn-success w-45 mr-2"
+//                           onClick={() => handleApproveExtend(true)}
+//                         >
+//                           Yes
+//                         </button>
+//                         <button className="btn btn-danger w-45" onClick={() => handleApproveExtend(false)}>
+//                           No
+//                         </button>
+//                       </div>
+//                     )}
+//                   </>
+//                 ) : (
+//                   <p>Call {callStatus.status}!</p>
+//                 )}
+//               </div>
+//             </div>
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default Home;
+
+
+
+// import React, { useState, useEffect, useRef } from 'react';
+// import { useSelector, useDispatch } from 'react-redux';
+// import { Link } from 'react-router-dom';
+// import {
+//   useInitiateCallMutation,
+//   useAcceptCallMutation,
+//   useRejectCallMutation,
+//   useEndCallMutation,
+//   useExtendCallMutation,
+//   useCancelCallMutation,
+//   useSetOnlineStatusMutation,
+//   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
+// } from '../redux/services/callApi';
+// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
+// import { io } from 'socket.io-client';
+// import { toast } from 'react-toastify';
+// import axios from 'axios';
+
+// const Home = () => {
+//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
+//   const dispatch = useDispatch();
+//   const [language, setLanguage] = useState('');
+//   const [extendRequest, setExtendRequest] = useState(null);
+//   const [localStream, setLocalStream] = useState(null);
+//   const [remoteStream, setRemoteStream] = useState(null);
+//   const peerConnection = useRef(null);
+//   const isWebRTCStarting = useRef(false);
+//   const [isReconnecting, setIsReconnecting] = useState(false); // Track reconnect state
+//   const socketRef = useRef(null);
+//   const prevCallStatusRef = useRef(null);
+//   const iceCandidatesQueue = useRef([]);
+
+//   const [initiateCall] = useInitiateCallMutation();
+//   const [acceptCall] = useAcceptCallMutation();
+//   const [rejectCall] = useRejectCallMutation();
+//   const [endCall] = useEndCallMutation();
+//   const [extendCall] = useExtendCallMutation();
+//   const [cancelCall] = useCancelCallMutation();
+//   const [setOnlineStatus] = useSetOnlineStatusMutation();
+//   const [approveExtendCall] = useApproveExtendCallMutation();
+//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
+//     skip: !isAuthenticated,
+//     pollingInterval: 5000,
+//   });
+
+//   useEffect(() => {
+//     if (callStatus?.isMuted !== undefined) {
+//       localStorage.setItem(`isMuted_${callStatus.callId}`, JSON.stringify(callStatus.isMuted));
+//     }
+//   }, [callStatus?.isMuted, callStatus?.callId]);
+
+//   useEffect(() => {
+//     if (isAuthenticated && user && user._id) {
+//       console.log('User in Redux:', user);
+//       socketRef.current = io('http://localhost:5000', {
+//         withCredentials: true,
+//         extraHeaders: { 'Content-Type': 'application/json' },
+//         reconnectionAttempts: 5,
+//         reconnectionDelay: 1000,
+//       });
+
+//       const socket = socketRef.current;
+
+//       socket.on('connect', () => {
+//         console.log('WebSocket connected:', socket.id);
+//         socket.emit('register', user._id);
+//         setOnlineStatus({ isOnline: true })
+//           .unwrap()
+//           .then(() => console.log('Set online status success'))
+//           .catch((err) => console.error('Set online failed:', err));
+//       });
+
+//       socket.on('call-request', (data) => {
+//         console.log('Call request received:', data);
+//         dispatch(
+//           setCallStatus({
+//             callId: data.callId,
+//             status: 'pending',
+//             caller: data.callerName,
+//             language: data.language,
+//             callerId: data.callerId,
+//             isMuted: false,
+//           })
+//         );
+//         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
+//       });
+
+//       socket.on('call-accepted', (data) => {
+//         console.log('Call accepted:', data);
+//         const updatedCallStatus = {
+//           callId: data.callId,
+//           status: 'active',
+//           receiver: data.receiverName,
+//           receiverId: data.receiverId,
+//           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//           callerId: user._id === data.receiverId ? data.callerId : user._id,
+//           startTime: callStatus?.startTime || new Date().toISOString(),
+//           isMuted: callStatus?.isMuted || false,
+//         };
+//         dispatch(setCallStatus(updatedCallStatus));
+//         if (!isWebRTCStarting.current && user._id === updatedCallStatus.callerId) {
+//           console.log('Starting WebRTC after call accepted, isCaller:', true);
+//           startWebRTC(socket, true, data.receiverId, data.callId);
+//         }
+//       });
+
+//       socket.on('offer', async ({ callId, offer, from }) => {
+//         console.log('Received offer:', { callId, offer, from });
+//         if (!isWebRTCStarting.current) {
+//           await startWebRTC(socket, false, from, callId, offer);
+//         }
+//       });
+
+//       socket.on('answer', ({ callId, answer }) => {
+//         console.log('Received answer:', { callId, answer });
+//         if (peerConnection.current) {
+//           peerConnection.current
+//             .setRemoteDescription(new RTCSessionDescription(answer))
+//             .then(() => console.log('Answer set successfully'))
+//             .catch((err) => console.error('Set answer failed:', err));
+//         }
+//       });
+
+//       socket.on('ice-candidate', ({ callId, candidate }) => {
+//         console.log('Received ICE candidate:', { callId, candidate });
+//         if (peerConnection.current && peerConnection.current.remoteDescription) {
+//           peerConnection.current
+//             .addIceCandidate(new RTCIceCandidate(candidate))
+//             .catch((err) => console.error('ICE candidate error:', err));
+//         } else {
+//           console.log('Buffering ICE candidate:', candidate);
+//           iceCandidatesQueue.current.push(candidate);
+//         }
+//       });
+
+//       socket.on('call-rejected', (data) => {
+//         console.log('Call rejected:', data);
+//         if (callStatus?.callerId === user?._id) {
+//           toast.warn(`Your call was rejected by ${data.receiverName}`);
+//           dispatch(clearCallStatus());
+//         }
+//       });
+
+//       socket.on('call-ended', (data) => {
+//         console.log('Call ended:', data);
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//         toast.info(`Call ended with status: ${data.status}`);
+//       });
+
+//       socket.on('call-extend-request', (data) => {
+//         console.log('Extend request received:', data);
+//         setExtendRequest(data);
+//         toast.info(`${data.requesterName} wants to extend the call. Approve?`);
+//       });
+
+//       socket.on('call-extended', (data) => {
+//         console.log('Call extended:', data);
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('Call has been extended!');
+//       });
+
+//       socket.on('extend-denied', (data) => {
+//         console.log('Extension denied:', data);
+//         setExtendRequest(null);
+//         toast.info('Call extension was denied.');
+//       });
+
+//       socket.on('call-refreshing', (data) => {
+//         console.log('Other user is refreshing:', data);
+//         toast.info('Your call partner is reconnecting, please wait...');
+//       });
+
+//       socket.on('call-disconnected', (data) => {
+//         console.log('Call disconnected:', data);
+//         toast.warn('Your call partner disconnected unexpectedly');
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//       });
+
+//       socket.on('call-reconnect', async ({ callId, userId }) => {
+//         console.log('Received reconnect request:', { callId, userId });
+//         if (callId !== callStatus?.callId || userId === user._id) return;
+
+//         setIsReconnecting(true); // Start reconnection
+
+//         if (peerConnection.current) {
+//           console.log('Cleaning up existing WebRTC before reconnect');
+//           peerConnection.current.onicecandidate = null;
+//           peerConnection.current.ontrack = null;
+//           peerConnection.current.onconnectionstatechange = null;
+//           peerConnection.current.close();
+//           peerConnection.current = null;
+//           setRemoteStream(null);
+//         }
+
+//         if (user._id === callStatus.callerId) {
+//           console.log('Caller restarting WebRTC for call:', callId);
+//           await startWebRTC(socket, true, callStatus.receiverId, callId);
+//         }
+
+//         setIsReconnecting(false); // End reconnection
+//       });
+
+//       return () => {
+//         socket.disconnect();
+//         cleanupWebRTC();
+//       };
+//     }
+//   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
+
+//   useEffect(() => {
+//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
+//     if (currentCallData?.call) {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${currentCallData.call._id}`)) || false;
+//       const newCallStatus = {
+//         callId: currentCallData.call._id,
+//         status: currentCallData.call.status,
+//         language: currentCallData.call.language,
+//         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+//         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+//         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+//         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+//         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+//           id: r._id.toString(),
+//           name: r.name || 'Unknown',
+//         })) || callStatus?.receivers || [],
+//         extended: currentCallData.call.extended || callStatus?.extended || false,
+//         startTime: currentCallData.call.startTime || callStatus?.startTime,
+//         isMuted: persistedIsMuted,
+//       };
+//       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
+//         console.log('Restoring call status:', newCallStatus);
+//         dispatch(setCallStatus(newCallStatus));
+//         prevCallStatusRef.current = newCallStatus;
+//       }
+//       if (currentCallData.call.status === 'active' && !peerConnection.current && !isReconnecting) {
+//         console.log('Restoring WebRTC for active call:', currentCallData.call._id);
+//         const isCaller = user._id === currentCallData.call.caller._id;
+//         const remoteUserId = isCaller ? currentCallData.call.receiver._id : currentCallData.call.caller._id;
+//         startWebRTC(socketRef.current, isCaller, remoteUserId, currentCallData.call._id);
+//       }
+//     } else if (!callLoading && !callError && callStatus && !isReconnecting) {
+//       console.log('No active call, clearing status');
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       prevCallStatusRef.current = null;
+//       localStorage.removeItem(`isMuted_${callStatus.callId}`);
+//     }
+//   }, [currentCallData, callLoading, callError, dispatch, user, isReconnecting]);
+
+//   useEffect(() => {
+//     const handleBeforeUnload = () => {
+//       if (callStatus?.status === 'active') {
+//         socketRef.current.emit('call-refresh', { callId: callStatus.callId, userId: user._id });
+//       }
+//     };
+//     window.addEventListener('beforeunload', handleBeforeUnload);
+//     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+//   }, [callStatus, user]);
+
+//   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+//     console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+//     if (isWebRTCStarting.current) {
+//       console.log('WebRTC already starting, skipping');
+//       return;
+//     }
+//     isWebRTCStarting.current = true;
+
+//     if (!socketInstance.connected) {
+//       console.log('Socket not connected, attempting to reconnect');
+//       socketInstance.connect();
+//     } else {
+//       console.log('Socket already connected');
+//     }
+
+//     const configuration = {
+//       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+//     };
+
+//     peerConnection.current = new RTCPeerConnection(configuration);
+
+//     peerConnection.current.onicecandidate = (event) => {
+//       if (event.candidate) {
+//         console.log('Sending ICE candidate to:', remoteUserId);
+//         socketInstance.emit('ice-candidate', {
+//           callId,
+//           to: remoteUserId,
+//           candidate: event.candidate,
+//           from: user._id,
+//         });
+//       }
+//     };
+
+//     peerConnection.current.ontrack = (event) => {
+//       console.log('Remote track received:', event.streams[0]);
+//       event.streams[0].getTracks().forEach((track) => console.log('Remote track state:', track.readyState));
+//       setRemoteStream(event.streams[0]);
+//     };
+
+//     peerConnection.current.onconnectionstatechange = () => {
+//       console.log('Connection state:', peerConnection.current.connectionState);
+//       if (peerConnection.current.connectionState === 'connected') {
+//         toast.success('Audio call connected!');
+//       } else if (
+//         (peerConnection.current.connectionState === 'failed' ||
+//           peerConnection.current.connectionState === 'disconnected') &&
+//         callStatus?.status !== 'active' &&
+//         !isReconnecting
+//       ) {
+//         console.log('Connection failed or disconnected, cleaning up');
+//         cleanupWebRTC();
+//       }
+//     };
+
+//     try {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${callId}`)) || false;
+//       if (!localStream) {
+//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         console.log('Local stream obtained:', stream.getTracks());
+//         stream.getAudioTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted;
+//           console.log('Adding track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, stream);
+//         });
+//         setLocalStream(stream);
+//       } else {
+//         localStream.getTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted;
+//           console.log('Adding existing track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, localStream);
+//         });
+//       }
+
+//       if (isCaller) {
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         console.log('Sending offer to:', remoteUserId);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+//       } else if (offer) {
+//         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//         while (iceCandidatesQueue.current.length) {
+//           const candidate = iceCandidatesQueue.current.shift();
+//           console.log('Applying buffered ICE candidate:', candidate);
+//           await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+//         }
+//         const answer = await peerConnection.current.createAnswer();
+//         await peerConnection.current.setLocalDescription(answer);
+//         console.log('Sending answer to:', remoteUserId);
+//         socketInstance.emit('answer', { callId, answer, to: remoteUserId, from: user._id });
+//       }
+
+//       if (!isCaller) {
+//         socketInstance.on('offer', async ({ callId: incomingCallId, offer, from }) => {
+//           if (incomingCallId === callId && !isCaller) {
+//             console.log('Received new offer during reconnect:', { callId, offer, from });
+//             await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//             const answer = await peerConnection.current.createAnswer();
+//             await peerConnection.current.setLocalDescription(answer);
+//             console.log('Sending answer to:', from);
+//             socketInstance.emit('answer', { callId, answer, to: from, from: user._id });
+//           }
+//         });
+//       }
+//     } catch (error) {
+//       console.error('WebRTC error:', error);
+//       toast.error('Failed to start audio: ' + error.message);
+//       cleanupWebRTC();
+//     } finally {
+//       isWebRTCStarting.current = false;
+//     }
+//   };
+
+//   const cleanupWebRTC = () => {
+//     console.log('Cleaning up WebRTC');
+//     if (peerConnection.current) {
+//       peerConnection.current.close();
+//       peerConnection.current = null;
+//     }
+//     if (localStream) {
+//       localStream.getTracks().forEach((track) => track.stop());
+//       setLocalStream(null);
+//     }
+//     setRemoteStream(null);
+//     iceCandidatesQueue.current = [];
+//   };
+
+//   const toggleMute = () => {
+//     if (localStream) {
+//       const newIsMuted = !callStatus?.isMuted;
+//       localStream.getAudioTracks().forEach((track) => {
+//         track.enabled = !newIsMuted;
+//         console.log('Toggled mute, track enabled:', track.enabled);
+//       });
+//       dispatch(setCallStatus({ ...callStatus, isMuted: newIsMuted }));
+//       toast.info(newIsMuted ? 'Microphone muted' : 'Microphone unmuted');
+//     }
+//   };
+
+//   const getCallDuration = () => {
+//     if (callStatus?.status === 'active' && callStatus?.startTime) {
+//       const start = new Date(callStatus.startTime).getTime();
+//       const now = Date.now();
+//       return Math.floor((now - start) / 1000); // Seconds
+//     }
+//     return 0;
+//   };
+
+//   const handleInitiateCall = async () => {
+//     if (!language) {
+//       toast.error('Please enter a language');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to initiate a call');
+//       return;
+//     }
+//     console.log('Initiating call with language:', language);
+//     try {
+//       const response = await initiateCall(language).unwrap();
+//       console.log('Initiated call:', response);
+//       dispatch(
+//         setCallStatus({
+//           callId: response.callId,
+//           status: 'pending',
+//           receivers: response.potentialReceivers,
+//           language,
+//           callerId: user?._id,
+//           caller: user?.name,
+//           startTime: new Date().toISOString(),
+//           isMuted: false,
+//         })
+//       );
+//       toast.success('Call initiated, waiting for a receiver...');
+//     } catch (error) {
+//       console.error('Initiate call failed:', error);
+//       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleAcceptCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to accept');
+//       return;
+//     }
+//     console.log('Accepting call:', callStatus.callId);
+//     try {
+//       await axios.post(
+//         'http://localhost:5000/api/calls/accept',
+//         { callId: callStatus.callId },
+//         { withCredentials: true }
+//       );
+//       console.log('Call accepted by:', user.name);
+//       const updatedCallStatus = {
+//         ...callStatus,
+//         status: 'active',
+//         receiver: user.name,
+//         receiverId: user._id,
+//         startTime: new Date().toISOString(),
+//         isMuted: callStatus?.isMuted || false,
+//       };
+//       dispatch(setCallStatus(updatedCallStatus));
+//       toast.success('Call accepted! Waiting for caller audio...');
+//     } catch (error) {
+//       console.error('Accept call error:', error);
+//       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//     }
+//   };
+
+//   const handleRejectCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to reject');
+//       return;
+//     }
+//     console.log('Rejecting call:', callStatus.callId);
+//     try {
+//       await rejectCall(callStatus.callId).unwrap();
+//       console.log('Call rejected by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call rejected');
+//     } catch (error) {
+//       console.error('Reject call failed:', error);
+//       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleEndCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to end');
+//       return;
+//     }
+//     console.log('Ending call:', callStatus.callId);
+//     try {
+//       await endCall(callStatus.callId).unwrap();
+//       console.log('Call ended by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.success('Call ended');
+//     } catch (error) {
+//       console.error('End call failed:', error);
+//       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleExtendCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to extend');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to extend a call');
+//       return;
+//     }
+//     console.log('Extending call:', callStatus.callId);
+//     try {
+//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
+//       toast.info('Extension request sent, awaiting approval...');
+//     } catch (error) {
+//       console.error('Extend call failed:', error);
+//       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   const handleApproveExtend = async (approve) => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to approve extension for');
+//       return;
+//     }
+//     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
+//     try {
+//       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+//       setExtendRequest(null);
+//       if (approve) {
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('You approved the call extension!');
+//       } else {
+//         toast.info('You denied the call extension.');
+//       }
+//     } catch (error) {
+//       console.error('Approve extend call failed:', error);
+//       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+//       setExtendRequest(null);
+//     }
+//   };
+
+//   const handleCancelCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to cancel');
+//       return;
+//     }
+//     console.log('Cancelling call:', callStatus.callId);
+//     try {
+//       await cancelCall(callStatus.callId).unwrap();
+//       console.log('Call cancelled by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call cancelled');
+//     } catch (error) {
+//       console.error('Cancel call failed:', error);
+//       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   if (isAuthenticated && callLoading && !callStatus) {
+//     return <div>Loading call status...</div>;
+//   }
+
+//   return (
+//     <div className="container mt-5 text-center">
+//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
+//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
+
+//       {!isAuthenticated ? (
+//         <div className="alert alert-info">
+//           Please <Link to="/login">login</Link> to start exchanging languages!
+//         </div>
+//       ) : (
+//         <div>
+//           {!callStatus ? (
+//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Start a Language Call</h5>
+//                 <div className="mb-3">
+//                   <input
+//                     type="text"
+//                     className="form-control"
+//                     placeholder="Enter language to learn (e.g., Spanish)"
+//                     value={language}
+//                     onChange={(e) => setLanguage(e.target.value)}
+//                   />
+//                 </div>
+//                 <button
+//                   className="btn btn-primary w-100"
+//                   onClick={handleInitiateCall}
+//                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
+//                 >
+//                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+//                 </button>
+//               </div>
+//             </div>
+//           ) : (
+//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Call Status</h5>
+//                 {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+//                   <>
+//                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
+//                     {callStatus.receivers && (
+//                       <p>
+//                         Potential Receivers:{' '}
+//                         {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}
+//                       </p>
+//                     )}
+//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
+//                       Cancel Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
+//                   <>
+//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
+//                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
+//                       Accept Call
+//                     </button>
+//                     <button className="btn btn-danger w-100" onClick={handleRejectCall}>
+//                       Reject Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'active' ? (
+//                   <>
+//                     <p>
+//                       Active call with{' '}
+//                       {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+//                     </p>
+//                     <p>
+//                       Call Duration: {Math.floor(getCallDuration() / 60)}:
+//                       {(getCallDuration() % 60).toString().padStart(2, '0')}
+//                     </p>
+//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+//                     <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+//                     <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
+//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
+//                       End Call
+//                     </button>
+//                     <button className="btn btn-secondary w-100 mb-2" onClick={toggleMute}>
+//                       {callStatus.isMuted ? 'Unmute' : 'Mute'}
+//                     </button>
+//                     <button
+//                       className="btn btn-warning w-100 mb-2"
+//                       onClick={handleExtendCall}
+//                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+//                     >
+//                       {user?.powerTokens < 1
+//                         ? 'No Power Tokens'
+//                         : extendRequest
+//                         ? 'Awaiting Approval'
+//                         : 'Extend Call'}
+//                     </button>
+//                     {extendRequest && extendRequest.callId === callStatus.callId && (
+//                       <div>
+//                         <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+//                         <button
+//                           className="btn btn-success w-45 mr-2"
+//                           onClick={() => handleApproveExtend(true)}
+//                         >
+//                           Yes
+//                         </button>
+//                         <button className="btn btn-danger w-45" onClick={() => handleApproveExtend(false)}>
+//                           No
+//                         </button>
+//                       </div>
+//                     )}
+//                   </>
+//                 ) : (
+//                   <p>Call {callStatus.status}!</p>
+//                 )}
+//               </div>
+//             </div>
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default Home;
+
+
+// import React, { useState, useEffect, useRef } from 'react';
+// import { useSelector, useDispatch } from 'react-redux';
+// import { Link } from 'react-router-dom';
+// import {
+//   useInitiateCallMutation,
+//   useAcceptCallMutation,
+//   useRejectCallMutation,
+//   useEndCallMutation,
+//   useExtendCallMutation,
+//   useCancelCallMutation,
+//   useSetOnlineStatusMutation,
+//   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
+// } from '../redux/services/callApi';
+// import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
+// import { io } from 'socket.io-client';
+// import { toast } from 'react-toastify';
+// import axios from 'axios';
+
+// const Home = () => {
+//   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
+//   const dispatch = useDispatch();
+//   const [language, setLanguage] = useState('');
+//   const [extendRequest, setExtendRequest] = useState(null);
+//   const [localStream, setLocalStream] = useState(null);
+//   const [remoteStream, setRemoteStream] = useState(null);
+//   const peerConnection = useRef(null);
+//   const isWebRTCStarting = useRef(false);
+//   const [isReconnecting, setIsReconnecting] = useState(false); // Track reconnect state
+//   const socketRef = useRef(null);
+//   const prevCallStatusRef = useRef(null);
+//   const iceCandidatesQueue = useRef([]);
+
+//   const [initiateCall] = useInitiateCallMutation();
+//   const [acceptCall] = useAcceptCallMutation();
+//   const [rejectCall] = useRejectCallMutation();
+//   const [endCall] = useEndCallMutation();
+//   const [extendCall] = useExtendCallMutation();
+//   const [cancelCall] = useCancelCallMutation();
+//   const [setOnlineStatus] = useSetOnlineStatusMutation();
+//   const [approveExtendCall] = useApproveExtendCallMutation();
+//   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
+//     skip: !isAuthenticated,
+//     pollingInterval: 5000,
+//   });
+
+//   // **Persist mute state when it changes**
+//   useEffect(() => {
+//     if (callStatus?.isMuted !== undefined && callStatus?.callId) {
+//       localStorage.setItem(`isMuted_${callStatus.callId}`, JSON.stringify(callStatus.isMuted));
+//     }
+//   }, [callStatus?.isMuted, callStatus?.callId]);
+
+//   // **Sync mute state with audio tracks whenever localStream or isMuted changes**
+//   useEffect(() => {
+//     if (localStream && callStatus?.isMuted !== undefined) {
+//       localStream.getAudioTracks().forEach((track) => {
+//         track.enabled = !callStatus.isMuted;
+//       });
+//     }
+//   }, [localStream, callStatus?.isMuted]);
+
+//   // **Socket and WebRTC setup**
+//   useEffect(() => {
+//     if (isAuthenticated && user && user._id) {
+//       console.log('User in Redux:', user);
+//       socketRef.current = io('http://localhost:5000', {
+//         withCredentials: true,
+//         extraHeaders: { 'Content-Type': 'application/json' },
+//         reconnectionAttempts: 5,
+//         reconnectionDelay: 1000,
+//       });
+
+//       const socket = socketRef.current;
+
+//       socket.on('connect', () => {
+//         console.log('WebSocket connected:', socket.id);
+//         socket.emit('register', user._id);
+//         setOnlineStatus({ isOnline: true })
+//           .unwrap()
+//           .then(() => console.log('Set online status success'))
+//           .catch((err) => console.error('Set online failed:', err));
+//       });
+
+//       socket.on('call-request', (data) => {
+//         console.log('Call request received:', data);
+//         dispatch(
+//           setCallStatus({
+//             callId: data.callId,
+//             status: 'pending',
+//             caller: data.callerName,
+//             language: data.language,
+//             callerId: data.callerId,
+//             isMuted: false,
+//           })
+//         );
+//         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
+//       });
+
+//       socket.on('call-accepted', (data) => {
+//         console.log('Call accepted:', data);
+//         const updatedCallStatus = {
+//           callId: data.callId,
+//           status: 'active',
+//           receiver: data.receiverName,
+//           receiverId: data.receiverId,
+//           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//           callerId: user._id === data.receiverId ? data.callerId : user._id,
+//           startTime: callStatus?.startTime || new Date().toISOString(),
+//           isMuted: callStatus?.isMuted || false,
+//         };
+//         dispatch(setCallStatus(updatedCallStatus));
+//         if (!isWebRTCStarting.current && user._id === updatedCallStatus.callerId) {
+//           console.log('Starting WebRTC after call accepted, isCaller:', true);
+//           startWebRTC(socket, true, data.receiverId, data.callId);
+//         }
+//       });
+
+//       socket.on('offer', async ({ callId, offer, from }) => {
+//         console.log('Received offer:', { callId, offer, from });
+//         if (!isWebRTCStarting.current) {
+//           await startWebRTC(socket, false, from, callId, offer);
+//         }
+//       });
+
+//       socket.on('answer', ({ callId, answer }) => {
+//         console.log('Received answer:', { callId, answer });
+//         if (peerConnection.current) {
+//           peerConnection.current
+//             .setRemoteDescription(new RTCSessionDescription(answer))
+//             .then(() => console.log('Answer set successfully'))
+//             .catch((err) => console.error('Set answer failed:', err));
+//         }
+//       });
+
+//       socket.on('ice-candidate', ({ callId, candidate }) => {
+//         console.log('Received ICE candidate:', { callId, candidate });
+//         if (peerConnection.current && peerConnection.current.remoteDescription) {
+//           peerConnection.current
+//             .addIceCandidate(new RTCIceCandidate(candidate))
+//             .catch((err) => console.error('ICE candidate error:', err));
+//         } else {
+//           console.log('Buffering ICE candidate:', candidate);
+//           iceCandidatesQueue.current.push(candidate);
+//         }
+//       });
+
+//       socket.on('call-rejected', (data) => {
+//         console.log('Call rejected:', data);
+//         if (callStatus?.callerId === user?._id) {
+//           toast.warn(`Your call was rejected by ${data.receiverName}`);
+//           dispatch(clearCallStatus());
+//         }
+//       });
+
+//       socket.on('call-ended', (data) => {
+//         console.log('Call ended:', data);
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//         toast.info(`Call ended with status: ${data.status}`);
+//       });
+
+//       socket.on('call-extend-request', (data) => {
+//         console.log('Extend request received:', data);
+//         setExtendRequest(data);
+//         toast.info(`${data.requesterName} wants to extend the call. Approve?`);
+//       });
+
+//       socket.on('call-extended', (data) => {
+//         console.log('Call extended:', data);
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('Call has been extended!');
+//       });
+
+//       socket.on('extend-denied', (data) => {
+//         console.log('Extension denied:', data);
+//         setExtendRequest(null);
+//         toast.info('Call extension was denied.');
+//       });
+
+//       socket.on('call-refreshing', (data) => {
+//         console.log('Other user is refreshing:', data);
+//         toast.info('Your call partner is reconnecting, please wait...');
+//       });
+
+//       socket.on('call-disconnected', (data) => {
+//         console.log('Call disconnected:', data);
+//         toast.warn('Your call partner disconnected unexpectedly');
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//       });
+
+//       socket.on('call-reconnect', async ({ callId, userId }) => {
+//         console.log('Received reconnect request:', { callId, userId });
+//         if (callId !== callStatus?.callId || userId === user._id) return;
+
+//         setIsReconnecting(true); // Start reconnection
+
+//         if (peerConnection.current) {
+//           console.log('Cleaning up existing WebRTC before reconnect');
+//           peerConnection.current.onicecandidate = null;
+//           peerConnection.current.ontrack = null;
+//           peerConnection.current.onconnectionstatechange = null;
+//           peerConnection.current.close();
+//           peerConnection.current = null;
+//           setRemoteStream(null);
+//         }
+
+//         if (user._id === callStatus.callerId) {
+//           console.log('Caller restarting WebRTC for call:', callId);
+//           await startWebRTC(socket, true, callStatus.receiverId, callId);
+//         }
+
+//         setIsReconnecting(false); // End reconnection
+//       });
+
+//       return () => {
+//         socket.disconnect();
+//         cleanupWebRTC();
+//       };
+//     }
+//   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
+
+//   // **Restore active call on load**
+//   useEffect(() => {
+//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
+//     if (currentCallData?.call) {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${currentCallData.call._id}`)) || false;
+//       const newCallStatus = {
+//         callId: currentCallData.call._id,
+//         status: currentCallData.call.status,
+//         language: currentCallData.call.language,
+//         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+//         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+//         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+//         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+//         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+//           id: r._id.toString(),
+//           name: r.name || 'Unknown',
+//         })) || callStatus?.receivers || [],
+//         extended: currentCallData.call.extended || callStatus?.extended || false,
+//         startTime: currentCallData.call.startTime || callStatus?.startTime,
+//         isMuted: persistedIsMuted,
+//       };
+//       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
+//         console.log('Restoring call status:', newCallStatus);
+//         dispatch(setCallStatus(newCallStatus));
+//         prevCallStatusRef.current = newCallStatus;
+//       }
+//       if (currentCallData.call.status === 'active' && !peerConnection.current && !isReconnecting) {
+//         console.log('Restoring WebRTC for active call:', currentCallData.call._id);
+//         const isCaller = user._id === currentCallData.call.caller._id;
+//         const remoteUserId = isCaller ? currentCallData.call.receiver._id : currentCallData.call.caller._id;
+//         startWebRTC(socketRef.current, isCaller, remoteUserId, currentCallData.call._id);
+//       }
+//     } else if (!callLoading && !callError && callStatus && !isReconnecting) {
+//       console.log('No active call, clearing status');
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       prevCallStatusRef.current = null;
+//       if (callStatus?.callId) {
+//         localStorage.removeItem(`isMuted_${callStatus.callId}`);
+//       }
+//     }
+//   }, [currentCallData, callLoading, callError, dispatch, user, isReconnecting]);
+
+//   // **Handle page refresh**
+//   useEffect(() => {
+//     const handleBeforeUnload = () => {
+//       if (callStatus?.status === 'active') {
+//         socketRef.current.emit('call-refresh', { callId: callStatus.callId, userId: user._id });
+//       }
+//     };
+//     window.addEventListener('beforeunload', handleBeforeUnload);
+//     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+//   }, [callStatus, user]);
+
+//   // **Start WebRTC Connection**
+//   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+//     console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+//     if (isWebRTCStarting.current) {
+//       console.log('WebRTC already starting, skipping');
+//       return;
+//     }
+//     isWebRTCStarting.current = true;
+
+//     if (!socketInstance.connected) {
+//       console.log('Socket not connected, attempting to reconnect');
+//       socketInstance.connect();
+//     } else {
+//       console.log('Socket already connected');
+//     }
+
+//     const configuration = {
+//       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+//     };
+
+//     peerConnection.current = new RTCPeerConnection(configuration);
+
+//     peerConnection.current.onicecandidate = (event) => {
+//       if (event.candidate) {
+//         console.log('Sending ICE candidate to:', remoteUserId);
+//         socketInstance.emit('ice-candidate', {
+//           callId,
+//           to: remoteUserId,
+//           candidate: event.candidate,
+//           from: user._id,
+//         });
+//       }
+//     };
+
+//     peerConnection.current.ontrack = (event) => {
+//       console.log('Remote track received:', event.streams[0]);
+//       event.streams[0].getTracks().forEach((track) => console.log('Remote track state:', track.readyState));
+//       setRemoteStream(event.streams[0]);
+//     };
+
+//     peerConnection.current.onconnectionstatechange = () => {
+//       console.log('Connection state:', peerConnection.current.connectionState);
+//       if (peerConnection.current.connectionState === 'connected') {
+//         toast.success('Audio call connected!');
+//       } else if (
+//         (peerConnection.current.connectionState === 'failed' ||
+//           peerConnection.current.connectionState === 'disconnected') &&
+//         callStatus?.status !== 'active' &&
+//         !isReconnecting
+//       ) {
+//         console.log('Connection failed or disconnected, cleaning up');
+//         cleanupWebRTC();
+//       }
+//     };
+
+//     try {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${callId}`)) || false;
+//       if (!localStream) {
+//         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         console.log('Local stream obtained:', stream.getTracks());
+//         stream.getAudioTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted;
+//           console.log('Adding track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, stream);
+//         });
+//         setLocalStream(stream);
+//       } else {
+//         localStream.getTracks().forEach((track) => {
+//           track.enabled = !persistedIsMuted;
+//           console.log('Adding existing track with enabled:', track.enabled);
+//           peerConnection.current.addTrack(track, localStream);
+//         });
+//       }
+
+//       if (isCaller) {
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         console.log('Sending offer to:', remoteUserId);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+//       } else if (offer) {
+//         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//         while (iceCandidatesQueue.current.length) {
+//           const candidate = iceCandidatesQueue.current.shift();
+//           console.log('Applying buffered ICE candidate:', candidate);
+//           await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+//         }
+//         const answer = await peerConnection.current.createAnswer();
+//         await peerConnection.current.setLocalDescription(answer);
+//         console.log('Sending answer to:', remoteUserId);
+//         socketInstance.emit('answer', { callId, answer, to: remoteUserId, from: user._id });
+//       }
+
+//       if (!isCaller) {
+//         socketInstance.on('offer', async ({ callId: incomingCallId, offer, from }) => {
+//           if (incomingCallId === callId && !isCaller) {
+//             console.log('Received new offer during reconnect:', { callId, offer, from });
+//             await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//             const answer = await peerConnection.current.createAnswer();
+//             await peerConnection.current.setLocalDescription(answer);
+//             console.log('Sending answer to:', from);
+//             socketInstance.emit('answer', { callId, answer, to: from, from: user._id });
+//           }
+//         });
+//       }
+//     } catch (error) {
+//       console.error('WebRTC error:', error);
+//       toast.error('Failed to start audio: ' + error.message);
+//       cleanupWebRTC();
+//     } finally {
+//       isWebRTCStarting.current = false;
+//     }
+//   };
+
+//   // **Cleanup WebRTC Resources**
+//   const cleanupWebRTC = () => {
+//     console.log('Cleaning up WebRTC');
+//     if (peerConnection.current) {
+//       peerConnection.current.close();
+//       peerConnection.current = null;
+//     }
+//     if (localStream) {
+//       localStream.getTracks().forEach((track) => track.stop());
+//       setLocalStream(null);
+//     }
+//     setRemoteStream(null);
+//     iceCandidatesQueue.current = [];
+//     if (callStatus?.callId) {
+//       localStorage.removeItem(`isMuted_${callStatus.callId}`);
+//     }
+//   };
+
+//   // **Toggle Mute/Unmute**
+//   const toggleMute = () => {
+//     if (localStream) {
+//       const newIsMuted = !callStatus?.isMuted;
+//       localStream.getAudioTracks().forEach((track) => {
+//         track.enabled = !newIsMuted;
+//         console.log('Toggled mute, track enabled:', track.enabled);
+//       });
+//       dispatch(setCallStatus({ ...callStatus, isMuted: newIsMuted }));
+//       localStorage.setItem(`isMuted_${callStatus.callId}`, JSON.stringify(newIsMuted));
+//       toast.info(newIsMuted ? 'Microphone muted' : 'Microphone unmuted');
+//     }
+//   };
+
+//   // **Get Call Duration**
+//   const getCallDuration = () => {
+//     if (callStatus?.status === 'active' && callStatus?.startTime) {
+//       const start = new Date(callStatus.startTime).getTime();
+//       const now = Date.now();
+//       return Math.floor((now - start) / 1000); // Seconds
+//     }
+//     return 0;
+//   };
+
+//   // **Handle Initiate Call**
+//   const handleInitiateCall = async () => {
+//     if (!language) {
+//       toast.error('Please enter a language');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to initiate a call');
+//       return;
+//     }
+//     console.log('Initiating call with language:', language);
+//     try {
+//       const response = await initiateCall(language).unwrap();
+//       console.log('Initiated call:', response);
+//       dispatch(
+//         setCallStatus({
+//           callId: response.callId,
+//           status: 'pending',
+//           receivers: response.potentialReceivers,
+//           language,
+//           callerId: user?._id,
+//           caller: user?.name,
+//           startTime: new Date().toISOString(),
+//           isMuted: false,
+//         })
+//       );
+//       toast.success('Call initiated, waiting for a receiver...');
+//     } catch (error) {
+//       console.error('Initiate call failed:', error);
+//       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   // **Handle Accept Call**
+//   const handleAcceptCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to accept');
+//       return;
+//     }
+//     console.log('Accepting call:', callStatus.callId);
+//     try {
+//       await axios.post(
+//         'http://localhost:5000/api/calls/accept',
+//         { callId: callStatus.callId },
+//         { withCredentials: true }
+//       );
+//       console.log('Call accepted by:', user.name);
+//       const updatedCallStatus = {
+//         ...callStatus,
+//         status: 'active',
+//         receiver: user.name,
+//         receiverId: user._id,
+//         startTime: new Date().toISOString(),
+//         isMuted: callStatus?.isMuted || false,
+//       };
+//       dispatch(setCallStatus(updatedCallStatus));
+//       toast.success('Call accepted! Waiting for caller audio...');
+//     } catch (error) {
+//       console.error('Accept call error:', error);
+//       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//     }
+//   };
+
+//   // **Handle Reject Call**
+//   const handleRejectCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to reject');
+//       return;
+//     }
+//     console.log('Rejecting call:', callStatus.callId);
+//     try {
+//       await rejectCall(callStatus.callId).unwrap();
+//       console.log('Call rejected by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call rejected');
+//     } catch (error) {
+//       console.error('Reject call failed:', error);
+//       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   // **Handle End Call**
+//   const handleEndCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to end');
+//       return;
+//     }
+//     console.log('Ending call:', callStatus.callId);
+//     try {
+//       await endCall(callStatus.callId).unwrap();
+//       console.log('Call ended by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.success('Call ended');
+//     } catch (error) {
+//       console.error('End call failed:', error);
+//       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   // **Handle Extend Call**
+//   const handleExtendCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to extend');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to extend a call');
+//       return;
+//     }
+//     console.log('Extending call:', callStatus.callId);
+//     try {
+//       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
+//       toast.info('Extension request sent, awaiting approval...');
+//     } catch (error) {
+//       console.error('Extend call failed:', error);
+//       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   // **Handle Approve Extend**
+//   const handleApproveExtend = async (approve) => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to approve extension for');
+//       return;
+//     }
+//     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
+//     try {
+//       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+//       setExtendRequest(null);
+//       if (approve) {
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('You approved the call extension!');
+//       } else {
+//         toast.info('You denied the call extension.');
+//       }
+//     } catch (error) {
+//       console.error('Approve extend call failed:', error);
+//       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+//       setExtendRequest(null);
+//     }
+//   };
+
+//   // **Handle Cancel Call**
+//   const handleCancelCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to cancel');
+//       return;
+//     }
+//     console.log('Cancelling call:', callStatus.callId);
+//     try {
+//       await cancelCall(callStatus.callId).unwrap();
+//       console.log('Call cancelled by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call cancelled');
+//     } catch (error) {
+//       console.error('Cancel call failed:', error);
+//       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
+//     }
+//   };
+
+//   if (isAuthenticated && callLoading && !callStatus) {
+//     return <div>Loading call status...</div>;
+//   }
+
+//   return (
+//     <div className="container mt-5 text-center">
+//       <h1 className="text-primary mb-4">Welcome to Language Exchange!</h1>
+//       <p className="lead mb-5">Connect with language partners worldwide in real-time!</p>
+
+//       {!isAuthenticated ? (
+//         <div className="alert alert-info">
+//           Please <Link to="/login">login</Link> to start exchanging languages!
+//         </div>
+//       ) : (
+//         <div>
+//           {!callStatus ? (
+//             <div className="card mx-auto" style={{ maxWidth: '400px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Start a Language Call</h5>
+//                 <div className="mb-3">
+//                   <input
+//                     type="text"
+//                     className="form-control"
+//                     placeholder="Enter language to learn (e.g., Spanish)"
+//                     value={language}
+//                     onChange={(e) => setLanguage(e.target.value)}
+//                   />
+//                 </div>
+//                 <button
+//                   className="btn btn-primary w-100"
+//                   onClick={handleInitiateCall}
+//                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
+//                 >
+//                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+//                 </button>
+//               </div>
+//             </div>
+//           ) : (
+//             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
+//               <div className="card-body">
+//                 <h5 className="card-title">Call Status</h5>
+//                 {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+//                   <>
+//                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
+//                     {callStatus.receivers && (
+//                       <p>
+//                         Potential Receivers:{' '}
+//                         {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}
+//                       </p>
+//                     )}
+//                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
+//                       Cancel Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
+//                   <>
+//                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
+//                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
+//                       Accept Call
+//                     </button>
+//                     <button className="btn btn-danger w-100" onClick={handleRejectCall}>
+//                       Reject Call
+//                     </button>
+//                   </>
+//                 ) : callStatus.status === 'active' ? (
+//                   <>
+//                     <p>
+//                       Active call with{' '}
+//                       {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+//                     </p>
+//                     <p>
+//                       Call Duration: {Math.floor(getCallDuration() / 60)}:
+//                       {(getCallDuration() % 60).toString().padStart(2, '0')}
+//                     </p>
+//                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+//                     <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+//                     <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
+//                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
+//                       End Call
+//                     </button>
+//                     <button className="btn btn-secondary w-100 mb-2" onClick={toggleMute}>
+//                       {callStatus.isMuted ? 'Unmute' : 'Mute'}
+//                     </button>
+//                     <button
+//                       className="btn btn-warning w-100 mb-2"
+//                       onClick={handleExtendCall}
+//                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+//                     >
+//                       {user?.powerTokens < 1
+//                         ? 'No Power Tokens'
+//                         : extendRequest
+//                         ? 'Awaiting Approval'
+//                         : 'Extend Call'}
+//                     </button>
+//                     {extendRequest && extendRequest.callId === callStatus.callId && (
+//                       <div>
+//                         <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+//                         <button
+//                           className="btn btn-success w-45 mr-2"
+//                           onClick={() => handleApproveExtend(true)}
+//                         >
+//                           Yes
+//                         </button>
+//                         <button className="btn btn-danger w-45" onClick={() => handleApproveExtend(false)}>
+//                           No
+//                         </button>
+//                       </div>
+//                     )}
+//                   </>
+//                 ) : (
+//                   <p>Call {callStatus.status}!</p>
+//                 )}
+//               </div>
+//             </div>
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default Home;
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
@@ -2424,16 +9318,27 @@ import {
   useCancelCallMutation,
   useSetOnlineStatusMutation,
   useGetCurrentCallQuery,
+  useApproveExtendCallMutation,
 } from '../redux/services/callApi';
 import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
 import { io } from 'socket.io-client';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const Home = () => {
   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const [language, setLanguage] = useState('');
-  const [socket, setSocket] = useState(null);
+  const [extendRequest, setExtendRequest] = useState(null);
+  const [localStream, setLocalStream] = useState(null);
+  const [remoteStream, setRemoteStream] = useState(null);
+  const peerConnection = useRef(null);
+  const isWebRTCStarting = useRef(false);
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const socketRef = useRef(null);
+  const prevCallStatusRef = useRef(null);
+  const iceCandidatesQueue = useRef([]);
+
   const [initiateCall] = useInitiateCallMutation();
   const [acceptCall] = useAcceptCallMutation();
   const [rejectCall] = useRejectCallMutation();
@@ -2441,175 +9346,594 @@ const Home = () => {
   const [extendCall] = useExtendCallMutation();
   const [cancelCall] = useCancelCallMutation();
   const [setOnlineStatus] = useSetOnlineStatusMutation();
+  const [approveExtendCall] = useApproveExtendCallMutation();
   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
     skip: !isAuthenticated,
     pollingInterval: 5000,
   });
-  const prevCallStatusRef = useRef(null);
 
+  // **Persist mute state when it changes**
   useEffect(() => {
-    if (isAuthenticated && user && user._id) { // Add user check
-      const newSocket = io('http://localhost:5000', { withCredentials: true });
-      newSocket.on('connect', () => {
-        console.log('WebSocket connected:', newSocket.id);
-        newSocket.emit('register', user._id);
-        setOnlineStatus({ isOnline: true }).catch(err => console.error('Set online failed:', err));
+    if (callStatus?.isMuted !== undefined && callStatus?.callId) {
+      localStorage.setItem(`isMuted_${callStatus.callId}`, JSON.stringify(callStatus.isMuted));
+    }
+  }, [callStatus?.isMuted, callStatus?.callId]);
+
+  // **Sync mute state with audio tracks whenever localStream or isMuted changes**
+  useEffect(() => {
+    if (localStream && callStatus?.isMuted !== undefined) {
+      localStream.getAudioTracks().forEach((track) => {
+        track.enabled = !callStatus.isMuted;
+      });
+    }
+  }, [localStream, callStatus?.isMuted]);
+
+  // **Socket and WebRTC setup**
+  useEffect(() => {
+    if (isAuthenticated && user && user._id) {
+      console.log('User in Redux:', user);
+      socketRef.current = io('http://localhost:5000', {
+        withCredentials: true,
+        extraHeaders: { 'Content-Type': 'application/json' },
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+      });
+      // const backendUrl = window.location.hostname === 'localhost'
+      // ? 'http://localhost:5000'
+      // : 'yogesh5000.loca.lt'; // Replace with your backend ngrok URL
+      // socketRef.current = io(backendUrl, {
+      //   withCredentials: true,
+      //   extraHeaders: { 'Content-Type': 'application/json' },
+      //   reconnectionAttempts: 5,
+      //   reconnectionDelay: 1000,
+      // });
+
+      const socket = socketRef.current;
+
+      socket.on('connect', () => {
+        console.log('WebSocket connected:', socket.id);
+        socket.emit('register', user._id);
+        setOnlineStatus({ isOnline: true })
+          .unwrap()
+          .then(() => console.log('Set online status success'))
+          .catch((err) => console.error('Set online failed:', err));
       });
 
-      newSocket.on('call-request', (data) => {
+      socket.on('call-request', (data) => {
         console.log('Call request received:', data);
-        dispatch(setCallStatus({ 
-          callId: data.callId, 
-          status: 'pending', 
-          caller: data.callerName, 
-          language: data.language, 
-          callerId: data.callerId 
-        }));
+        dispatch(
+          setCallStatus({
+            callId: data.callId,
+            status: 'pending',
+            caller: data.callerName,
+            language: data.language,
+            callerId: data.callerId,
+            isMuted: false,
+          })
+        );
+        toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
       });
 
-      newSocket.on('call-accepted', (data) => {
+      socket.on('call-accepted', (data) => {
         console.log('Call accepted:', data);
-        dispatch(setCallStatus({ 
-          callId: data.callId, 
-          status: 'active', 
+        const updatedCallStatus = {
+          callId: data.callId,
+          status: 'active',
           receiver: data.receiverName,
-          caller: callStatus?.caller || (user?.name ?? 'Unknown Caller'), // Fallback if user is null
-        }));
-      });
-
-      newSocket.on('call-rejected', (data) => {
-        console.log('Call rejected:', data);
-        if (callStatus?.callId === data.callId && user?._id === callStatus.callerId) {
-          toast.warn(`Your call was rejected by ${data.receiverName}`, {
-            position: "top-right",
-            autoClose: 3000,
-          });
-          setTimeout(() => dispatch(clearCallStatus()), 3000);
+          receiverId: data.receiverId,
+          caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+          callerId: user._id === data.receiverId ? data.callerId : user._id,
+          startTime: callStatus?.startTime || new Date().toISOString(),
+          isMuted: callStatus?.isMuted || false,
+        };
+        dispatch(setCallStatus(updatedCallStatus));
+        if (!isWebRTCStarting.current && user._id === updatedCallStatus.callerId) {
+          console.log('Starting WebRTC after call accepted, isCaller:', true);
+          startWebRTC(socket, true, data.receiverId, data.callId);
         }
       });
 
-      newSocket.on('call-cancelled', (data) => {
-        console.log('Call cancelled:', data);
-        dispatch(clearCallStatus());
+      socket.on('offer', async ({ callId, offer, from }) => {
+        console.log('Received offer:', { callId, offer, from });
+        if (peerConnection.current && callStatus?.callId === callId) {
+          // Handle incoming offer (e.g., from receiver after their refresh)
+          await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+          const answer = await peerConnection.current.createAnswer();
+          await peerConnection.current.setLocalDescription(answer);
+          console.log('Sending answer to:', from);
+          socket.emit('answer', { callId, answer, to: from, from: user._id });
+        } else if (!isWebRTCStarting.current) {
+          // Initial offer from caller
+          await startWebRTC(socket, false, from, callId, offer);
+        }
       });
 
-      newSocket.on('call-ended', (data) => {
+      socket.on('answer', ({ callId, answer }) => {
+        console.log('Received answer:', { callId, answer });
+        if (peerConnection.current) {
+          peerConnection.current
+            .setRemoteDescription(new RTCSessionDescription(answer))
+            .then(() => console.log('Answer set successfully'))
+            .catch((err) => console.error('Set answer failed:', err));
+        }
+      });
+
+      socket.on('ice-candidate', ({ callId, candidate }) => {
+        console.log('Received ICE candidate:', { callId, candidate });
+        if (peerConnection.current && peerConnection.current.remoteDescription) {
+          peerConnection.current
+            .addIceCandidate(new RTCIceCandidate(candidate))
+            .catch((err) => console.error('ICE candidate error:', err));
+        } else {
+          console.log('Buffering ICE candidate:', candidate);
+          iceCandidatesQueue.current.push(candidate);
+        }
+      });
+
+      socket.on('call-rejected', (data) => {
+        console.log('Call rejected:', data);
+        if (callStatus?.callerId === user?._id) {
+          toast.warn(`Your call was rejected by ${data.receiverName}`);
+          dispatch(clearCallStatus());
+        }
+      });
+
+      socket.on('call-ended', (data) => {
         console.log('Call ended:', data);
-        dispatch(setCallStatus({ callId: data.callId, status: data.status }));
-        setTimeout(() => dispatch(clearCallStatus()), 2000);
+        dispatch(clearCallStatus());
+        cleanupWebRTC();
+        toast.info(`Call ended with status: ${data.status}`);
       });
 
-      newSocket.on('call-extended', (data) => {
+      socket.on('call-extend-request', (data) => {
+        console.log('Extend request received:', data);
+        setExtendRequest(data);
+        toast.info(`${data.requesterName} wants to extend the call. Approve?`);
+      });
+
+      socket.on('call-extended', (data) => {
         console.log('Call extended:', data);
         dispatch(setCallStatus({ ...callStatus, extended: true }));
+        toast.success('Call has been extended!');
       });
 
-      setSocket(newSocket);
+      socket.on('extend-denied', (data) => {
+        console.log('Extension denied:', data);
+        setExtendRequest(null);
+        toast.info('Call extension was denied.');
+      });
+
+      socket.on('call-refreshing', (data) => {
+        console.log('Other user is refreshing:', data);
+        toast.info('Your call partner is reconnecting, please wait...');
+      });
+
+      socket.on('call-disconnected', (data) => {
+        console.log('Call disconnected:', data);
+        toast.warn('Your call partner disconnected unexpectedly');
+        dispatch(clearCallStatus());
+        cleanupWebRTC();
+      });
+
+      socket.on('call-reconnect', async ({ callId, userId }) => {
+        console.log('Received reconnect request:', { callId, userId });
+        if (callId !== callStatus?.callId || userId === user._id) return;
+
+        setIsReconnecting(true);
+
+        if (peerConnection.current) {
+          console.log('Cleaning up existing WebRTC before reconnect');
+          peerConnection.current.onicecandidate = null;
+          peerConnection.current.ontrack = null;
+          peerConnection.current.onconnectionstatechange = null;
+          peerConnection.current.close();
+          peerConnection.current = null;
+          setRemoteStream(null);
+        }
+
+        const isCaller = user._id === callStatus.callerId;
+        const remoteUserId = isCaller ? callStatus.receiverId : callStatus.callerId;
+        await startWebRTC(socket, isCaller, remoteUserId, callId);
+
+        setIsReconnecting(false);
+      });
 
       return () => {
-        newSocket.disconnect();
+        socket.disconnect();
+        cleanupWebRTC();
       };
     }
-  }, [isAuthenticated, user, setOnlineStatus, dispatch, callStatus]);
+  }, [isAuthenticated, user, setOnlineStatus, dispatch]);
 
+  // **Restore active call on load**
   useEffect(() => {
     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
     if (currentCallData?.call) {
+      const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${currentCallData.call._id}`)) || false;
       const newCallStatus = {
-        callId: currentCallData.call.callId,
+        callId: currentCallData.call._id,
         status: currentCallData.call.status,
         language: currentCallData.call.language,
-        callerId: currentCallData.call.callerId,
-        caller: currentCallData.call.caller || callStatus?.caller || (user?.name ?? 'Unknown Caller'),
-        receiver: currentCallData.call.receiver || callStatus?.receiver || (user?.name ?? 'Unknown Receiver'),
-        ...(currentCallData.call.receivers ? { receivers: currentCallData.call.receivers } : callStatus?.receivers ? { receivers: callStatus.receivers } : {}),
-        ...(currentCallData.call.extended ? { extended: currentCallData.call.extended } : callStatus?.extended ? { extended: callStatus.extended } : {})
+        callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+        caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+        receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+        receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+        receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+          id: r._id.toString(),
+          name: r.name || 'Unknown',
+        })) || callStatus?.receivers || [],
+        extended: currentCallData.call.extended || callStatus?.extended || false,
+        startTime: currentCallData.call.startTime || callStatus?.startTime,
+        isMuted: persistedIsMuted,
       };
       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
         console.log('Restoring call status:', newCallStatus);
         dispatch(setCallStatus(newCallStatus));
         prevCallStatusRef.current = newCallStatus;
       }
-    } else if (!callLoading && !callError && !callStatus) {
+      if (currentCallData.call.status === 'active' && !peerConnection.current && !isReconnecting) {
+        console.log('Restoring WebRTC for active call:', currentCallData.call._id);
+        const isCaller = user._id === currentCallData.call.caller._id;
+        const remoteUserId = isCaller ? currentCallData.call.receiver._id : currentCallData.call.caller._id;
+        startWebRTC(socketRef.current, isCaller, remoteUserId, currentCallData.call._id);
+      }
+    } else if (!callLoading && !callError && callStatus && !isReconnecting) {
       console.log('No active call, clearing status');
       dispatch(clearCallStatus());
+      cleanupWebRTC();
       prevCallStatusRef.current = null;
+      if (callStatus?.callId) {
+        localStorage.removeItem(`isMuted_${callStatus.callId}`);
+      }
     }
-  }, [currentCallData, callLoading, callError, dispatch, callStatus, user]);
+  }, [currentCallData, callLoading, callError, dispatch, user, isReconnecting]);
 
+  // **Handle page refresh**
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (callStatus?.status === 'active') {
+        socketRef.current.emit('call-refresh', { callId: callStatus.callId, userId: user._id });
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [callStatus, user]);
+
+  // **Start WebRTC Connection**
+  const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+    console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+    if (isWebRTCStarting.current) {
+      console.log('WebRTC already starting, skipping');
+      return;
+    }
+    isWebRTCStarting.current = true;
+
+    if (!socketInstance.connected) {
+      console.log('Socket not connected, attempting to reconnect');
+      socketInstance.connect();
+    } else {
+      console.log('Socket already connected');
+    }
+
+    const configuration = {
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+    };
+
+    if (!peerConnection.current) {
+      peerConnection.current = new RTCPeerConnection(configuration);
+
+      peerConnection.current.onicecandidate = (event) => {
+        if (event.candidate) {
+          console.log('Sending ICE candidate to:', remoteUserId);
+          socketInstance.emit('ice-candidate', {
+            callId,
+            to: remoteUserId,
+            candidate: event.candidate,
+            from: user._id,
+          });
+        }
+      };
+
+      peerConnection.current.ontrack = (event) => {
+        console.log('Remote track received:', event.streams[0]);
+        event.streams[0].getTracks().forEach((track) => console.log('Remote track state:', track.readyState));
+        setRemoteStream(event.streams[0]);
+      };
+
+      peerConnection.current.onconnectionstatechange = () => {
+        console.log('Connection state:', peerConnection.current.connectionState);
+        if (peerConnection.current.connectionState === 'connected') {
+          toast.success('Audio call connected!');
+        } else if (
+          (peerConnection.current.connectionState === 'failed' ||
+            peerConnection.current.connectionState === 'disconnected') &&
+          callStatus?.status !== 'active' &&
+          !isReconnecting
+        ) {
+          console.log('Connection failed or disconnected, cleaning up');
+          cleanupWebRTC();
+        }
+      };
+    }
+
+    try {
+      const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${callId}`)) || false;
+      let stream;
+      if (!localStream) {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('Local stream obtained:', stream.getTracks());
+        setLocalStream(stream);
+      } else {
+        stream = localStream;
+      }
+
+      const audioTrack = stream.getAudioTracks()[0];
+      audioTrack.enabled = !persistedIsMuted;
+      console.log('Track enabled state set to:', audioTrack.enabled);
+
+      if (peerConnection.current) {
+        const sender = peerConnection.current.getSenders().find((s) => s.track?.kind === 'audio');
+        if (sender) {
+          console.log('Replacing existing audio track');
+          await sender.replaceTrack(audioTrack);
+        } else {
+          console.log('Adding new audio track');
+          peerConnection.current.addTrack(audioTrack, stream);
+        }
+      }
+
+      if (isCaller && !offer) {
+        const offer = await peerConnection.current.createOffer();
+        await peerConnection.current.setLocalDescription(offer);
+        console.log('Sending offer to:', remoteUserId);
+        socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+      } else if (offer) {
+        await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+        while (iceCandidatesQueue.current.length) {
+          const candidate = iceCandidatesQueue.current.shift();
+          console.log('Applying buffered ICE candidate:', candidate);
+          await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+        const answer = await peerConnection.current.createAnswer();
+        await peerConnection.current.setLocalDescription(answer);
+        console.log('Sending answer to:', remoteUserId);
+        socketInstance.emit('answer', { callId, answer, to: remoteUserId, from: user._id });
+      }
+
+      // Trigger renegotiation for receiver after replacing track
+      if (!isCaller && peerConnection.current.signalingState === 'stable') {
+        console.log('Receiver triggering renegotiation');
+        const offer = await peerConnection.current.createOffer();
+        await peerConnection.current.setLocalDescription(offer);
+        socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+      }
+    } catch (error) {
+      console.error('WebRTC error:', error);
+      toast.error('Failed to start audio: ' + error.message);
+      cleanupWebRTC();
+    } finally {
+      isWebRTCStarting.current = false;
+    }
+  };
+
+  // **Cleanup WebRTC Resources**
+  const cleanupWebRTC = () => {
+    console.log('Cleaning up WebRTC');
+    if (peerConnection.current) {
+      peerConnection.current.close();
+      peerConnection.current = null;
+    }
+    if (localStream) {
+      localStream.getTracks().forEach((track) => track.stop());
+      setLocalStream(null);
+    }
+    setRemoteStream(null);
+    iceCandidatesQueue.current = [];
+    if (callStatus?.callId) {
+      localStorage.removeItem(`isMuted_${callStatus.callId}`);
+    }
+  };
+
+  // **Toggle Mute/Unmute**
+  const toggleMute = () => {
+    if (localStream) {
+      const newIsMuted = !callStatus?.isMuted;
+      localStream.getAudioTracks().forEach((track) => {
+        track.enabled = !newIsMuted;
+        console.log('Toggled mute, track enabled:', track.enabled);
+      });
+      dispatch(setCallStatus({ ...callStatus, isMuted: newIsMuted }));
+      localStorage.setItem(`isMuted_${callStatus.callId}`, JSON.stringify(newIsMuted));
+      toast.info(newIsMuted ? 'Microphone muted' : 'Microphone unmuted');
+    }
+  };
+
+  // **Get Call Duration**
+  const getCallDuration = () => {
+    if (callStatus?.status === 'active' && callStatus?.startTime) {
+      const start = new Date(callStatus.startTime).getTime();
+      const now = Date.now();
+      return Math.floor((now - start) / 1000); // Seconds
+    }
+    return 0;
+  };
+
+  // **Handle Initiate Call**
   const handleInitiateCall = async () => {
+    if (!language) {
+      toast.error('Please enter a language');
+      return;
+    }
+    if (!user?.powerTokens || user.powerTokens < 1) {
+      toast.error('You need at least 1 power token to initiate a call');
+      return;
+    }
+    console.log('Initiating call with language:', language);
     try {
       const response = await initiateCall(language).unwrap();
       console.log('Initiated call:', response);
-      dispatch(setCallStatus({ 
-        callId: response.callId, 
-        status: 'pending', 
-        receivers: response.potentialReceivers, 
-        language, 
-        callerId: user?._id ?? '',
-        caller: user?.name ?? 'Unknown Caller'
-      }));
+      dispatch(
+        setCallStatus({
+          callId: response.callId,
+          status: 'pending',
+          receivers: response.potentialReceivers,
+          language,
+          callerId: user?._id,
+          caller: user?.name,
+          startTime: new Date().toISOString(),
+          isMuted: false,
+        })
+      );
+      toast.success('Call initiated, waiting for a receiver...');
     } catch (error) {
       console.error('Initiate call failed:', error);
+      toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
     }
   };
 
+  // **Handle Accept Call**
   const handleAcceptCall = async () => {
+    if (!callStatus?.callId) {
+      toast.error('No call to accept');
+      return;
+    }
+    console.log('Accepting call:', callStatus.callId);
     try {
-      await acceptCall(callStatus.callId).unwrap();
-      console.log('Call accepted by:', user?.name ?? 'Unknown');
-      dispatch(setCallStatus({ 
-        ...callStatus, 
-        status: 'active', 
-        receiver: user?.name ?? 'Unknown Receiver'
-      }));
+      await axios.post(
+        'http://localhost:5000/api/calls/accept',
+        { callId: callStatus.callId },
+        { withCredentials: true }
+      );
+    //   const backendUrl = window.location.hostname === 'localhost'
+    //   ? 'http://localhost:5000'
+    //   : 'yogesh5000.loca.lt'; // Replace with your backend ngrok URL
+    // await axios.post(
+    //   `${backendUrl}/api/calls/accept`,
+    //   { callId: callStatus.callId },
+    //   { withCredentials: true }
+    // );
+      console.log('Call accepted by:', user.name);
+      const updatedCallStatus = {
+        ...callStatus,
+        status: 'active',
+        receiver: user.name,
+        receiverId: user._id,
+        startTime: new Date().toISOString(),
+        isMuted: callStatus?.isMuted || false,
+      };
+      dispatch(setCallStatus(updatedCallStatus));
+      toast.success('Call accepted! Waiting for caller audio...');
     } catch (error) {
-      console.error('Accept call failed:', error);
+      console.error('Accept call error:', error);
+      toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
       dispatch(clearCallStatus());
+      cleanupWebRTC();
     }
   };
 
+  // **Handle Reject Call**
   const handleRejectCall = async () => {
+    if (!callStatus?.callId) {
+      toast.error('No call to reject');
+      return;
+    }
+    console.log('Rejecting call:', callStatus.callId);
     try {
       await rejectCall(callStatus.callId).unwrap();
-      console.log('Call rejected by:', user?.name ?? 'Unknown');
+      console.log('Call rejected by:', user?.name);
       dispatch(clearCallStatus());
+      cleanupWebRTC();
+      toast.info('Call rejected');
     } catch (error) {
       console.error('Reject call failed:', error);
-      dispatch(clearCallStatus());
+      toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
     }
   };
 
+  // **Handle End Call**
   const handleEndCall = async () => {
+    if (!callStatus?.callId) {
+      toast.error('No call to end');
+      return;
+    }
+    console.log('Ending call:', callStatus.callId);
     try {
       await endCall(callStatus.callId).unwrap();
-      console.log('Call ended by:', user?.name ?? 'Unknown');
+      console.log('Call ended by:', user?.name);
+      dispatch(clearCallStatus());
+      cleanupWebRTC();
+      toast.success('Call ended');
     } catch (error) {
       console.error('End call failed:', error);
+      toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
     }
   };
 
+  // **Handle Extend Call**
   const handleExtendCall = async () => {
+    if (!callStatus?.callId) {
+      toast.error('No call to extend');
+      return;
+    }
+    if (!user?.powerTokens || user.powerTokens < 1) {
+      toast.error('You need at least 1 power token to extend a call');
+      return;
+    }
+    console.log('Extending call:', callStatus.callId);
     try {
       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
-      console.log('Call extended by:', user?.name ?? 'Unknown');
+      toast.info('Extension request sent, awaiting approval...');
     } catch (error) {
       console.error('Extend call failed:', error);
+      toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
     }
   };
 
+  // **Handle Approve Extend**
+  const handleApproveExtend = async (approve) => {
+    if (!callStatus?.callId) {
+      toast.error('No call to approve extension for');
+      return;
+    }
+    console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
+    try {
+      await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
+      setExtendRequest(null);
+      if (approve) {
+        dispatch(setCallStatus({ ...callStatus, extended: true }));
+        toast.success('You approved the call extension!');
+      } else {
+        toast.info('You denied the call extension.');
+      }
+    } catch (error) {
+      console.error('Approve extend call failed:', error);
+      toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
+      setExtendRequest(null);
+    }
+  };
+
+  // **Handle Cancel Call**
   const handleCancelCall = async () => {
+    if (!callStatus?.callId) {
+      toast.error('No call to cancel');
+      return;
+    }
+    console.log('Cancelling call:', callStatus.callId);
     try {
       await cancelCall(callStatus.callId).unwrap();
-      console.log('Call cancelled by:', user?.name ?? 'Unknown');
+      console.log('Call cancelled by:', user?.name);
       dispatch(clearCallStatus());
+      cleanupWebRTC();
+      toast.info('Call cancelled');
     } catch (error) {
       console.error('Cancel call failed:', error);
+      toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
     }
   };
 
-  if (!user) return <div>Loading user data...</div>; // Early return if user is null
-  if (callLoading && !callStatus) return <div>Loading call status...</div>;
+  if (isAuthenticated && callLoading && !callStatus) {
+    return <div>Loading call status...</div>;
+  }
 
   return (
     <div className="container mt-5 text-center">
@@ -2638,9 +9962,9 @@ const Home = () => {
                 <button
                   className="btn btn-primary w-100"
                   onClick={handleInitiateCall}
-                  disabled={!language || user.powerTokens < 1}
+                  disabled={!language || !user?.powerTokens || user.powerTokens < 1}
                 >
-                  {user.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+                  {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
                 </button>
               </div>
             </div>
@@ -2648,17 +9972,20 @@ const Home = () => {
             <div className="card mx-auto" style={{ maxWidth: '500px' }}>
               <div className="card-body">
                 <h5 className="card-title">Call Status</h5>
-                {callStatus.status === 'pending' && callStatus.callerId === user._id ? (
+                {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
                   <>
                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
                     {callStatus.receivers && (
-                      <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id).join(', ')}</p>
+                      <p>
+                        Potential Receivers:{' '}
+                        {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}
+                      </p>
                     )}
                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
                       Cancel Call
                     </button>
                   </>
-                ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user._id ? (
+                ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
                   <>
                     <p>Incoming call from {callStatus.caller} for {callStatus.language}</p>
                     <button className="btn btn-success w-100 mb-2" onClick={handleAcceptCall}>
@@ -2671,19 +9998,47 @@ const Home = () => {
                 ) : callStatus.status === 'active' ? (
                   <>
                     <p>
-                      Active call with {callStatus.callerId === user._id ? callStatus.receiver : callStatus.caller}
+                      Active call with{' '}
+                      {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+                    </p>
+                    <p>
+                      Call Duration: {Math.floor(getCallDuration() / 60)}:
+                      {(getCallDuration() % 60).toString().padStart(2, '0')}
                     </p>
                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+                    <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+                    <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
                       End Call
                     </button>
-                    <button
-                      className="btn btn-warning w-100"
-                      onClick={handleExtendCall}
-                      disabled={user.powerTokens < 1}
-                    >
-                      {user.powerTokens < 1 ? 'No Power Tokens' : 'Extend Call'}
+                    <button className="btn btn-secondary w-100 mb-2" onClick={toggleMute}>
+                      {callStatus.isMuted ? 'Unmute' : 'Mute'}
                     </button>
+                    <button
+                      className="btn btn-warning w-100 mb-2"
+                      onClick={handleExtendCall}
+                      disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+                    >
+                      {user?.powerTokens < 1
+                        ? 'No Power Tokens'
+                        : extendRequest
+                        ? 'Awaiting Approval'
+                        : 'Extend Call'}
+                    </button>
+                    {extendRequest && extendRequest.callId === callStatus.callId && (
+                      <div>
+                        <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
+                        <button
+                          className="btn btn-success w-45 mr-2"
+                          onClick={() => handleApproveExtend(true)}
+                        >
+                          Yes
+                        </button>
+                        <button className="btn btn-danger w-45" onClick={() => handleApproveExtend(false)}>
+                          No
+                        </button>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <p>Call {callStatus.status}!</p>
@@ -2714,17 +10069,27 @@ export default Home;
 //   useCancelCallMutation,
 //   useSetOnlineStatusMutation,
 //   useGetCurrentCallQuery,
+//   useApproveExtendCallMutation,
 // } from '../redux/services/callApi';
 // import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
 // import { io } from 'socket.io-client';
 // import { toast } from 'react-toastify';
+// import axios from 'axios';
 
 // const Home = () => {
 //   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
 //   const dispatch = useDispatch();
 //   const [language, setLanguage] = useState('');
-//   const [socket, setSocket] = useState(null);
-//   const [extendRequest, setExtendRequest] = useState(null); // Track extension request
+//   const [extendRequest, setExtendRequest] = useState(null);
+//   const [localStream, setLocalStream] = useState(null);
+//   const [remoteStream, setRemoteStream] = useState(null);
+//   const peerConnection = useRef(null);
+//   const isWebRTCStarting = useRef(false);
+//   const [isReconnecting, setIsReconnecting] = useState(false);
+//   const socketRef = useRef(null);
+//   const prevCallStatusRef = useRef(null);
+//   const iceCandidatesQueue = useRef([]);
+
 //   const [initiateCall] = useInitiateCallMutation();
 //   const [acceptCall] = useAcceptCallMutation();
 //   const [rejectCall] = useRejectCallMutation();
@@ -2732,201 +10097,576 @@ export default Home;
 //   const [extendCall] = useExtendCallMutation();
 //   const [cancelCall] = useCancelCallMutation();
 //   const [setOnlineStatus] = useSetOnlineStatusMutation();
-//   const [approveExtendCall] = useMutation({
-//     mutationFn: (data) => fetch('http://localhost:5000/api/calls/approve-extend', {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       credentials: 'include',
-//       body: JSON.stringify(data),
-//     }).then(res => res.json()),
-//   });
+//   const [approveExtendCall] = useApproveExtendCallMutation();
 //   const { data: currentCallData, isLoading: callLoading, error: callError } = useGetCurrentCallQuery(undefined, {
 //     skip: !isAuthenticated,
 //     pollingInterval: 5000,
 //   });
-//   const prevCallStatusRef = useRef(null);
 
+//   // **Persist mute state when it changes**
+//   useEffect(() => {
+//     if (callStatus?.isMuted !== undefined && callStatus?.callId) {
+//       localStorage.setItem(`isMuted_${callStatus.callId}`, JSON.stringify(callStatus.isMuted));
+//     }
+//   }, [callStatus?.isMuted, callStatus?.callId]);
+
+//   // **Sync mute state with audio tracks whenever localStream or isMuted changes**
+//   useEffect(() => {
+//     if (localStream && callStatus?.isMuted !== undefined) {
+//       localStream.getAudioTracks().forEach((track) => {
+//         track.enabled = !callStatus.isMuted;
+//       });
+//     }
+//   }, [localStream, callStatus?.isMuted]);
+
+//   // **Socket and WebRTC setup**
 //   useEffect(() => {
 //     if (isAuthenticated && user && user._id) {
-//       const newSocket = io('http://localhost:5000', { withCredentials: true });
-//       newSocket.on('connect', () => {
-//         console.log('WebSocket connected:', newSocket.id);
-//         newSocket.emit('register', user._id);
-//         setOnlineStatus({ isOnline: true }).catch(err => console.error('Set online failed:', err));
+//       console.log('User in Redux:', user);
+//       const backendUrl = 'https://9ac0-2409-40d1-1a-e63a-c4cb-8426-d3a5-cda0.ngrok-free.app';
+//       socketRef.current = io(backendUrl, {
+//         withCredentials: true,
+//         extraHeaders: { 'Content-Type': 'application/json' },
+//         reconnectionAttempts: 5,
+//         reconnectionDelay: 1000,
 //       });
 
-//       newSocket.on('call-request', (data) => {
+//       const socket = socketRef.current;
+
+//       socket.on('connect', () => {
+//         console.log('WebSocket connected:', socket.id);
+//         socket.emit('register', user._id);
+//         setOnlineStatus({ isOnline: true })
+//           .unwrap()
+//           .then(() => console.log('Set online status success'))
+//           .catch((err) => console.error('Set online failed:', err));
+//       });
+
+//       socket.on('call-request', (data) => {
 //         console.log('Call request received:', data);
-//         dispatch(setCallStatus({ 
-//           callId: data.callId, 
-//           status: 'pending', 
-//           caller: data.callerName, 
-//           language: data.language, 
-//           callerId: data.callerId 
-//         }));
+//         dispatch(
+//           setCallStatus({
+//             callId: data.callId,
+//             status: 'pending',
+//             caller: data.callerName,
+//             language: data.language,
+//             callerId: data.callerId,
+//             isMuted: false,
+//           })
+//         );
+//         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
 //       });
 
-//       newSocket.on('call-accepted', (data) => {
+//       socket.on('call-accepted', (data) => {
 //         console.log('Call accepted:', data);
-//         dispatch(setCallStatus({ 
-//           callId: data.callId, 
-//           status: 'active', 
+//         const updatedCallStatus = {
+//           callId: data.callId,
+//           status: 'active',
 //           receiver: data.receiverName,
-//           caller: callStatus?.caller || user.name,
-//         }));
-//       });
-
-//       newSocket.on('call-rejected', (data) => {
-//         console.log('Call rejected:', data);
-//         if (callStatus?.callId === data.callId && user._id === callStatus.callerId) {
-//           toast.warn(`Your call was rejected by ${data.receiverName}`, {
-//             position: "top-right",
-//             autoClose: 3000,
-//           });
-//           setTimeout(() => dispatch(clearCallStatus()), 3000);
+//           receiverId: data.receiverId,
+//           caller: user._id === data.receiverId ? data.callerName : callStatus?.caller || user.name,
+//           callerId: user._id === data.receiverId ? data.callerId : user._id,
+//           startTime: callStatus?.startTime || new Date().toISOString(),
+//           isMuted: callStatus?.isMuted || false,
+//         };
+//         dispatch(setCallStatus(updatedCallStatus));
+//         if (!isWebRTCStarting.current && user._id === updatedCallStatus.callerId) {
+//           console.log('Starting WebRTC after call accepted, isCaller:', true);
+//           startWebRTC(socket, true, data.receiverId, data.callId);
 //         }
 //       });
 
-//       newSocket.on('call-cancelled', () => {
-//         console.log('Call cancelled');
-//         dispatch(clearCallStatus());
+//       socket.on('offer', async ({ callId, offer, from }) => {
+//         console.log('Received offer:', { callId, offer, from });
+//         if (peerConnection.current && callStatus?.callId === callId) {
+//           await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//           const answer = await peerConnection.current.createAnswer();
+//           await peerConnection.current.setLocalDescription(answer);
+//           console.log('Sending answer to:', from);
+//           socket.emit('answer', { callId, answer, to: from, from: user._id });
+//         } else if (!isWebRTCStarting.current) {
+//           await startWebRTC(socket, false, from, callId, offer);
+//         }
 //       });
 
-//       newSocket.on('call-ended', (data) => {
+//       socket.on('answer', ({ callId, answer }) => {
+//         console.log('Received answer:', { callId, answer });
+//         if (peerConnection.current) {
+//           peerConnection.current
+//             .setRemoteDescription(new RTCSessionDescription(answer))
+//             .then(() => console.log('Answer set successfully'))
+//             .catch((err) => console.error('Set answer failed:', err));
+//         }
+//       });
+
+//       socket.on('ice-candidate', ({ callId, candidate }) => {
+//         console.log('Received ICE candidate:', { callId, candidate });
+//         if (peerConnection.current && peerConnection.current.remoteDescription) {
+//           peerConnection.current
+//             .addIceCandidate(new RTCIceCandidate(candidate))
+//             .catch((err) => console.error('ICE candidate error:', err));
+//         } else {
+//           console.log('Buffering ICE candidate:', candidate);
+//           iceCandidatesQueue.current.push(candidate);
+//         }
+//       });
+
+//       socket.on('call-rejected', (data) => {
+//         console.log('Call rejected:', data);
+//         if (callStatus?.callerId === user?._id) {
+//           toast.warn(`Your call was rejected by ${data.receiverName}`);
+//           dispatch(clearCallStatus());
+//         }
+//       });
+
+//       socket.on('call-ended', (data) => {
 //         console.log('Call ended:', data);
-//         dispatch(setCallStatus({ callId: data.callId, status: data.status }));
-//         setTimeout(() => dispatch(clearCallStatus()), 2000);
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//         toast.info(`Call ended with status: ${data.status}`);
 //       });
 
-//       newSocket.on('call-extended', (data) => {
+//       socket.on('call-extend-request', (data) => {
+//         console.log('Extend request received:', data);
+//         setExtendRequest(data);
+//         toast.info(`${data.requesterName} wants to extend the call. Approve?`);
+//       });
+
+//       socket.on('call-extended', (data) => {
 //         console.log('Call extended:', data);
 //         dispatch(setCallStatus({ ...callStatus, extended: true }));
-//         toast.success("Call has been extended!");
+//         toast.success('Call has been extended!');
 //       });
 
-//       newSocket.on('extend-request', (data) => {
-//         console.log('Extend request received:', data);
-//         setExtendRequest(data); // Show approval prompt
+//       socket.on('extend-denied', (data) => {
+//         console.log('Extension denied:', data);
+//         setExtendRequest(null);
+//         toast.info('Call extension was denied.');
 //       });
 
-//       newSocket.on('extend-denied', (data) => {
-//         console.log('Extend denied:', data);
-//         toast.error("Call extension was denied by the other user.");
+//       socket.on('call-refreshing', (data) => {
+//         console.log('Other user is refreshing:', data);
+//         toast.info('Your call partner is reconnecting, please wait...');
 //       });
 
-//       setSocket(newSocket);
+//       socket.on('call-disconnected', (data) => {
+//         console.log('Call disconnected:', data);
+//         toast.warn('Your call partner disconnected unexpectedly');
+//         dispatch(clearCallStatus());
+//         cleanupWebRTC();
+//       });
+
+//       socket.on('call-reconnect', async ({ callId, userId }) => {
+//         console.log('Received reconnect request:', { callId, userId });
+//         if (callId !== callStatus?.callId || userId === user._id) return;
+
+//         setIsReconnecting(true);
+
+//         if (peerConnection.current) {
+//           console.log('Cleaning up existing WebRTC before reconnect');
+//           peerConnection.current.onicecandidate = null;
+//           peerConnection.current.ontrack = null;
+//           peerConnection.current.onconnectionstatechange = null;
+//           peerConnection.current.close();
+//           peerConnection.current = null;
+//           setRemoteStream(null);
+//         }
+
+//         const isCaller = user._id === callStatus.callerId;
+//         const remoteUserId = isCaller ? callStatus.receiverId : callStatus.callerId;
+//         await startWebRTC(socket, isCaller, remoteUserId, callId);
+
+//         setIsReconnecting(false);
+//       });
 
 //       return () => {
-//         newSocket.disconnect();
+//         socket.disconnect();
+//         cleanupWebRTC();
 //       };
 //     }
-//   }, [isAuthenticated, user, setOnlineStatus, dispatch, callStatus]);
+//   }, [isAuthenticated, user, setOnlineStatus, dispatch]);
 
+//   // **Restore active call on load**
 //   useEffect(() => {
+//     console.log('Current Call Data:', currentCallData, 'Call Error:', callError);
 //     if (currentCallData?.call) {
-//       console.log('Current Call Data:', currentCallData);
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${currentCallData.call._id}`)) || false;
 //       const newCallStatus = {
-//         callId: currentCallData.call.callId,
+//         callId: currentCallData.call._id,
 //         status: currentCallData.call.status,
 //         language: currentCallData.call.language,
-//         callerId: currentCallData.call.callerId,
-//         caller: currentCallData.call.caller || callStatus?.caller || user?.name,
-//         receiver: currentCallData.call.receiver || callStatus?.receiver || user?.name,
-//         ...(currentCallData.call.receivers ? { receivers: currentCallData.call.receivers } : callStatus?.receivers ? { receivers: callStatus.receivers } : {}),
-//         ...(currentCallData.call.extended ? { extended: currentCallData.call.extended } : callStatus?.extended ? { extended: callStatus.extended } : {})
+//         callerId: currentCallData.call.caller?._id || currentCallData.call.callerId,
+//         caller: currentCallData.call.caller?.name || callStatus?.caller || user?.name,
+//         receiver: currentCallData.call.receiver?.name || callStatus?.receiver,
+//         receiverId: currentCallData.call.receiver?._id || callStatus?.receiverId,
+//         receivers: currentCallData.call.potentialReceivers?.map((r) => ({
+//           id: r._id.toString(),
+//           name: r.name || 'Unknown',
+//         })) || callStatus?.receivers || [],
+//         extended: currentCallData.call.extended || callStatus?.extended || false,
+//         startTime: currentCallData.call.startTime || callStatus?.startTime,
+//         isMuted: persistedIsMuted,
 //       };
 //       if (JSON.stringify(newCallStatus) !== JSON.stringify(prevCallStatusRef.current)) {
+//         console.log('Restoring call status:', newCallStatus);
 //         dispatch(setCallStatus(newCallStatus));
 //         prevCallStatusRef.current = newCallStatus;
 //       }
-//     } else if (!callLoading && !callError && !callStatus) {
+//       if (currentCallData.call.status === 'active' && !peerConnection.current && !isReconnecting) {
+//         console.log('Restoring WebRTC for active call:', currentCallData.call._id);
+//         const isCaller = user._id === currentCallData.call.caller._id;
+//         const remoteUserId = isCaller ? currentCallData.call.receiver._id : currentCallData.call.caller._id;
+//         startWebRTC(socketRef.current, isCaller, remoteUserId, currentCallData.call._id);
+//       }
+//     } else if (!callLoading && !callError && callStatus && !isReconnecting) {
+//       console.log('No active call, clearing status');
 //       dispatch(clearCallStatus());
+//       cleanupWebRTC();
 //       prevCallStatusRef.current = null;
+//       if (callStatus?.callId) {
+//         localStorage.removeItem(`isMuted_${callStatus.callId}`);
+//       }
 //     }
-//   }, [currentCallData, callLoading, callError, dispatch]);
+//   }, [currentCallData, callLoading, callError, dispatch, user, isReconnecting]);
 
+//   // **Handle page refresh**
+//   useEffect(() => {
+//     const handleBeforeUnload = () => {
+//       if (callStatus?.status === 'active') {
+//         socketRef.current.emit('call-refresh', { callId: callStatus.callId, userId: user._id });
+//       }
+//     };
+//     window.addEventListener('beforeunload', handleBeforeUnload);
+//     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+//   }, [callStatus, user]);
+
+//   // **Start WebRTC Connection**
+//   const startWebRTC = async (socketInstance, isCaller, remoteUserId, callId, offer = null) => {
+//     console.log('Starting WebRTC, isCaller:', isCaller, 'Remote User:', remoteUserId, 'Call ID:', callId);
+//     if (isWebRTCStarting.current) {
+//       console.log('WebRTC already starting, skipping');
+//       return;
+//     }
+//     isWebRTCStarting.current = true;
+
+//     if (!socketInstance.connected) {
+//       console.log('Socket not connected, attempting to reconnect');
+//       socketInstance.connect();
+//     } else {
+//       console.log('Socket already connected');
+//     }
+
+//     const configuration = {
+//       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+//     };
+
+//     if (!peerConnection.current) {
+//       peerConnection.current = new RTCPeerConnection(configuration);
+
+//       peerConnection.current.onicecandidate = (event) => {
+//         if (event.candidate) {
+//           console.log('Sending ICE candidate to:', remoteUserId);
+//           socketInstance.emit('ice-candidate', {
+//             callId,
+//             to: remoteUserId,
+//             candidate: event.candidate,
+//             from: user._id,
+//           });
+//         }
+//       };
+
+//       peerConnection.current.ontrack = (event) => {
+//         console.log('Remote track received:', event.streams[0]);
+//         event.streams[0].getTracks().forEach((track) => console.log('Remote track state:', track.readyState));
+//         setRemoteStream(event.streams[0]);
+//       };
+
+//       peerConnection.current.onconnectionstatechange = () => {
+//         console.log('Connection state:', peerConnection.current.connectionState);
+//         if (peerConnection.current.connectionState === 'connected') {
+//           toast.success('Audio call connected!');
+//         } else if (
+//           (peerConnection.current.connectionState === 'failed' ||
+//             peerConnection.current.connectionState === 'disconnected') &&
+//           callStatus?.status !== 'active' &&
+//           !isReconnecting
+//         ) {
+//           console.log('Connection failed or disconnected, cleaning up');
+//           cleanupWebRTC();
+//         }
+//       };
+//     }
+
+//     try {
+//       const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${callId}`)) || false;
+//       let stream;
+//       if (!localStream) {
+//         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//         console.log('Local stream obtained:', stream.getTracks());
+//         setLocalStream(stream);
+//       } else {
+//         stream = localStream;
+//       }
+
+//       const audioTrack = stream.getAudioTracks()[0];
+//       audioTrack.enabled = !persistedIsMuted;
+//       console.log('Track enabled state set to:', audioTrack.enabled);
+
+//       if (peerConnection.current) {
+//         const sender = peerConnection.current.getSenders().find((s) => s.track?.kind === 'audio');
+//         if (sender) {
+//           console.log('Replacing existing audio track');
+//           await sender.replaceTrack(audioTrack);
+//         } else {
+//           console.log('Adding new audio track');
+//           peerConnection.current.addTrack(audioTrack, stream);
+//         }
+//       }
+
+//       if (isCaller && !offer) {
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         console.log('Sending offer to:', remoteUserId);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+//       } else if (offer) {
+//         await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+//         while (iceCandidatesQueue.current.length) {
+//           const candidate = iceCandidatesQueue.current.shift();
+//           console.log('Applying buffered ICE candidate:', candidate);
+//           await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+//         }
+//         const answer = await peerConnection.current.createAnswer();
+//         await peerConnection.current.setLocalDescription(answer);
+//         console.log('Sending answer to:', remoteUserId);
+//         socketInstance.emit('answer', { callId, answer, to: remoteUserId, from: user._id });
+//       }
+
+//       if (!isCaller && peerConnection.current.signalingState === 'stable') {
+//         console.log('Receiver triggering renegotiation');
+//         const offer = await peerConnection.current.createOffer();
+//         await peerConnection.current.setLocalDescription(offer);
+//         socketInstance.emit('offer', { callId, offer, to: remoteUserId, from: user._id });
+//       }
+//     } catch (error) {
+//       console.error('WebRTC error:', error);
+//       toast.error('Failed to start audio: ' + error.message);
+//       cleanupWebRTC();
+//     } finally {
+//       isWebRTCStarting.current = false;
+//     }
+//   };
+
+//   // **Cleanup WebRTC Resources**
+//   const cleanupWebRTC = () => {
+//     console.log('Cleaning up WebRTC');
+//     if (peerConnection.current) {
+//       peerConnection.current.close();
+//       peerConnection.current = null;
+//     }
+//     if (localStream) {
+//       localStream.getTracks().forEach((track) => track.stop());
+//       setLocalStream(null);
+//     }
+//     setRemoteStream(null);
+//     iceCandidatesQueue.current = [];
+//     if (callStatus?.callId) {
+//       localStorage.removeItem(`isMuted_${callStatus.callId}`);
+//     }
+//   };
+
+//   // **Toggle Mute/Unmute**
+//   const toggleMute = () => {
+//     if (localStream) {
+//       const newIsMuted = !callStatus?.isMuted;
+//       localStream.getAudioTracks().forEach((track) => {
+//         track.enabled = !newIsMuted;
+//         console.log('Toggled mute, track enabled:', track.enabled);
+//       });
+//       dispatch(setCallStatus({ ...callStatus, isMuted: newIsMuted }));
+//       localStorage.setItem(`isMuted_${callStatus.callId}`, JSON.stringify(newIsMuted));
+//       toast.info(newIsMuted ? 'Microphone muted' : 'Microphone unmuted');
+//     }
+//   };
+
+//   // **Get Call Duration**
+//   const getCallDuration = () => {
+//     if (callStatus?.status === 'active' && callStatus?.startTime) {
+//       const start = new Date(callStatus.startTime).getTime();
+//       const now = Date.now();
+//       return Math.floor((now - start) / 1000); // Seconds
+//     }
+//     return 0;
+//   };
+
+//   // **Handle Initiate Call**
 //   const handleInitiateCall = async () => {
+//     if (!language) {
+//       toast.error('Please enter a language');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to initiate a call');
+//       return;
+//     }
+//     console.log('Initiating call with language:', language);
 //     try {
 //       const response = await initiateCall(language).unwrap();
-//       dispatch(setCallStatus({ 
-//         callId: response.callId, 
-//         status: 'pending', 
-//         receivers: response.potentialReceivers, 
-//         language, 
-//         callerId: user?._id ?? '',
-//         caller: user?.name ?? 'Unknown Caller'
-//       }));
+//       console.log('Initiated call:', response);
+//       dispatch(
+//         setCallStatus({
+//           callId: response.callId,
+//           status: 'pending',
+//           receivers: response.potentialReceivers,
+//           language,
+//           callerId: user?._id,
+//           caller: user?.name,
+//           startTime: new Date().toISOString(),
+//           isMuted: false,
+//         })
+//       );
+//       toast.success('Call initiated, waiting for a receiver...');
 //     } catch (error) {
 //       console.error('Initiate call failed:', error);
+//       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
 //     }
 //   };
 
+//   // **Handle Accept Call**
 //   const handleAcceptCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to accept');
+//       return;
+//     }
+//     console.log('Accepting call:', callStatus.callId);
 //     try {
-//       await acceptCall(callStatus.callId).unwrap();
-//       dispatch(setCallStatus({ 
-//         ...callStatus, 
-//         status: 'active', 
-//         receiver: user?.name ?? 'Unknown Receiver'
-//       }));
+//       const backendUrl = 'https://9ac0-2409-40d1-1a-e63a-c4cb-8426-d3a5-cda0.ngrok-free.app';
+//       await axios.post(
+//         `${backendUrl}/api/calls/accept`,
+//         { callId: callStatus.callId },
+//         { withCredentials: true }
+//       );
+//       console.log('Call accepted by:', user.name);
+//       const updatedCallStatus = {
+//         ...callStatus,
+//         status: 'active',
+//         receiver: user.name,
+//         receiverId: user._id,
+//         startTime: new Date().toISOString(),
+//         isMuted: callStatus?.isMuted || false,
+//       };
+//       dispatch(setCallStatus(updatedCallStatus));
+//       toast.success('Call accepted! Waiting for caller audio...');
 //     } catch (error) {
-//       console.error('Accept call failed:', error);
+//       console.error('Accept call error:', error);
+//       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
 //       dispatch(clearCallStatus());
+//       cleanupWebRTC();
 //     }
 //   };
 
+//   // **Handle Reject Call**
 //   const handleRejectCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to reject');
+//       return;
+//     }
+//     console.log('Rejecting call:', callStatus.callId);
 //     try {
 //       await rejectCall(callStatus.callId).unwrap();
+//       console.log('Call rejected by:', user?.name);
 //       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call rejected');
 //     } catch (error) {
 //       console.error('Reject call failed:', error);
-//       dispatch(clearCallStatus());
+//       toast.error(`Failed to reject call: ${error.data?.error || error.status || 'Unknown error'}`);
 //     }
 //   };
 
+//   // **Handle End Call**
 //   const handleEndCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to end');
+//       return;
+//     }
+//     console.log('Ending call:', callStatus.callId);
 //     try {
 //       await endCall(callStatus.callId).unwrap();
+//       console.log('Call ended by:', user?.name);
+//       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.success('Call ended');
 //     } catch (error) {
 //       console.error('End call failed:', error);
+//       toast.error(`Failed to end call: ${error.data?.error || error.status || 'Unknown error'}`);
 //     }
 //   };
 
+//   // **Handle Extend Call**
 //   const handleExtendCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to extend');
+//       return;
+//     }
+//     if (!user?.powerTokens || user.powerTokens < 1) {
+//       toast.error('You need at least 1 power token to extend a call');
+//       return;
+//     }
+//     console.log('Extending call:', callStatus.callId);
 //     try {
 //       await extendCall({ callId: callStatus.callId, extend: true }).unwrap();
-//       toast.info("Extension request sent, awaiting approval...");
+//       toast.info('Extension request sent, awaiting approval...');
 //     } catch (error) {
 //       console.error('Extend call failed:', error);
+//       toast.error(`Failed to extend call: ${error.data?.error || error.status || 'Unknown error'}`);
 //     }
 //   };
 
+//   // **Handle Approve Extend**
 //   const handleApproveExtend = async (approve) => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to approve extension for');
+//       return;
+//     }
+//     console.log('Approving extend for call:', callStatus.callId, 'Approve:', approve);
 //     try {
 //       await approveExtendCall({ callId: callStatus.callId, approve }).unwrap();
-//       setExtendRequest(null); // Clear request after response
+//       setExtendRequest(null);
 //       if (approve) {
-//         toast.success("You approved the call extension!");
+//         dispatch(setCallStatus({ ...callStatus, extended: true }));
+//         toast.success('You approved the call extension!');
 //       } else {
-//         toast.info("You denied the call extension.");
+//         toast.info('You denied the call extension.');
 //       }
 //     } catch (error) {
 //       console.error('Approve extend call failed:', error);
+//       toast.error(`Failed to approve extension: ${error.data?.error || error.status || 'Unknown error'}`);
 //       setExtendRequest(null);
 //     }
 //   };
 
+//   // **Handle Cancel Call**
 //   const handleCancelCall = async () => {
+//     if (!callStatus?.callId) {
+//       toast.error('No call to cancel');
+//       return;
+//     }
+//     console.log('Cancelling call:', callStatus.callId);
 //     try {
 //       await cancelCall(callStatus.callId).unwrap();
+//       console.log('Call cancelled by:', user?.name);
 //       dispatch(clearCallStatus());
+//       cleanupWebRTC();
+//       toast.info('Call cancelled');
 //     } catch (error) {
 //       console.error('Cancel call failed:', error);
+//       toast.error(`Failed to cancel call: ${error.data?.error || error.status || 'Unknown error'}`);
 //     }
 //   };
 
-//   if (callLoading && !callStatus) return <div>Loading call status...</div>;
+//   if (isAuthenticated && callLoading && !callStatus) {
+//     return <div>Loading call status...</div>;
+//   }
 
 //   return (
 //     <div className="container mt-5 text-center">
@@ -2955,7 +10695,7 @@ export default Home;
 //                 <button
 //                   className="btn btn-primary w-100"
 //                   onClick={handleInitiateCall}
-//                   disabled={!language || user?.powerTokens < 1}
+//                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
 //                 >
 //                   {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
 //                 </button>
@@ -2969,7 +10709,10 @@ export default Home;
 //                   <>
 //                     <p>Waiting for someone to accept your call for {callStatus.language}...</p>
 //                     {callStatus.receivers && (
-//                       <p>Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id).join(', ')}</p>
+//                       <p>
+//                         Potential Receivers:{' '}
+//                         {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}
+//                       </p>
 //                     )}
 //                     <button className="btn btn-danger w-100" onClick={handleCancelCall}>
 //                       Cancel Call
@@ -2988,18 +10731,32 @@ export default Home;
 //                 ) : callStatus.status === 'active' ? (
 //                   <>
 //                     <p>
-//                       Active call with {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+//                       Active call with{' '}
+//                       {callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}
+//                     </p>
+//                     <p>
+//                       Call Duration: {Math.floor(getCallDuration() / 60)}:
+//                       {(getCallDuration() % 60).toString().padStart(2, '0')}
 //                     </p>
 //                     {callStatus.extended && <p className="text-success">Call Extended!</p>}
+//                     <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+//                     <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
 //                     <button className="btn btn-danger w-100 mb-2" onClick={handleEndCall}>
 //                       End Call
+//                     </button>
+//                     <button className="btn btn-secondary w-100 mb-2" onClick={toggleMute}>
+//                       {callStatus.isMuted ? 'Unmute' : 'Mute'}
 //                     </button>
 //                     <button
 //                       className="btn btn-warning w-100 mb-2"
 //                       onClick={handleExtendCall}
-//                       disabled={user?.powerTokens < 1 || extendRequest}
+//                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
 //                     >
-//                       {user?.powerTokens < 1 ? 'No Power Tokens' : extendRequest ? 'Awaiting Approval' : 'Extend Call'}
+//                       {user?.powerTokens < 1
+//                         ? 'No Power Tokens'
+//                         : extendRequest
+//                         ? 'Awaiting Approval'
+//                         : 'Extend Call'}
 //                     </button>
 //                     {extendRequest && extendRequest.callId === callStatus.callId && (
 //                       <div>
@@ -3010,10 +10767,7 @@ export default Home;
 //                         >
 //                           Yes
 //                         </button>
-//                         <button
-//                           className="btn btn-danger w-45"
-//                           onClick={() => handleApproveExtend(false)}
-//                         >
+//                         <button className="btn btn-danger w-45" onClick={() => handleApproveExtend(false)}>
 //                           No
 //                         </button>
 //                       </div>
