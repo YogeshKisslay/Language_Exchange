@@ -28,7 +28,7 @@ exports.generatePowerToken = async (req, res) => {
   try {
     const users = await User.find();
     // const twoHours = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
-    const twoHours=60*1000;
+    const twoHours=120*1000;
     for (let user of users) {
       const timeDiff = Date.now() - new Date(user.lastTokenGeneration).getTime();
       if (timeDiff >= twoHours && user.powerTokens < 10) {
