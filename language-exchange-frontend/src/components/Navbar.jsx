@@ -894,7 +894,8 @@ const Navbar = () => {
 
   useEffect(() => {
     if (isAuthenticated && user && user._id) {
-      const newSocket = io(process.env.REACT_APP_BACKEND_URL, { withCredentials: true });
+      // const newSocket = io(process.env.REACT_APP_BACKEND_URL, { withCredentials: true });
+      const newSocket = io(import.meta.env.VITE_BACKEND_URL, { withCredentials: true }); // Updated for Vite
       newSocket.on('connect', () => {
         console.log('Connected to WebSocket:', newSocket.id);
         newSocket.emit('register', user._id);

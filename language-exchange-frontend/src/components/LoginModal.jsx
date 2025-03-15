@@ -345,10 +345,12 @@ const LoginModal = () => {
       alert(err.data?.message || 'Failed to send reset email');
     }
   };
-
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.REACT_APP_BACKEND_URL}/api/auth/auth0`;
+    window.location.href = `${import.meta.env.VITE_BACKEND_URL}/api/auth/auth0`; // Updated for Vite
   };
+  // const handleGoogleLogin = () => {
+  //   window.location.href = `${process.env.REACT_APP_BACKEND_URL}/api/auth/auth0`;
+  // };
 
   return (
     <div
@@ -435,7 +437,7 @@ const LoginModal = () => {
               Continue with Google
             </button>
             <p className="text-center mt-3">
-              Don’t have an account?{' '}
+              Don't have an account?{' '}
               <Link
                 to="/register"
                 className="btn btn-link p-0"

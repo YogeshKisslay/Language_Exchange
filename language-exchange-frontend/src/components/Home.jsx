@@ -10130,14 +10130,20 @@ const Home = () => {
   useEffect(() => {
     if (isAuthenticated && user && user._id) {
       console.log('User in Redux:', user);
-      const backendUrl = process.env.REACT_APP_BACKEND_URL;
+      // const backendUrl = process.env.REACT_APP_BACKEND_URL;
+      // socketRef.current = io(backendUrl, {
+      //   withCredentials: true,
+      //   extraHeaders: { 'Content-Type': 'application/json' },
+      //   reconnectionAttempts: 5,
+      //   reconnectionDelay: 1000,
+      // });
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
       socketRef.current = io(backendUrl, {
         withCredentials: true,
         extraHeaders: { 'Content-Type': 'application/json' },
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
       });
-
       const socket = socketRef.current;
 
       socket.on('connect', () => {
@@ -10546,9 +10552,14 @@ const Home = () => {
     }
     console.log('Accepting call:', callStatus.callId);
     try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL;
+      // const backendUrl = process.env.REACT_APP_BACKEND_URL;
+      // await axios.post(
+      //   `${backendUrl}/api/calls/accept`,
+      //   { callId: callStatus.callId },
+      //   { withCredentials: true }
+      // );
       await axios.post(
-        `${backendUrl}/api/calls/accept`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/calls/accept`, // Updated for Vite
         { callId: callStatus.callId },
         { withCredentials: true }
       );

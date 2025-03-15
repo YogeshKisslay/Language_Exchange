@@ -478,7 +478,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 export const callApi = createApi({
   reducerPath: 'callApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: `${process.env.REACT_APP_BACKEND_URL}/api`,
+    baseUrl: `${import.meta.env.VITE_BACKEND_URL}/api`, // Updated for Vite
     credentials: 'include',
   }),
   endpoints: (builder) => ({
