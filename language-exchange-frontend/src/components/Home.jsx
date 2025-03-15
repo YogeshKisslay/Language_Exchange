@@ -1,6 +1,7 @@
 
 
 
+
 // import React, { useState, useEffect, useRef } from 'react';
 // import { useSelector, useDispatch } from 'react-redux';
 // import { Link } from 'react-router-dom';
@@ -4570,6 +4571,7 @@
 // };
 
 // export default Home; 
+
 
 
 
@@ -9401,6 +9403,7 @@ const Home = () => {
 
       socket.on('call-request', (data) => {
         console.log('Call request received:', data);
+
         dispatch(
           setCallStatus({
             callId: data.callId,
@@ -9412,11 +9415,14 @@ const Home = () => {
           })
         );
         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
+
       });
 
       socket.on('call-accepted', (data) => {
         console.log('Call accepted:', data);
+
         const updatedCallStatus = {
+
           callId: data.callId,
           status: 'active',
           receiver: data.receiverName,
@@ -9772,6 +9778,7 @@ const Home = () => {
     try {
       const response = await initiateCall(language).unwrap();
       console.log('Initiated call:', response);
+
       dispatch(
         setCallStatus({
           callId: response.callId,
@@ -9785,6 +9792,7 @@ const Home = () => {
         })
       );
       toast.success('Call initiated, waiting for a receiver...');
+
     } catch (error) {
       console.error('Initiate call failed:', error);
       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
@@ -9799,6 +9807,7 @@ const Home = () => {
     }
     console.log('Accepting call:', callStatus.callId);
     try {
+
       await axios.post(
         'http://localhost:5000/api/calls/accept',
         { callId: callStatus.callId },
@@ -9823,6 +9832,7 @@ const Home = () => {
       };
       dispatch(setCallStatus(updatedCallStatus));
       toast.success('Call accepted! Waiting for caller audio...');
+
     } catch (error) {
       console.error('Accept call error:', error);
       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
@@ -10144,6 +10154,7 @@ export default Home;
 
 //       socket.on('call-request', (data) => {
 //         console.log('Call request received:', data);
+
 //         dispatch(
 //           setCallStatus({
 //             callId: data.callId,
@@ -10155,11 +10166,14 @@ export default Home;
 //           })
 //         );
 //         toast.info(`Incoming call from ${data.callerName} for ${data.language}`);
+
 //       });
 
 //       socket.on('call-accepted', (data) => {
 //         console.log('Call accepted:', data);
+
 //         const updatedCallStatus = {
+
 //           callId: data.callId,
 //           status: 'active',
 //           receiver: data.receiverName,
@@ -10511,6 +10525,7 @@ export default Home;
 //     console.log('Initiating call with language:', language);
 //     try {
 //       const response = await initiateCall(language).unwrap();
+
 //       console.log('Initiated call:', response);
 //       dispatch(
 //         setCallStatus({
@@ -10525,6 +10540,7 @@ export default Home;
 //         })
 //       );
 //       toast.success('Call initiated, waiting for a receiver...');
+
 //     } catch (error) {
 //       console.error('Initiate call failed:', error);
 //       toast.error(`Failed to initiate call: ${error.data?.error || error.status || 'Unknown error'}`);
@@ -10539,6 +10555,7 @@ export default Home;
 //     }
 //     console.log('Accepting call:', callStatus.callId);
 //     try {
+
 //       const backendUrl = 'https://9ac0-2409-40d1-1a-e63a-c4cb-8426-d3a5-cda0.ngrok-free.app';
 //       await axios.post(
 //         `${backendUrl}/api/calls/accept`,
@@ -10556,6 +10573,7 @@ export default Home;
 //       };
 //       dispatch(setCallStatus(updatedCallStatus));
 //       toast.success('Call accepted! Waiting for caller audio...');
+
 //     } catch (error) {
 //       console.error('Accept call error:', error);
 //       toast.error(`Failed to accept call: ${error.response?.data?.error || error.message}`);
