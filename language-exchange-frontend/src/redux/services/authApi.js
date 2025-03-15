@@ -208,7 +208,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 export const authApi = createApi({
   reducerPath: 'authApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: `${process.env.REACT_APP_BACKEND_URL}/api`, // Use .env variable
+    baseUrl: `${import.meta.env.VITE_BACKEND_URL}/api`, // Updated for Vite
     credentials: 'include', // Send cookies
   }),
   endpoints: (builder) => ({
@@ -252,7 +252,7 @@ export const authApi = createApi({
     logout: builder.mutation({
       query: () => ({
         url: '/user/logout',
-        method: 'POST', // Matches your backend
+        method: 'POST',
       }),
     }),
     resetPassword: builder.mutation({

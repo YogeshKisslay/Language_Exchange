@@ -683,10 +683,12 @@ const RegisterModal = () => {
       alert(err.data?.message || 'Registration failed');
     }
   };
-
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.REACT_APP_BACKEND_URL}/api/auth/auth0`;
+    window.location.href = `${import.meta.env.VITE_BACKEND_URL}/api/auth/auth0`; // Updated for Vite
   };
+  // const handleGoogleLogin = () => {
+  //   window.location.href = `${process.env.REACT_APP_BACKEND_URL}/api/auth/auth0`;
+  // };
 
   return (
     <div
