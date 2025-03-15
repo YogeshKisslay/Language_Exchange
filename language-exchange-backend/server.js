@@ -272,7 +272,7 @@ connectDB();
 
 // Define allowed origins for CORS
 const allowedOrigins = [
-  "http://localhost:5173", // Vite local dev port
+  "http://localhost:3000", // Vite local dev port
   "https://language-exchange-frontend.onrender.com", // Deployed frontend
 ];
 
