@@ -409,9 +409,17 @@ let io;
 module.exports = {
   init: (httpServer) => {
     io = new Server(httpServer, {
+      // cors: {
+      //   // origin: 'http://localhost:3000',
+      //   // origin: '*',
+      //   methods: ['GET', 'POST'],
+      //   credentials: true,
+      // },
       cors: {
-        origin: 'http://localhost:3000',
-        // origin: '*',
+        origin: [
+          'http://localhost:3000', // Updated Vite local dev port
+          'https://language-exchange-frontend.onrender.com',
+        ],
         methods: ['GET', 'POST'],
         credentials: true,
       },

@@ -64,9 +64,19 @@ const updateProfile = asyncHandler(async (req, res) => {
 });
 
 // Logout (clear cookie)
+// const logout = asyncHandler(async (req, res) => {
+//   res.cookie("token", "", { httpOnly: true, expires: new Date(0) });
+//   res.status(200).json({ message: "Logged out successfully" });
+// });
 const logout = asyncHandler(async (req, res) => {
-  res.cookie("token", "", { httpOnly: true, expires: new Date(0) });
+  res.cookie("token", "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // Match login settings
+    sameSite: "lax", // Match login settings
+    path: '/', // Ensure cookie is cleared site-wide
+    expires: new Date(0), // Immediately expire
+  });
+  console.log('Logout - Cookie cleared'); // Debug
   res.status(200).json({ message: "Logged out successfully" });
 });
-
 module.exports = { getProfile, updateProfile, logout };
