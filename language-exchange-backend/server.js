@@ -312,7 +312,7 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/calls", callRoutes);
-
+console.log('NODE_ENV:', process.env.NODE_ENV);
 // Schedule power token generation every 2 hours
 cron.schedule(
   "0 */2 * * *",
