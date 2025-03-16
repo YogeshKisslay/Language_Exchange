@@ -318,12 +318,12 @@ const loginUser = asyncHandler(async (req, res) => {
   const isProduction = process.env.NODE_ENV === 'production';
   res.cookie("token", token, {
     httpOnly: true,
-    secure: isProduction, // True on Render (HTTPS)
-    sameSite: isProduction ? 'none' : 'lax', // None for cross-origin in prod
+    secure: true, // Always true for deployed backend (HTTPS)
+    sameSite: 'none', // Always none for cross-origin
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
   });
-  console.log('Login - NODE_ENV:', process.env.NODE_ENV, 'Cookie Settings:', { secure: isProduction, sameSite: isProduction ? 'none' : 'lax' });
+  console.log('Login - NODE_ENV:', process.env.NODE_ENV, 'Cookie Settings:', { secure: true, sameSite: 'none' });
   res.json({
     message: "Logged in successfully",
     token,
@@ -353,12 +353,12 @@ const auth0Login = asyncHandler(async (req, res) => {
   const isProduction = process.env.NODE_ENV === 'production';
   res.cookie("token", token, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    secure: true,
+    sameSite: 'none',
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
   });
-  console.log('Auth0 Login - NODE_ENV:', process.env.NODE_ENV, 'Cookie Settings:', { secure: isProduction, sameSite: isProduction ? 'none' : 'lax' });
+  console.log('Auth0 Login - NODE_ENV:', process.env.NODE_ENV, 'Cookie Settings:', { secure: true, sameSite: 'none' });
   res.redirect(process.env.FRONTEND_URL);
 });
 const forgotPassword = asyncHandler(async (req, res) => {
