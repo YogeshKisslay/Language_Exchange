@@ -289,6 +289,7 @@ export const authApi = createApi({
     credentials: 'include',
     prepareHeaders: (headers, { getState }) => {
       const token = getState().auth.token;
+      console.log('prepareHeaders - Token:', token); // Debug log
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);
       }
@@ -324,11 +325,15 @@ export const authApi = createApi({
       }),
     }),
     getProfile: builder.query({
-      query: () => '/user/profile',
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+      query: () => {
+        console.log('getProfile query triggered'); // Debug log
+        return '/user/profile';
+      },
+      async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) { // Add getState
         try {
+          console.log('getProfile onQueryStarted'); // Debug log
           const { data } = await queryFulfilled;
-          dispatch(setCredentials({ user: data.user, token: data.token }));
+          dispatch(setCredentials({ user: data.user, token: getState().auth.token || data.token }));
         } catch (err) {
           console.error('Profile fetch failed:', err);
           dispatch(logout());
