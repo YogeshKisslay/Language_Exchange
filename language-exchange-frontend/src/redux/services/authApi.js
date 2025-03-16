@@ -203,13 +203,97 @@
 
 
 
+// import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+
+// export const authApi = createApi({
+//   reducerPath: 'authApi',
+//   baseQuery: fetchBaseQuery({
+//     baseUrl: `${import.meta.env.VITE_BACKEND_URL}/api`, // Updated for Vite
+//     credentials: 'include', // Send cookies
+//   }),
+//   endpoints: (builder) => ({
+//     register: builder.mutation({
+//       query: (credentials) => ({
+//         url: '/auth/register',
+//         method: 'POST',
+//         body: credentials,
+//       }),
+//     }),
+//     login: builder.mutation({
+//       query: (credentials) => ({
+//         url: '/auth/login',
+//         method: 'POST',
+//         body: credentials,
+//       }),
+//     }),
+//     forgotPassword: builder.mutation({
+//       query: (email) => ({
+//         url: '/auth/forgot-password',
+//         method: 'POST',
+//         body: { email },
+//       }),
+//     }),
+//     googleLogin: builder.mutation({
+//       query: () => ({
+//         url: '/auth/auth0',
+//         method: 'GET',
+//       }),
+//     }),
+//     getProfile: builder.query({
+//       query: () => '/user/profile',
+//     }),
+//     updateProfile: builder.mutation({
+//       query: (profileData) => ({
+//         url: '/user/profile',
+//         method: 'PUT',
+//         body: profileData,
+//       }),
+//     }),
+//     logout: builder.mutation({
+//       query: () => ({
+//         url: '/user/logout',
+//         method: 'POST',
+//       }),
+//     }),
+//     resetPassword: builder.mutation({
+//       query: ({ token, newPassword }) => ({
+//         url: `/auth/reset-password/${token}`,
+//         method: 'POST',
+//         body: { newPassword },
+//       }),
+//     }),
+//   }),
+// });
+
+// export const {
+//   useRegisterMutation,
+//   useLoginMutation,
+//   useForgotPasswordMutation,
+//   useGoogleLoginMutation,
+//   useGetProfileQuery,
+//   useUpdateProfileMutation,
+//   useLogoutMutation,
+//   useResetPasswordMutation,
+// } = authApi;
+
+// export default authApi;
+
+
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { setCredentials, logout } from '../slices/authSlice';
 
 export const authApi = createApi({
   reducerPath: 'authApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: `${import.meta.env.VITE_BACKEND_URL}/api`, // Updated for Vite
-    credentials: 'include', // Send cookies
+    baseUrl: `${import.meta.env.VITE_BACKEND_URL}/api`,
+    credentials: 'include',
+    prepareHeaders: (headers, { getState }) => {
+      const token = getState().auth.token;
+      if (token) {
+        headers.set('Authorization', `Bearer ${token}`);
+      }
+      return headers;
+    },
   }),
   endpoints: (builder) => ({
     register: builder.mutation({
@@ -241,6 +325,15 @@ export const authApi = createApi({
     }),
     getProfile: builder.query({
       query: () => '/user/profile',
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setCredentials({ user: data.user, token: data.token }));
+        } catch (err) {
+          console.error('Profile fetch failed:', err);
+          dispatch(logout());
+        }
+      },
     }),
     updateProfile: builder.mutation({
       query: (profileData) => ({
@@ -254,6 +347,14 @@ export const authApi = createApi({
         url: '/user/logout',
         method: 'POST',
       }),
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(logout());
+        } catch (err) {
+          console.error('Logout failed:', err);
+        }
+      },
     }),
     resetPassword: builder.mutation({
       query: ({ token, newPassword }) => ({
