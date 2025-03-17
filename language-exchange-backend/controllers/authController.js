@@ -546,13 +546,15 @@ const logoutUser = asyncHandler(async (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    // sameSite: isProduction ? 'none' : 'lax',
+    sameSite:none,
     path: '/',
   });
   res.clearCookie("connect.sid", {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    // sameSite: isProduction ? 'none' : 'lax',
+    sameSite:none,
     path: '/',
   });
 
