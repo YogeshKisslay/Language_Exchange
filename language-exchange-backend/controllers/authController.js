@@ -730,23 +730,35 @@ const resetPassword = asyncHandler(async (req, res) => {
   }
 });
 
+// const logoutUser = asyncHandler(async (req, res) => {
+//   const isProduction = process.env.NODE_ENV === 'production';
+//   res.clearCookie("token", {
+//     httpOnly: true,
+//     secure: isProduction,
+//     sameSite: isProduction ? 'none' : 'lax', // Must match login settings
+//     path: '/',
+//     maxAge: 0, // Explicitly expire immediately
+//   });
+
+//   console.log('Logout - NODE_ENV:', process.env.NODE_ENV, 'Cookie cleared with:', {
+//     secure: isProduction,
+//     sameSite: isProduction ? 'none' : 'lax',
+//   });
+//   res.status(200).json({ message: "Logged out successfully" });
+// });
 const logoutUser = asyncHandler(async (req, res) => {
   const isProduction = process.env.NODE_ENV === 'production';
-  res.clearCookie("token", {
+  const cookieOptions = {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax', // Must match login settings
+    secure: isProduction, // true in production
+    sameSite: isProduction ? 'none' : 'lax', // 'none' in production
     path: '/',
-    maxAge: 0, // Explicitly expire immediately
-  });
-
-  console.log('Logout - NODE_ENV:', process.env.NODE_ENV, 'Cookie cleared with:', {
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
-  });
+    expires: new Date(0), // Expire immediately (Unix epoch)
+  };
+  res.clearCookie("token", cookieOptions);
+  console.log('Logout - NODE_ENV:', process.env.NODE_ENV, 'Cookie cleared with:', cookieOptions);
   res.status(200).json({ message: "Logged out successfully" });
 });
-
 module.exports = {
   registerUser,
   verifyUser,
