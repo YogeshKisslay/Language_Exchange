@@ -279,6 +279,113 @@
 // export default authApi;
 
 
+// import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+// import { setCredentials, logout } from '../slices/authSlice';
+
+// export const authApi = createApi({
+//   reducerPath: 'authApi',
+//   baseQuery: fetchBaseQuery({
+//     baseUrl: `${import.meta.env.VITE_BACKEND_URL}/api`,
+//     credentials: 'include',
+//     prepareHeaders: (headers, { getState }) => {
+//       const token = getState().auth.token;
+//       console.log('prepareHeaders - Token:', token); // Debug log
+//       if (token) {
+//         headers.set('Authorization', `Bearer ${token}`);
+//       }
+//       return headers;
+//     },
+//   }),
+//   endpoints: (builder) => ({
+//     register: builder.mutation({
+//       query: (credentials) => ({
+//         url: '/auth/register',
+//         method: 'POST',
+//         body: credentials,
+//       }),
+//     }),
+//     login: builder.mutation({
+//       query: (credentials) => ({
+//         url: '/auth/login',
+//         method: 'POST',
+//         body: credentials,
+//       }),
+//     }),
+//     forgotPassword: builder.mutation({
+//       query: (email) => ({
+//         url: '/auth/forgot-password',
+//         method: 'POST',
+//         body: { email },
+//       }),
+//     }),
+//     googleLogin: builder.mutation({
+//       query: () => ({
+//         url: '/auth/auth0',
+//         method: 'GET',
+//       }),
+//     }),
+//     getProfile: builder.query({
+//       query: () => {
+//         console.log('getProfile query triggered'); // Debug log
+//         return '/user/profile';
+//       },
+//       async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) { // Add getState
+//         try {
+//           console.log('getProfile onQueryStarted'); // Debug log
+//           const { data } = await queryFulfilled;
+//           dispatch(setCredentials({ user: data.user, token: getState().auth.token || data.token }));
+//         } catch (err) {
+//           console.error('Profile fetch failed:', err);
+//           dispatch(logout());
+//         }
+//       },
+//     }),
+//     updateProfile: builder.mutation({
+//       query: (profileData) => ({
+//         url: '/user/profile',
+//         method: 'PUT',
+//         body: profileData,
+//       }),
+//     }),
+//     logout: builder.mutation({
+//       query: () => ({
+//         url: '/user/logout',
+//         method: 'POST',
+//       }),
+//       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+//         try {
+//           await queryFulfilled;
+//           dispatch(logout());
+//         } catch (err) {
+//           console.error('Logout failed:', err);
+//         }
+//       },
+//     }),
+//     resetPassword: builder.mutation({
+//       query: ({ token, newPassword }) => ({
+//         url: `/auth/reset-password/${token}`,
+//         method: 'POST',
+//         body: { newPassword },
+//       }),
+//     }),
+//   }),
+// });
+
+// export const {
+//   useRegisterMutation,
+//   useLoginMutation,
+//   useForgotPasswordMutation,
+//   useGoogleLoginMutation,
+//   useGetProfileQuery,
+//   useUpdateProfileMutation,
+//   useLogoutMutation,
+//   useResetPasswordMutation,
+// } = authApi;
+
+// export default authApi;
+
+
+
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { setCredentials, logout } from '../slices/authSlice';
 
@@ -289,7 +396,7 @@ export const authApi = createApi({
     credentials: 'include',
     prepareHeaders: (headers, { getState }) => {
       const token = getState().auth.token;
-      console.log('prepareHeaders - Token:', token); // Debug log
+      console.log('prepareHeaders - Token:', token);
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);
       }
@@ -326,12 +433,12 @@ export const authApi = createApi({
     }),
     getProfile: builder.query({
       query: () => {
-        console.log('getProfile query triggered'); // Debug log
+        console.log('getProfile query triggered');
         return '/user/profile';
       },
-      async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) { // Add getState
+      async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
         try {
-          console.log('getProfile onQueryStarted'); // Debug log
+          console.log('getProfile onQueryStarted');
           const { data } = await queryFulfilled;
           dispatch(setCredentials({ user: data.user, token: getState().auth.token || data.token }));
         } catch (err) {
@@ -349,7 +456,7 @@ export const authApi = createApi({
     }),
     logout: builder.mutation({
       query: () => ({
-        url: '/user/logout',
+        url: '/user/logout', // Updated to match backend route
         method: 'POST',
       }),
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
