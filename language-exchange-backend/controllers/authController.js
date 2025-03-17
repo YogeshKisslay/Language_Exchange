@@ -757,7 +757,7 @@ const logoutUser = asyncHandler(async (req, res) => {
   };
   res.clearCookie("token", cookieOptions);
   console.log('Logout - NODE_ENV:', process.env.NODE_ENV, 'Cookie cleared with:', cookieOptions);
-  res.status(200).json({ message: "Logged out successfully" });
+  res.status(200).json({ message: "Logged out successfully" }); 
 });
 module.exports = {
   registerUser,
