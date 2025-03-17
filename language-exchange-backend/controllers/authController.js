@@ -730,22 +730,8 @@ const resetPassword = asyncHandler(async (req, res) => {
   }
 });
 
-// const logoutUser = asyncHandler(async (req, res) => {
-//   const isProduction = process.env.NODE_ENV === 'production';
-//   res.clearCookie("token", {
-//     httpOnly: true,
-//     secure: isProduction,
-//     sameSite: isProduction ? 'none' : 'lax', // Must match login settings
-//     path: '/',
-//     maxAge: 0, // Explicitly expire immediately
-//   });
 
-//   console.log('Logout - NODE_ENV:', process.env.NODE_ENV, 'Cookie cleared with:', {
-//     secure: isProduction,
-//     sameSite: isProduction ? 'none' : 'lax',
-//   });
-//   res.status(200).json({ message: "Logged out successfully" });
-// });
+// this is for auth0 not needed
 const logoutUser = asyncHandler(async (req, res) => {
   const isProduction = process.env.NODE_ENV === 'production';
   const cookieOptions = {
