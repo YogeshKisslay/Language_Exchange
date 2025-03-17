@@ -750,7 +750,7 @@ const logoutUser = asyncHandler(async (req, res) => {
   const isProduction = process.env.NODE_ENV === 'production';
   const cookieOptions = {
     httpOnly: true,
-    secure: isProduction, // true in production
+    secure: isProduction, // true in production  
     sameSite: isProduction ? 'none' : 'lax', // 'none' in production
     path: '/',
     expires: new Date(0), // Expire immediately (Unix epoch)
