@@ -735,8 +735,9 @@ const logoutUser = asyncHandler(async (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax', // Reverted to conditional for consistency
+    sameSite: isProduction ? 'none' : 'lax', // Must match login settings
     path: '/',
+    maxAge: 0, // Explicitly expire immediately
   });
 
   console.log('Logout - NODE_ENV:', process.env.NODE_ENV, 'Cookie cleared with:', {
