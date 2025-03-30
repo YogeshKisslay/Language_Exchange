@@ -1,0 +1,53 @@
+.card {
+    text-align: center;
+    padding: 10px;
+    /* ✅ Keep padding small */
+    border-radius: 15px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    max-width: 300px;
+    /* ✅ Keep width consistent */
+    min-height: 180px;
+    /* ✅ Do not increase height */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    /* ✅ Remove extra space */
+}
+
+/* Remove Bootstrap Grid Spacing */
+.row {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+}
+
+/* Reduce Padding Between Cards */
+.row>[class*='col'] {
+    padding-right: 3px !important;
+    /* ✅ Minimize gap */
+    padding-left: 3px !important;
+}
+
+/* Background Colors */
+.card-left {
+    background: linear-gradient(to right, #ff9a9e, #fad0c4);
+    color: white;
+}
+
+.card-center {
+    background: linear-gradient(to right, #fbc2eb, #a6c1ee);
+    color: white;
+}
+
+.card-right {
+    background: linear-gradient(to right, #84fab0, #8fd3f4);
+    color: white;
+}
+
+/* Hover Effects */
+.card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.2);
+}
