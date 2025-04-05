@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { useLogoutMutation } from '../redux/services/authApi';
@@ -13,9 +13,11 @@ const Navbar = () => {
   const [notifications, setNotifications] = useState([]);
   const [socket, setSocket] = useState(null);
 
+  // WebSocket connection
   useEffect(() => {
     if (isAuthenticated && user && user._id) {
       const newSocket = io('http://localhost:5000', { withCredentials: true });
+
       newSocket.on('connect', () => {
         console.log('Connected to WebSocket:', newSocket.id);
         newSocket.emit('register', user._id);
@@ -27,12 +29,10 @@ const Navbar = () => {
       });
 
       newSocket.on('call-cancelled', (data) => {
-        console.log('Navbar - Call cancelled:', data);
         setNotifications((prev) => prev.filter((n) => n.data.callId !== data.callId));
       });
 
       newSocket.on('call-rejected', (data) => {
-        console.log('Navbar - Call rejected:', data);
         setNotifications((prev) => prev.filter((n) => n.data.callId !== data.callId));
       });
 
@@ -44,16 +44,24 @@ const Navbar = () => {
     }
   }, [isAuthenticated, user]);
 
+  // Restore pending call notification (FIXED)
   useEffect(() => {
-    if (callStatus?.status === 'pending' && callStatus.caller && callStatus.callerId !== (user?._id || '')) {
-      if (!notifications.some(n => n.data.callId === callStatus.callId)) {
-        console.log('Navbar - Restoring pending call notification:', callStatus);
-        setNotifications((prev) => [...prev, { type: 'call-request', data: callStatus }]);
-      }
+    if (
+      callStatus?.status === 'pending' &&
+      callStatus.caller &&
+      callStatus.callerId !== (user?._id || '')
+    ) {
+      setNotifications((prev) => {
+        const alreadyExists = prev.some(n => n.data.callId === callStatus.callId);
+        if (!alreadyExists) {
+          return [...prev, { type: 'call-request', data: callStatus }];
+        }
+        return prev;
+      });
     } else if (!callStatus) {
       setNotifications([]);
     }
-  }, [callStatus, user, notifications]);
+  }, [callStatus, user]);
 
   const handleLogout = async () => {
     try {
@@ -84,7 +92,12 @@ const Navbar = () => {
             src="https://cdn6.f-cdn.com/contestentries/260579/10522671/55c88fabf38d4_thumb900.jpg"
             alt="Language Exchange Logo"
             className="d-inline-block align-text-top"
-            style={{ width: "45px", height: "45px", borderRadius: "50%", border: "2px solid #0D2818" }}
+            style={{
+              width: "45px",
+              height: "45px",
+              borderRadius: "50%",
+              border: "2px solid #0D2818"
+            }}
           />
           <span className="ms-2" style={{ color: "#D32F2F" }}>FlyLingua</span>
         </Link>
@@ -104,50 +117,48 @@ const Navbar = () => {
         <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
           <ul className="navbar-nav align-items-center">
             {isAuthenticated && user ? (
-              <>
-                <li className="nav-item dropdown">
-                  <button
-                    className="btn btn-primary ms-2 rounded-circle d-flex align-items-center justify-content-center position-relative"
-                    style={{ width: '40px', height: '40px', padding: 0 }}
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false"
-                  >
-                    {avatarLetter}
-                    {languagesMissing && (
-                      <span
-                        className="position-absolute badge bg-danger"
-                        style={{
-                          top: '30px',
-                          left: '20%',
-                          transform: 'translateX(-50%)',
-                          width: '15px',
-                          height: '15px',
-                          fontSize: '0.8rem',
-                          lineHeight: '12px',
-                          borderRadius: '50%',
-                          padding: 0,
-                          textAlign: 'center',
-                          zIndex: 1,
-                        }}
-                      >
-                        !
-                      </span>
-                    )}
-                  </button>
-                  <ul className="dropdown-menu dropdown-menu-end">
-                    <li>
-                      <Link className="dropdown-item" to="/profile">
-                        Profile
-                      </Link>
-                    </li>
-                    <li>
-                      <button className="dropdown-item" onClick={handleLogout}>
-                        Logout
-                      </button>
-                    </li>
-                  </ul>
-                </li>
-              </>
+              <li className="nav-item dropdown">
+                <button
+                  className="btn btn-primary ms-2 rounded-circle d-flex align-items-center justify-content-center position-relative"
+                  style={{ width: '40px', height: '40px', padding: 0 }}
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  {avatarLetter}
+                  {languagesMissing && (
+                    <span
+                      className="position-absolute badge bg-danger"
+                      style={{
+                        top: '30px',
+                        left: '20%',
+                        transform: 'translateX(-50%)',
+                        width: '15px',
+                        height: '15px',
+                        fontSize: '0.8rem',
+                        lineHeight: '12px',
+                        borderRadius: '50%',
+                        padding: 0,
+                        textAlign: 'center',
+                        zIndex: 1,
+                      }}
+                    >
+                      !
+                    </span>
+                  )}
+                </button>
+                <ul className="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <Link className="dropdown-item" to="/profile">
+                      Profile
+                    </Link>
+                  </li>
+                  <li>
+                    <button className="dropdown-item" onClick={handleLogout}>
+                      Logout
+                    </button>
+                  </li>
+                </ul>
+              </li>
             ) : (
               <li className="nav-item">
                 <Link className="btn btn-danger fw-bold ms-2 shadow-sm" to="/login">
