@@ -72,7 +72,6 @@
 
 
 
-
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
@@ -88,7 +87,6 @@ const transporter = nodemailer.createTransport({
 const sendVerificationEmail = (user, type = "verify") => {
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-  // Use frontend URL for reset password, backend URL for verification
   const url = type === "reset"
     ? `${process.env.FRONTEND_URL}/${type}/${token}`  // Frontend for reset
     : `${process.env.BACKEND_URL}/api/auth/${type}/${token}`;  // Backend for verify
@@ -109,4 +107,4 @@ const sendVerificationEmail = (user, type = "verify") => {
   });
 };
 
-module.exports = { sendVerificationEmail };
+module.exports = { sendVerificationEmail, transporter }; // Export transporter

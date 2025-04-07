@@ -105,7 +105,8 @@ const userSchema = new mongoose.Schema(
     lastTokenGeneration: { type: Date, default: Date.now },
     isOnline: { type: Boolean, default: false },
     rejectedCalls: [{ type: mongoose.Schema.Types.ObjectId, ref: "Call", default: [] }], // Track rejected calls
-    currentCall: { type: mongoose.Schema.Types.ObjectId, ref: "Call", default: null } // Track active/pending call
+    currentCall: { type: mongoose.Schema.Types.ObjectId, ref: "Call", default: null } ,// Track active/pending call
+    premium: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

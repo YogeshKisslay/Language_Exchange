@@ -1407,6 +1407,11 @@ const Navbar = () => {
                     )}
                   </ul>
                 </li>
+                <li className="nav-item">
+                  <Link className="btn btn-warning ms-2" to="/premium">
+                    Premium {user.premium && <i className="bi bi-check-circle-fill"></i>}
+                  </Link>
+                </li>
               </>
             )}
             {isAuthenticated && user ? (

@@ -2699,5 +2699,94 @@ exports.getCurrentCall = async (req, res) => {
     res.status(500).json({ error: "Failed to get current call", details: error.message });
   }
 };
+
+// exports.initiateSelectiveCall = async (req, res) => {
+//   try {
+//     console.log('Initiate selective call - Request body:', req.body);
+//     console.log('Initiate selective call - User:', req.user);
+
+//     const caller = req.user;
+//     const { receiverId, language } = req.body;
+
+//     if (!caller || !caller.premium) return res.status(403).json({ error: "Premium access required" });
+//     if (!receiverId || !language) return res.status(400).json({ error: "Receiver ID and language required" });
+//     if (caller.powerTokens < 1) return res.status(400).json({ error: "Insufficient power tokens" });
+
+//     const receiver = await User.findById(receiverId);
+//     if (!receiver || !receiver.isOnline) return res.status(404).json({ error: "Receiver not found or offline" });
+
+//     const call = new Call({
+//       caller: caller._id,
+//       receiver: receiver._id,
+//       potentialReceivers: [receiver._id],
+//       language,
+//       status: "pending",
+//       startTime: new Date(),
+//     });
+
+//     await call.save();
+//     caller.currentCall = call._id;
+//     await caller.save();
+//     console.log('Selective call saved:', call._id.toString());
+
+//     const io = socket.getIO();
+//     io.to(receiver._id.toString()).emit("call-request", {
+//       callId: call._id.toString(),
+//       callerId: caller._id.toString(),
+//       callerName: caller.name,
+//       language,
+//     });
+//     console.log(`Emitted call-request to ${receiver.name} (${receiver._id})`);
+
+//     res.status(200).json({ callId: call._id.toString(), receiver: { id: receiver._id.toString(), name: receiver.name } });
+//   } catch (error) {
+//     console.error("Initiate selective call error:", error.stack);
+//     res.status(500).json({ error: "Failed to initiate selective call", details: error.message });
+//   }
+// };
+exports.initiateSelectiveCall = async (req, res) => {
+  try {
+    console.log('Initiate selective call - Request body:', req.body);
+    console.log('Initiate selective call - User:', req.user);
+
+    const caller = req.user;
+    const { receiverId, language } = req.body; // Language is optional
+
+    if (!caller || !caller.premium) return res.status(403).json({ error: "Premium access required" });
+    if (!receiverId) return res.status(400).json({ error: "Receiver ID required" });
+    if (caller.powerTokens < 1) return res.status(400).json({ error: "Insufficient power tokens" });
+
+    const receiver = await User.findById(receiverId);
+    if (!receiver || !receiver.isOnline) return res.status(404).json({ error: "Receiver not found or offline" });
+
+    const call = new Call({
+      caller: caller._id,
+      receiver: receiver._id,
+      potentialReceivers: [receiver._id],
+      language: language || "Not specified", // Default if no language provided
+      status: "pending",
+      startTime: new Date(),
+    });
+
+    await call.save();
+    caller.currentCall = call._id;
+    await caller.save();
+    console.log('Selective call saved:', call._id.toString());
+
+    const io = socket.getIO();
+    io.to(receiver._id.toString()).emit("call-request", {
+      callId: call._id.toString(),
+      callerId: caller._id.toString(),
+      callerName: caller.name,
+      language: call.language,
+    });
+    console.log(`Emitted call-request to ${receiver.name} (${receiver._id})`);
+
+    res.status(200).json({ callId: call._id.toString(), receiver: { id: receiver._id.toString(), name: receiver.name } });
+  } catch (error) {
+    console.error("Initiate selective call error:", error.stack);
+    res.status(500).json({ error: "Failed to initiate selective call", details: error.message });
+  }
+};
 // Rest of the file remains unchanged (including previous rejectCall fix)
 module.exports = exports;

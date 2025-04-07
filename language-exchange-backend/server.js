@@ -276,6 +276,7 @@ const allowedOrigins = [
   "https://language-exchange-frontend.onrender.com", // Deployed frontend
 ];
 
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "your_secret_key", // Use env variable or fallback
@@ -313,6 +314,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/calls", callRoutes);
 console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log("Environment variables loaded - RAZORPAY_KEY_ID:", process.env.RAZORPAY_KEY_ID);
 // Schedule power token generation every 2 hours
 cron.schedule(
   "0 */2 * * *",
