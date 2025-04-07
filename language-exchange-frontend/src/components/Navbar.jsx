@@ -44,7 +44,7 @@ const Navbar = () => {
     }
   }, [isAuthenticated, user]);
 
-  // Restore pending call notification (FIXED)
+  // Restore pending call notification
   useEffect(() => {
     if (
       callStatus?.status === 'pending' &&
