@@ -89,4 +89,6 @@ router.post('/payment/verify', authenticateUser, userController.verifyPayment);
 router.get('/all-users', authenticateUser, userController.getAllUsers);
 router.post('/send-email', authenticateUser, userController.sendEmailToUser);
 
+router.post('/exchangePowerTokens',authenticateUser, userController.exchangePowerTokens); 
+
 module.exports = router;
