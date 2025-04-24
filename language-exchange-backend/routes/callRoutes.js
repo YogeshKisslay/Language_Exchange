@@ -74,5 +74,5 @@ router.post("/approve-extend", authenticateUser, callController.approveExtendCal
 router.post("/cancel", authenticateUser, callController.cancelCall);
 router.post("/set-online", authenticateUser, callController.setOnlineStatus);
 router.get("/current-call", authenticateUser, callController.getCurrentCall);
-
+router.post('/initiate-selective', authenticateUser, callController.initiateSelectiveCall); // New route
 module.exports = router;

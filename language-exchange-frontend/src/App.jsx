@@ -254,6 +254,7 @@
 // export default App;
 
 
+
 // import React, { useEffect } from 'react';
 // import { useSelector } from 'react-redux';
 // import { Routes, Route, useLocation } from 'react-router-dom';
@@ -329,6 +330,7 @@
 
 // export default App;
 
+
 import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Routes, Route, useLocation } from 'react-router-dom';
@@ -339,8 +341,10 @@ import ResetPassword from './components/ResetPassword';
 import Profile from './components/Profile';
 import UpdateProfile from './components/UpdateProfile';
 import Home from './components/Home';
+
 import Premium from './components/Premium';
 import Store from './components/Store';
+
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -395,9 +399,12 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/reset/:token" element={<ResetPassword />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/:userId" element={<Profile />} />
         <Route path="/update-profile" element={<UpdateProfile />} />
+
         <Route path="/premium" element={<Premium />} />
         <Route path="/store" element={<Store />} />
+
       </Routes>
     </>
   );

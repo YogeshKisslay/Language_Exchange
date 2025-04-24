@@ -1273,7 +1273,6 @@
 // export default Premium;
 
 
-
 // import React, { useState, useEffect, useRef } from 'react';
 // import { useSelector, useDispatch } from 'react-redux';
 // import { Link } from 'react-router-dom';
@@ -3093,6 +3092,7 @@
 // export default Premium;
 
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -3113,6 +3113,7 @@ import { io } from 'socket.io-client';
 import { toast } from 'react-toastify';
 import EmailModal from './EmailModal';
 
+
 const Premium = () => {
   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
@@ -3121,8 +3122,10 @@ const Premium = () => {
   const [extendRequest, setExtendRequest] = useState(null);
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
+
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [selectedRecipient, setSelectedRecipient] = useState(null);
+
   const peerConnection = useRef(null);
   const isWebRTCStarting = useRef(false);
   const socketRef = useRef(null);
@@ -3135,14 +3138,17 @@ const Premium = () => {
   const [extendCall] = useExtendCallMutation();
   const [cancelCall] = useCancelCallMutation();
   const [approveExtendCall] = useApproveExtendCallMutation();
+
   const { data: usersData, isLoading, error } = useGetAllUsersQuery(undefined, {
     skip: !isAuthenticated || !user?.premium,
   });
+
   const [sendEmail] = useSendEmailToUserMutation();
   const { data: currentCallData, isLoading: callLoading } = useGetCurrentCallQuery(undefined, {
     skip: !isAuthenticated,
     pollingInterval: 5000,
   });
+
 
   useEffect(() => {
     if (isAuthenticated && user && user._id) {
@@ -3445,9 +3451,11 @@ const Premium = () => {
     }
   };
 
+
   const handleSendEmail = (recipientId, recipientName) => {
     setSelectedRecipient({ id: recipientId, name: recipientName });
     setShowEmailModal(true);
+
   };
 
   const handlePayment = async () => {
@@ -3458,7 +3466,9 @@ const Premium = () => {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
+
           body: JSON.stringify({ type: 'premium', amount: 50000 }),
+
         }
       );
       const orderData = await orderResponse.json();
@@ -3476,7 +3486,9 @@ const Premium = () => {
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
+
             type: 'premium',
+
           };
           const verifyRes = await fetch(
             `${import.meta.env.VITE_BACKEND_URL}/api/user/payment/verify`,
@@ -3492,7 +3504,9 @@ const Premium = () => {
           else toast.error('Payment verification failed');
         },
         prefill: { name: user.name, email: user.email },
+
         theme: { color: '#1d1e22' },
+
       };
       const rzp = new window.Razorpay(options);
       rzp.open();
@@ -3500,6 +3514,7 @@ const Premium = () => {
       toast.error('Failed to initiate payment');
     }
   };
+
 
   const filteredUsers = usersData?.users
     ? usersData.users.filter(u =>
@@ -3585,13 +3600,16 @@ const Premium = () => {
       <h2 style={{
         color: '#1d1e22',
         textAlign: 'center',
+
         marginBottom: '1rem',
+
         fontWeight: 'bold',
         textShadow: '0 0 5px rgba(254, 218, 106, 0.3)',
         animation: 'fadeIn 0.5s ease-in',
       }}>
         Premium Dashboard
       </h2>
+
       <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
         <Link
           to="/store"
@@ -3615,6 +3633,7 @@ const Premium = () => {
           Buy More Tokens or Coins
         </Link>
       </div>
+
       {callStatus ? (
         <div style={{
           maxWidth: '500px',
@@ -3932,6 +3951,7 @@ const Premium = () => {
         {isLoading ? (
           <p style={{ color: '#393f4d', textAlign: 'center' }}>Loading users...</p>
         ) : error ? (
+
           <p style={{ color: '#393f4d', textAlign: 'center' }}>
             Error: {error.data?.error || 'Failed to load users'}
           </p>
@@ -3939,6 +3959,7 @@ const Premium = () => {
           <p style={{ color: '#393f4d', textAlign: 'center' }}>
             No users available
           </p>
+
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -3960,6 +3981,7 @@ const Premium = () => {
                   onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#feda6a'}
                   onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#FFFFFF'}
                   >
+
                     <td style={{ padding: '1rem' }}>
                       <Link to={`/profile/${u._id}`} style={{ color: '#393f4d', textDecoration: 'none' }}>
                         {u.name}
@@ -3974,6 +3996,7 @@ const Premium = () => {
                     <td style={{ padding: '1rem', color: '#393f4d' }}>
                       {u.learnLanguages.join(', ') || 'None'}
                     </td>
+
                     <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
                       <button
                         onClick={() => handleSelectiveCall(u._id)}
@@ -4003,7 +4026,9 @@ const Premium = () => {
                         Call
                       </button>
                       <button
+
                         onClick={() => handleSendEmail(u._id, u.name)}
+
                         disabled={!user?.premium}
                         style={{
                           backgroundColor: '#393f4d',
@@ -4038,6 +4063,7 @@ const Premium = () => {
         )}
       </div>
 
+
       {showEmailModal && selectedRecipient && (
         <EmailModal
           recipientId={selectedRecipient.id}
@@ -4048,6 +4074,7 @@ const Premium = () => {
           }}
         />
       )}
+
 
       <style>
         {`

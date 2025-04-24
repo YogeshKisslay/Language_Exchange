@@ -62,6 +62,7 @@
 
 
 
+
 // import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 // export const userApi = createApi({
@@ -114,10 +115,12 @@ export const userApi = createApi({
       query: () => '/all-users',
     }),
     sendEmailToUser: builder.mutation({
+
       query: ({ recipientId, subject, message }) => ({
         url: '/send-email',
         method: 'POST',
         body: { recipientId, subject, message },
+
       }),
     }),
     getProfile: builder.query({

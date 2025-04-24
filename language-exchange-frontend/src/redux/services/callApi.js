@@ -634,6 +634,13 @@ export const callApi = createApi({
     getCurrentCall: builder.query({
       query: () => '/calls/current-call',
     }),
+    initiateSelectiveCall: builder.mutation({
+      query: ({ receiverId, language }) => ({
+        url: '/calls/initiate-selective',
+        method: 'POST',
+        body: { receiverId, language },
+      }),
+    }),
   }),
 });
 
@@ -647,6 +654,7 @@ export const {
   useCancelCallMutation,
   useSetOnlineStatusMutation,
   useGetCurrentCallQuery,
+  useInitiateSelectiveCallMutation,
 } = callApi;
 
 export default callApi;
