@@ -19,13 +19,16 @@ const { authenticateUser } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// Get user profile (protected)
-router.get("/profile", authenticateUser, getProfile);
-
-// Update user profile (protected)
-router.put("/profile", authenticateUser, updateProfile);
-
-// Logout
-router.post("/logout", authenticateUser, logout);
-
+// Get authenticated user's profile (no userId)
+router.get("/profile", authenticateUser, userController.getProfile);
+// Get any user's profile by userId
+router.get("/profile/:userId", authenticateUser, userController.getProfile);
+// Update authenticated user's profile
+router.put("/profile", authenticateUser, userController.updateProfile);
+router.post("/logout", authenticateUser, userController.logout);
+router.post('/payment/order', authenticateUser, userController.createPaymentOrder);
+router.post('/payment/verify', authenticateUser, userController.verifyPayment);
+router.get('/all-users', authenticateUser, userController.getAllUsers);
+router.post('/send-email', authenticateUser, userController.sendEmailToUser);
+router.post('/exchangePowerTokens',authenticateUser, userController.exchangePowerTokens); 
 module.exports = router;
