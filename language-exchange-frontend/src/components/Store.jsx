@@ -644,7 +644,7 @@ const Store = () => {
 
       const options = {
         key: import.meta.env.VITE_BACKEND_URL.includes('localhost')
-          ? 'rzp_test_UO32P7rVyJvoW2'
+          ? import.meta.env.VITE_RAZORPAY_KEY_ID
           : import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: orderData.amount,
         currency: orderData.currency,
