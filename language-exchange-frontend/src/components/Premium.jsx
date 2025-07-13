@@ -7589,6 +7589,8 @@
 // export default Premium;
 
 
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -8229,66 +8231,28 @@ const Premium = () => {
 
   if (!isAuthenticated) {
     return (
-      <div style={{ color: '#393f4d', textAlign: 'center', marginTop: '50px' }}>
-        Please log in to access this page.
+      <div className="text-center mt-5">
+        <p className="text-secondary">Please log in to access this page.</p>
       </div>
     );
   }
 
   if (!user?.premium) {
     return (
-      <div style={{ backgroundColor: '#FFFFFF', minHeight: '100vh', paddingTop: '50px', textAlign: 'center' }}>
-        <h2 style={{ color: '#1d1e22', fontWeight: 'bold', textShadow: '0 0 5px rgba(254, 218, 106, 0.3)' }}>
-          Upgrade to Premium
-        </h2>
-        <p style={{ color: '#393f4d', fontSize: '1.2rem', marginBottom: '1rem' }}>
+      <div className="bg-white min-vh-100 pt-5 text-center">
+        <h2 className="text-dark fw-bold">Upgrade to Premium</h2>
+        <p className="text-secondary fs-5 mb-3">
           Unlock selective calling, user list, and email features for ₹500!
         </p>
         <button
           onClick={handlePayment}
-          style={{
-            backgroundColor: '#feda6a',
-            color: '#1d1e22',
-            border: 'none',
-            padding: '0.75rem 2rem',
-            borderRadius: '20px',
-            fontWeight: 'bold',
-            boxShadow: '0 2px 6px rgba(254, 218, 106, 0.4)',
-            transition: 'transform 0.3s ease, background-color 0.3s ease',
-            marginRight: '1rem',
-          }}
-          onMouseOver={(e) => {
-            e.target.style.backgroundColor = '#fee08f';
-            e.target.style.transform = 'scale(1.05)';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.backgroundColor = '#feda6a';
-            e.target.style.transform = 'scale(1)';
-          }}
+          className="btn btn-warning text-dark fw-bold px-4 py-2 rounded-pill shadow-sm me-3"
         >
           Buy Premium
         </button>
         <Link
           to="/store"
-          style={{
-            backgroundColor: '#393f4d',
-            color: '#feda6a',
-            border: 'none',
-            padding: '0.75rem 2rem',
-            borderRadius: '20px',
-            fontWeight: 'bold',
-            textDecoration: 'none',
-            transition: 'background-color 0.3s ease, transform 0.3s ease',
-            display: 'inline-block',
-          }}
-          onMouseOver={(e) => {
-            e.target.style.backgroundColor = '#2c303b';
-            e.target.style.transform = 'scale(1.05)';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.backgroundColor = '#393f4d';
-            e.target.style.transform = 'scale(1)';
-          }}
+          className="btn btn-dark text-warning fw-bold px-4 py-2 rounded-pill shadow-sm text-decoration-none"
         >
           Visit Store
         </Link>
@@ -8297,500 +8261,236 @@ const Premium = () => {
   }
 
   return (
-    <div style={{ backgroundColor: '#FFFFFF', minHeight: '100vh', padding: '20px 0' }}>
-      <h2 style={{
-        color: '#1d1e22',
-        textAlign: 'center',
-        marginBottom: '1rem',
-        fontWeight: 'bold',
-        textShadow: '0 0 5px rgba(254, 218, 106, 0.3)',
-        animation: 'fadeIn 0.5s ease-in',
-      }}>
-        Premium Dashboard
-      </h2>
+    <div className="bg-white min-vh-100 py-4">
+      <h2 className="text-center text-dark fw-bold mb-3">Premium Dashboard</h2>
 
-      <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+      <div className="text-center mb-3">
         <Link
           to="/store"
-          style={{
-            color: '#feda6a',
-            backgroundColor: '#393f4d',
-            padding: '0.5rem 1rem',
-            borderRadius: '8px',
-            textDecoration: 'none',
-            transition: 'background-color 0.3s ease, transform 0.3s ease',
-          }}
-          onMouseOver={(e) => {
-            e.target.style.backgroundColor = '#2c303b';
-            e.target.style.transform = 'scale(1.05)';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.backgroundColor = '#393f4d';
-            e.target.style.transform = 'scale(1)';
-          }}
+          className="btn btn-dark text-warning fw-bold px-3 py-2 rounded-pill"
         >
           Buy More Tokens or Coins
         </Link>
       </div>
 
       {callStatus ? (
-        <div style={{
-          maxWidth: '500px',
-          margin: '0 auto 2rem',
-          backgroundColor: '#d4d4dc',
-          borderRadius: '15px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          padding: '2rem',
-          animation: 'slideIn 0.5s ease-out',
-        }}>
-          <h5 style={{ color: '#1d1e22', fontWeight: '600', marginBottom: '1rem' }}>Call Status</h5>
-          {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
-            <>
-              <p style={{ color: '#393f4d' }}>Waiting for someone to accept your call...</p>
-              {callStatus.receivers && callStatus.receivers.length > 0 ? (
-                <p style={{ color: '#feda6a' }}>
-                  Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}
+        <div className="card mx-auto mb-4 shadow-sm" style={{ maxWidth: '500px' }}>
+          <div className="card-body">
+            <h5 className="card-title text-dark fw-bold mb-3">Call Status</h5>
+            {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+              <>
+                <p className="text-secondary">Waiting for someone to accept your call...</p>
+                {callStatus.receivers && callStatus.receivers.length > 0 ? (
+                  <p className="text-warning">
+                    Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}
+                  </p>
+                ) : (
+                  <p>No potential receivers left.</p>
+                )}
+                <button
+                  onClick={handleCancelCall}
+                  className="btn btn-dark text-warning w-100 rounded-pill"
+                >
+                  Cancel Call
+                </button>
+              </>
+            ) : callStatus.status === 'pending' && callStatus.callerId !== user?._id ? (
+              <>
+                <p className="text-secondary">
+                  Incoming call from <strong>{callStatus.caller}</strong> for <strong>{callStatus.language}</strong>
                 </p>
-              ) : (
-                <p>No potential receivers left.</p>
-              )}
-              <button
-                onClick={handleCancelCall}
-                style={{
-                  backgroundColor: '#393f4d',
-                  color: '#feda6a',
-                  border: 'none',
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  transition: 'background-color 0.3s ease, transform 0.3s ease',
-                }}
-                onMouseOver={(e) => {
-                  e.target.style.backgroundColor = '#2c303b';
-                  e.target.style.transform = 'scale(1.05)';
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.backgroundColor = '#393f4d';
-                  e.target.style.transform = 'scale(1)';
-                }}
-              >
-                Cancel Call
-              </button>
-            </>
-          ) : callStatus.status === 'pending' && callStatus.callerId !== user?._id ? (
-            <>
-              <p style={{ color: '#393f4d' }}>
-                Incoming call from <strong>{callStatus.caller}</strong> for <strong>{callStatus.language}</strong>
-              </p>
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <button
-                  onClick={handleAcceptCall}
-                  style={{
-                    backgroundColor: '#feda6a',
-                    color: '#1d1e22',
-                    border: 'none',
-                    width: '50%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    transition: 'background-color 0.3s ease, transform 0.3s ease',
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.backgroundColor = '#fee08f';
-                    e.target.style.transform = 'scale(1.05)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.backgroundColor = '#feda6a';
-                    e.target.style.transform = 'scale(1)';
-                  }}
-                >
-                  Accept Call
-                </button>
-                <button
-                  onClick={handleRejectCall}
-                  style={{
-                    backgroundColor: '#393f4d',
-                    color: '#feda6a',
-                    border: 'none',
-                    width: '50%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    transition: 'background-color 0.3s ease, transform 0.3s ease',
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.backgroundColor = '#2c303b';
-                    e.target.style.transform = 'scale(1.05)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.backgroundColor = '#393f4d';
-                    e.target.style.transform = 'scale(1)';
-                  }}
-                >
-                  Reject Call
-                </button>
-              </div>
-            </>
-          ) : callStatus.status === 'active' ? (
-            <>
-              <p style={{ color: '#393f4d' }}>
-                Active call with <strong>{callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}</strong>
-              </p>
-              <p style={{ color: '#393f4d' }}>
-                Call Duration: {Math.floor(getCallDuration() / 60)}:{(getCallDuration() % 60).toString().padStart(2, '0')}
-              </p>
-              <div style={{
-                height: '5px',
-                backgroundColor: '#e0e0e0',
-                borderRadius: '2.5px',
-                overflow: 'hidden',
-                margin: '10px 0',
-              }}>
-                <div style={{
-                  width: `${getCallDurationProgress()}%`,
-                  height: '100%',
-                  backgroundColor: getCallDurationProgress() >= 100 ? '#ff4d4f' : '#feda6a',
-                  transition: 'width 1s linear, background-color 0.3s ease',
-                }}></div>
-              </div>
-              {callStatus.extended && <p style={{ color: '#feda6a' }}>Call Extended!</p>}
-              <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
-              <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <button
-                  onClick={handleEndCall}
-                  style={{
-                    backgroundColor: '#393f4d',
-                    color: '#feda6a',
-                    border: 'none',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    transition: 'background-color 0.3s ease, transform 0.3s ease',
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.backgroundColor = '#2c303b';
-                    e.target.style.transform = 'scale(1.05)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.backgroundColor = '#393f4d';
-                    e.target.style.transform = 'scale(1)';
-                  }}
-                >
-                  End Call
-                </button>
-                <button
-                  onClick={toggleMute}
-                  style={{
-                    backgroundColor: '#393f4d',
-                    color: '#feda6a',
-                    border: 'none',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    transition: 'background-color 0.3s ease, transform 0.3s ease',
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.backgroundColor = '#2c303b';
-                    e.target.style.transform = 'scale(1.05)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.backgroundColor = '#393f4d';
-                    e.target.style.transform = 'scale(1)';
-                  }}
-                >
-                  {callStatus.isMuted ? 'Unmute' : 'Mute'}
-                </button>
-                <button
-                  onClick={handleExtendCall}
-                  disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
-                  style={{
-                    backgroundColor: '#feda6a',
-                    color: '#1d1e22',
-                    border: 'none',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    transition: 'background-color 0.3s ease, transform 0.3s ease',
-                    opacity: (!user?.powerTokens || user.powerTokens < 1 || extendRequest) ? 0.6 : 1,
-                  }}
-                  onMouseOver={(e) => {
-                    if (!e.target.disabled) {
-                      e.target.style.backgroundColor = '#fee08f';
-                      e.target.style.transform = 'scale(1.05)';
-                    }
-                  }}
-                  onMouseOut={(e) => {
-                    if (!e.target.disabled) {
-                      e.target.style.backgroundColor = '#feda6a';
-                      e.target.style.transform = 'scale(1)';
-                    }
-                  }}
-                >
-                  {extendRequest ? 'Awaiting Approval' : 'Extend Call'}
-                </button>
-              </div>
-              {extendRequest && (
-                <div style={{ marginTop: '1rem' }}>
-                  <p style={{ color: '#393f4d' }}>{extendRequest.requesterName} wants to extend the call. Approve?</p>
-                  <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button
-                      onClick={() => handleApproveExtend(true)}
-                      style={{
-                        backgroundColor: '#feda6a',
-                        color: '#1d1e22',
-                        border: 'none',
-                        width: '50%',
-                        padding: '0.75rem',
-                        borderRadius: '8px',
-                        transition: 'background-color 0.3s ease, transform 0.3s ease',
-                      }}
-                      onMouseOver={(e) => {
-                        e.target.style.backgroundColor = '#fee08f';
-                        e.target.style.transform = 'scale(1.05)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.target.style.backgroundColor = '#feda6a';
-                        e.target.style.transform = 'scale(1)';
-                      }}
-                    >
-                      Yes
-                    </button>
-                    <button
-                      onClick={() => handleApproveExtend(false)}
-                      style={{
-                        backgroundColor: '#393f4d',
-                        color: '#feda6a',
-                        border: 'none',
-                        width: '50%',
-                        padding: '0.75rem',
-                        borderRadius: '8px',
-                        transition: 'background-color 0.3s ease, transform 0.3s ease',
-                      }}
-                      onMouseOver={(e) => {
-                        e.target.style.backgroundColor = '#2c303b';
-                        e.target.style.transform = 'scale(1.05)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.target.style.backgroundColor = '#393f4d';
-                        e.target.style.transform = 'scale(1)';
-                      }}
-                    >
-                      No
-                    </button>
-                  </div>
+                <div className="d-flex gap-3">
+                  <button
+                    onClick={handleAcceptCall}
+                    className="btn btn-warning text-dark w-50 rounded-pill"
+                  >
+                    Accept Call
+                  </button>
+                  <button
+                    onClick={handleRejectCall}
+                    className="btn btn-dark text-warning w-50 rounded-pill"
+                  >
+                    Reject Call
+                  </button>
                 </div>
-              )}
-            </>
-          ) : (
-            <p style={{ color: '#393f4d' }}>Call <strong>{callStatus.status}</strong>!</p>
-          )}
+              </>
+            ) : callStatus.status === 'active' ? (
+              <>
+                <p className="text-secondary">
+                  Active call with <strong>{callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}</strong>
+                </p>
+                <p className="text-secondary">
+                  Call Duration: {Math.floor(getCallDuration() / 60)}:{(getCallDuration() % 60).toString().padStart(2, '0')}
+                </p>
+                <div className="progress mb-2" style={{ height: '5px' }}>
+                  <div
+                    className={`progress-bar ${getCallDurationProgress() >= 100 ? 'bg-danger' : 'bg-warning'}`}
+                    style={{ width: `${getCallDurationProgress()}%` }}
+                  ></div>
+                </div>
+                {callStatus.extended && <p className="text-warning">Call Extended!</p>}
+                <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+                <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
+                <div className="d-flex flex-column gap-2">
+                  <button
+                    onClick={handleEndCall}
+                    className="btn btn-dark text-warning rounded-pill"
+                  >
+                    End Call
+                  </button>
+                  <button
+                    onClick={toggleMute}
+                    className="btn btn-dark text-warning rounded-pill"
+                  >
+                    {callStatus.isMuted ? 'Unmute' : 'Mute'}
+                  </button>
+                  <button
+                    onClick={handleExtendCall}
+                    disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+                    className="btn btn-warning text-dark rounded-pill"
+                  >
+                    {extendRequest ? 'Awaiting Approval' : 'Extend Call'}
+                  </button>
+                </div>
+                {extendRequest && (
+                  <div className="mt-3">
+                    <p className="text-secondary">{extendRequest.requesterName} wants to extend the call. Approve?</p>
+                    <div className="d-flex gap-3">
+                      <button
+                        onClick={() => handleApproveExtend(true)}
+                        className="btn btn-warning text-dark w-50 rounded-pill"
+                      >
+                        Yes
+                      </button>
+                      <button
+                        onClick={() => handleApproveExtend(false)}
+                        className="btn btn-dark text-warning w-50 rounded-pill"
+                      >
+                        No
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-secondary">Call <strong>{callStatus.status}</strong>!</p>
+            )}
+          </div>
         </div>
       ) : (
-        <div style={{
-          maxWidth: '400px',
-          margin: '0 auto 2rem',
-          backgroundColor: '#d4d4dc',
-          borderRadius: '15px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          padding: '1.5rem',
-          animation: 'slideIn 0.5s ease-out',
-        }}>
-          <h5 style={{ color: '#1d1e22', fontWeight: '600', marginBottom: '1rem' }}>Start a Random Language Call</h5>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <input
-              type="text"
-              placeholder="Enter language to learn (e.g., Spanish)"
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              style={{
-                borderColor: '#d4d4dc',
-                color: '#393f4d',
-                borderRadius: '8px',
-                padding: '0.5rem 1rem',
-                flex: 1,
-                transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#1d1e22';
-                e.target.style.boxShadow = '0 0 5px rgba(29, 30, 34, 0.5)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#d4d4dc';
-                e.target.style.boxShadow = 'none';
-              }}
-            />
-            <button
-              onClick={handleInitiateCall}
-              style={{
-                backgroundColor: '#1d1e22',
-                color: '#feda6a',
-                border: 'none',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '8px',
-                transition: 'background-color 0.3s ease, transform 0.3s ease',
-              }}
-              onMouseOver={(e) => {
-                e.target.style.backgroundColor = '#151618';
-                e.target.style.transform = 'scale(1.05)';
-              }}
-              onMouseOut={(e) => {
-                e.target.style.backgroundColor = '#1d1e22';
-                e.target.style.transform = 'scale(1)';
-              }}
-            >
-              Initiate Call
-            </button>
+        <div className="card mx-auto mb-4 shadow-sm" style={{ maxWidth: '400px' }}>
+          <div className="card-body">
+            <h5 className="card-title text-dark fw-bold mb-3">Start a Random Language Call</h5>
+            <div className="d-flex flex-column flex-sm-row gap-3 align-items-sm-center">
+              <input
+                type="text"
+                placeholder="Enter language to learn (e.g., Spanish)"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="form-control rounded-pill"
+              />
+              <button
+                onClick={handleInitiateCall}
+                className="btn btn-dark text-warning rounded-pill px-4"
+              >
+                Initiate Call
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      <div style={{
-        backgroundColor: '#d4d4dc',
-        borderRadius: '15px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-        padding: '2rem',
-      }}>
-        <h5 style={{ color: '#1d1e22', fontWeight: '600', marginBottom: '1rem' }}>Available Users</h5>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem', flexDirection: 'column' }}>
-          <input
-            type="text"
-            placeholder="Search users by name, email, or languages"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              borderColor: '#d4d4dc',
-              color: '#393f4d',
-              borderRadius: '8px',
-              padding: '0.5rem 1rem',
-              flex: 1,
-              transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
-              width: '100%',
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = '#1d1e22';
-              e.target.style.boxShadow = '0 0 5px rgba(29, 30, 34, 0.5)';
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#d4d4dc';
-              e.target.style.boxShadow = 'none';
-            }}
-          />
-          <label style={{ display: 'flex', alignItems: 'center', color: '#393f4d' }}>
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <h5 className="card-title text-dark fw-bold mb-3">Available Users</h5>
+          <div className="d-flex flex-column flex-sm-row gap-3 align-items-sm-center mb-3">
             <input
-              type="checkbox"
-              checked={showPremiumOnly}
-              onChange={(e) => setShowPremiumOnly(e.target.checked)}
-              style={{ marginRight: '0.5rem' }}
+              type="text"
+              placeholder="Search users by name, email, or languages"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="form-control rounded-pill"
             />
-            Show Premium Users Only
-          </label>
-        </div>
-        {isLoading ? (
-          <p style={{ color: '#393f4d', textAlign: 'center' }}>Loading users...</p>
-        ) : error ? (
-          <p style={{ color: '#393f4d', textAlign: 'center' }}>
-            Error: {error.data?.error || 'Failed to load users'}
-          </p>
-        ) : !usersData?.users ? (
-          <p style={{ color: '#393f4d', textAlign: 'center' }}>
-            No users available
-          </p>
-        ) : (
-          <div>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#1d1e22', color: '#feda6a' }}>
-                  <th style={{ padding: '1rem', textAlign: 'left' }}>Name</th>
-                  <th style={{ padding: '1rem', textAlign: 'left' }}>Status</th>
-                  <th style={{ padding: '1rem', textAlign: 'left' }}>Known Languages</th>
-                  <th style={{ padding: '1rem', textAlign: 'left' }}>Learning Languages</th>
-                  <th style={{ padding: '1rem', textAlign: 'left' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map(u => (
-                  <tr key={u._id} style={{
-                    backgroundColor: '#FFFFFF',
-                    transition: 'background-color 0.3s ease',
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#feda6a'}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#FFFFFF'}
-                  >
-                    <td style={{ padding: '1rem' }}>
-                      <Link to={`/profile/${u._id}`} style={{ color: '#393f4d', textDecoration: 'none' }}>
-                        {u.name}
-                        {u.premium && (
-                          <i className="fas fa-star" style={{ color: '#FFD700', marginLeft: '0.5rem' }} title="Premium User" />
-                        )}
-                      </Link>
-                    </td>
-                    <td style={{ padding: '1rem' }}>
-                      {u.isOnline ? <span style={{ color: '#feda6a' }}>Online</span> : <span style={{ color: '#393f4d' }}>Offline</span>}
-                    </td>
-                    <td style={{ padding: '1rem', color: '#393f4d' }}>
-                      {u.knownLanguages.join(', ') || 'None'}
-                    </td>
-                    <td style={{ padding: '1rem', color: '#393f4d' }}>
-                      {u.learnLanguages.join(', ') || 'None'}
-                    </td>
-                    <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        onClick={() => handleSelectiveCall(u._id)}
-                        disabled={!u.isOnline || !user?.premium}
-                        style={{
-                          backgroundColor: '#1d1e22',
-                          color: '#feda6a',
-                          border: 'none',
-                          padding: '0.5rem 1rem',
-                          borderRadius: '8px',
-                          transition: 'background-color 0.3s ease, transform 0.3s ease',
-                          opacity: (!u.isOnline || !user?.premium) ? 0.6 : 1,
-                        }}
-                        onMouseOver={(e) => {
-                          if (!e.target.disabled) {
-                            e.target.style.backgroundColor = '#151618';
-                            e.target.style.transform = 'scale(1.05)';
-                          }
-                        }}
-                        onMouseOut={(e) => {
-                          if (!e.target.disabled) {
-                            e.target.style.backgroundColor = '#1d1e22';
-                            e.target.style.transform = 'scale(1)';
-                          }
-                        }}
-                      >
-                        Call
-                      </button>
-                      <button
-                        onClick={() => handleSendEmail(u._id, u.name)}
-                        disabled={!user?.premium}
-                        style={{
-                          backgroundColor: '#393f4d',
-                          color: '#feda6a',
-                          border: 'none',
-                          padding: '0.5rem 1rem',
-                          borderRadius: '8px',
-                          transition: 'background-color 0.3s ease, transform 0.3s ease',
-                          opacity: !user?.premium ? 0.6 : 1,
-                        }}
-                        onMouseOver={(e) => {
-                          if (!e.target.disabled) {
-                            e.target.style.backgroundColor = '#2c303b';
-                            e.target.style.transform = 'scale(1.05)';
-                          }
-                        }}
-                        onMouseOut={(e) => {
-                          if (!e.target.disabled) {
-                            e.target.style.backgroundColor = '#393f4d';
-                            e.target.style.transform = 'scale(1)';
-                          }
-                        }}
-                      >
-                        Email
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="form-check">
+              <input
+                type="checkbox"
+                checked={showPremiumOnly}
+                onChange={(e) => setShowPremiumOnly(e.target.checked)}
+                className="form-check-input"
+                id="premiumOnly"
+              />
+              <label className="form-check-label text-secondary" htmlFor="premiumOnly">
+                Show Premium Users Only
+              </label>
+            </div>
           </div>
-        )}
+          {isLoading ? (
+            <p className="text-center text-secondary">Loading users...</p>
+          ) : error ? (
+            <p className="text-center text-secondary">
+              Error: {error.data?.error || 'Failed to load users'}
+            </p>
+          ) : !usersData?.users ? (
+            <p className="text-center text-secondary">
+              No users available
+            </p>
+          ) : (
+            <div className="table-responsive">
+              <table className="table table-hover">
+                <thead className="table-dark text-warning">
+                  <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" className="d-none d-md-table-cell">Known Languages</th>
+                    <th scope="col" className="d-none d-md-table-cell">Learning Languages</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.map(u => (
+                    <tr key={u._id}>
+                      <td>
+                        <Link to={`/profile/${u._id}`} className="text-decoration-none text-secondary">
+                          {u.name}
+                          {u.premium && (
+                            <i className="fas fa-star ms-2 text-warning" title="Premium User" />
+                          )}
+                        </Link>
+                      </td>
+                      <td>
+                        {u.isOnline ? <span className="text-warning">Online</span> : <span className="text-secondary">Offline</span>}
+                      </td>
+                      <td className="d-none d-md-table-cell text-secondary">
+                        {u.knownLanguages.join(', ') || 'None'}
+                      </td>
+                      <td className="d-none d-md-table-cell text-secondary">
+                        {u.learnLanguages.join(', ') || 'None'}
+                      </td>
+                      <td>
+                        <div className="d-flex gap-2">
+                          <button
+                            onClick={() => handleSelectiveCall(u._id)}
+                            disabled={!u.isOnline || !user?.premium}
+                            className="btn btn-dark text-warning rounded-pill btn-sm"
+                          >
+                            Call
+                          </button>
+                          <button
+                            onClick={() => handleSendEmail(u._id, u.name)}
+                            disabled={!user?.premium}
+                            className="btn btn-dark text-warning rounded-pill btn-sm"
+                          >
+                            Email
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
       {showEmailModal && selectedRecipient && (
@@ -8803,61 +8503,6 @@ const Premium = () => {
           }}
         />
       )}
-
-      <style>
-        {`
-          @keyframes slideIn {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-          }
-          @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-          @media (max-width: 640px) {
-            table {
-              width: 100%;
-            }
-            th, td {
-              font-size: 0.8rem;
-              padding: 0.5rem;
-            }
-            td[style*="display: flex"] {
-              gap: 0.3rem;
-            }
-            td[style*="display: flex"] button {
-              padding: 0.3rem 0.6rem;
-              font-size: 0.8rem;
-            }
-            div[style*="flex-direction: column"] {
-              flex-direction: column;
-            }
-            input[style*="width: 100%"] {
-              width: 100%;
-              padding: 0.3rem 0.6rem;
-              font-size: 0.8rem;
-            }
-          }
-          @media (min-width: 641px) {
-            div[style*="flex-direction: column"] {
-              flex-direction: row;
-            }
-            input[style*="width: 100%"] {
-              width: auto;
-              padding: 0.5rem 1rem;
-              font-size: 1rem;
-            }
-            th, td {
-              font-size: 1rem;
-              padding: 1rem;
-            }
-            td[style*="display: flex"] button {
-              padding: 0.5rem 1rem;
-              font-size: 1rem;
-            }
-          }
-        `}
-      </style>
     </div>
   );
 };
