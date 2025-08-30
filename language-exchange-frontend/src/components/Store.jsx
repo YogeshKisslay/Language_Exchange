@@ -1,245 +1,3 @@
-// import React from 'react';
-// import { useSelector } from 'react-redux';
-// import { toast } from 'react-toastify';
-
-// const Store = () => {
-//   const { user, isAuthenticated } = useSelector((state) => state.auth);
-
-//   const handlePayment = async (type, amount, description, successMessage) => {
-//     if (!isAuthenticated) {
-//       toast.error('Please log in to make a purchase');
-//       return;
-//     }
-
-//     try {
-//       const orderResponse = await fetch(
-//         `${import.meta.env.VITE_BACKEND_URL}/api/user/payment/order`,
-//         {
-//           method: 'POST',
-//           credentials: 'include',
-//           headers: { 'Content-Type': 'application/json' },
-//           body: JSON.stringify({ type, amount }),
-//         }
-//       );
-//       const orderData = await orderResponse.json();
-//       if (!orderResponse.ok) throw new Error(orderData.error || 'Failed to create payment order');
-
-//       const options = {
-//         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-//         amount: orderData.amount,
-//         currency: orderData.currency,
-//         name: 'Language Exchange',
-//         description,
-//         order_id: orderData.orderId,
-//         handler: async (response) => {
-//           const verifyData = {
-//             razorpay_order_id: response.razorpay_order_id,
-//             razorpay_payment_id: response.razorpay_payment_id,
-//             razorpay_signature: response.razorpay_signature,
-//             type,
-//           };
-//           const verifyRes = await fetch(
-//             `${import.meta.env.VITE_BACKEND_URL}/api/user/payment/verify`,
-//             {
-//               method: 'POST',
-//               credentials: 'include',
-//               headers: { 'Content-Type': 'application/json' },
-//               body: JSON.stringify(verifyData),
-//             }
-//           );
-//           const verifyResult = await verifyRes.json();
-//           if (verifyResult.message) {
-//             toast.success(successMessage);
-//           } else {
-//             toast.error('Payment verification failed');
-//           }
-//         },
-//         prefill: { name: user.name, email: user.email },
-//         theme: { color: '#1d1e22' },
-//       };
-//       const rzp = new window.Razorpay(options);
-//       rzp.open();
-//     } catch (error) {
-//       toast.error(error.message || 'Failed to initiate payment');
-//     }
-//   };
-
-//   if (!isAuthenticated) {
-//     return (
-//       <div style={{ color: '#393f4d', textAlign: 'center', marginTop: '50px' }}>
-//         Please log in to access the store.
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div style={{ backgroundColor: '#FFFFFF', minHeight: '100vh', padding: '20px 0' }}>
-//       <h2 style={{
-//         color: '#1d1e22',
-//         textAlign: 'center',
-//         marginBottom: '2rem',
-//         fontWeight: 'bold',
-//         textShadow: '0 0 5px rgba(254, 218, 106, 0.3)',
-//         animation: 'fadeIn 0.5s ease-in',
-//       }}>
-//         Store
-//       </h2>
-//       <div style={{
-//         maxWidth: '800px',
-//         margin: '0 auto',
-//         display: 'grid',
-//         gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-//         gap: '2rem',
-//         padding: '0 1rem',
-//       }}>
-//         {/* Power Tokens */}
-//         <div style={{
-//           backgroundColor: '#d4d4dc',
-//           borderRadius: '15px',
-//           padding: '1.5rem',
-//           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-//           animation: 'slideIn 0.5s ease-out',
-//         }}>
-//           <h5 style={{ color: '#1d1e22', fontWeight: '600', marginBottom: '1rem' }}>
-//             Buy Power Tokens
-//           </h5>
-//           <p style={{ color: '#393f4d', marginBottom: '1rem' }}>
-//             Get 2 Power Tokens for 1 Coin
-//           </p>
-//           <button
-//             onClick={() => handlePayment(
-//               'powerTokens',
-//               1, // Amount in coins
-//               'Purchase 2 Power Tokens',
-//               'Successfully purchased 2 Power Tokens!'
-//             )}
-//             style={{
-//               backgroundColor: '#feda6a',
-//               color: '#1d1e22',
-//               border: 'none',
-//               width: '100%',
-//               padding: '0.75rem',
-//               borderRadius: '8px',
-//               fontWeight: 'bold',
-//               transition: 'background-color 0.3s ease, transform 0.3s ease',
-//             }}
-//             onMouseOver={(e) => {
-//               e.target.style.backgroundColor = '#fee08f';
-//               e.target.style.transform = 'scale(1.05)';
-//             }}
-//             onMouseOut={(e) => {
-//               e.target.style.backgroundColor = '#feda6a';
-//               e.target.style.transform = 'scale(1)';
-//             }}
-//           >
-//             Buy Now
-//           </button>
-//         </div>
-//         {/* Coins */}
-//         <div style={{
-//           backgroundColor: '#d4d4dc',
-//           borderRadius: '15px',
-//           padding: '1.5rem',
-//           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-//           animation: 'slideIn 0.5s ease-out',
-//         }}>
-//           <h5 style={{ color: '#1d1e22', fontWeight: '600', marginBottom: '1rem' }}>
-//             Buy Coins
-//           </h5>
-//           <p style={{ color: '#393f4d', marginBottom: '1rem' }}>
-//             Get 10 Coins for ₹50
-//           </p>
-//           <button
-//             onClick={() => handlePayment(
-//               'coins',
-//               5000, // Amount in paise (₹50)
-//               'Purchase 10 Coins',
-//               'Successfully purchased 10 Coins!'
-//             )}
-//             style={{
-//               backgroundColor: '#feda6a',
-//               color: '#1d1e22',
-//               border: 'none',
-//               width: '100%',
-//               padding: '0.75rem',
-//               borderRadius: '8px',
-//               fontWeight: 'bold',
-//               transition: 'background-color 0.3s ease, transform 0.3s ease',
-//             }}
-//             onMouseOver={(e) => {
-//               e.target.style.backgroundColor = '#fee08f';
-//               e.target.style.transform = 'scale(1.05)';
-//             }}
-//             onMouseOut={(e) => {
-//               e.target.style.backgroundColor = '#feda6a';
-//               e.target.style.transform = 'scale(1)';
-//             }}
-//           >
-//             Buy Now
-//           </button>
-//         </div>
-//         {/* Premium Plan */}
-//         <div style={{
-//           backgroundColor: '#d4d4dc',
-//           borderRadius: '15px',
-//           padding: '1.5rem',
-//           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-//           animation: 'slideIn 0.5s ease-out',
-//         }}>
-//           <h5 style={{ color: '#1d1e22', fontWeight: '600', marginBottom: '1rem' }}>
-//             Buy Premium Plan
-//           </h5>
-//           <p style={{ color: '#393f4d', marginBottom: '1rem' }}>
-//             Get Premium + 50 Coins for ₹500
-//           </p>
-//           <button
-//             onClick={() => handlePayment(
-//               'premium',
-//               50000, // Amount in paise (₹500)
-//               'Purchase Premium Plan',
-//               'Premium plan activated with 50 Coins!'
-//             )}
-//             style={{
-//               backgroundColor: '#feda6a',
-//               color: '#1d1e22',
-//               border: 'none',
-//               width: '100%',
-//               padding: '0.75rem',
-//               borderRadius: '8px',
-//               fontWeight: 'bold',
-//               transition: 'background-color 0.3s ease, transform 0.3s ease',
-//             }}
-//             onMouseOver={(e) => {
-//               e.target.style.backgroundColor = '#fee08f';
-//               e.target.style.transform = 'scale(1.05)';
-//             }}
-//             onMouseOut={(e) => {
-//               e.target.style.backgroundColor = '#feda6a';
-//               e.target.style.transform = 'scale(1)';
-//             }}
-//           >
-//             Buy Now
-//           </button>
-//         </div>
-//       </div>
-
-//       <style>
-//         {`
-//           @keyframes slideIn {
-//             from { transform: translateY(20px); opacity: 0; }
-//             to { transform: translateY(0); opacity: 1; }
-//           }
-//           @keyframes fadeIn {
-//             from { opacity: 0; }
-//             to { opacity: 1; }
-//           }
-//         `}
-//       </style>
-//     </div>
-//   );
-// };
-
-// export default Store;
 
 
 
@@ -273,7 +31,9 @@
 //       if (!orderResponse.ok) throw new Error(orderData.error || 'Failed to create payment order');
 
 //       const options = {
-//         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+//         key: import.meta.env.VITE_BACKEND_URL.includes('localhost')
+//           ? import.meta.env.VITE_RAZORPAY_KEY_ID
+//           : import.meta.env.VITE_RAZORPAY_KEY_ID,
 //         amount: orderData.amount,
 //         currency: orderData.currency,
 //         name: 'Language Exchange',
@@ -324,7 +84,7 @@
 //           method: 'POST',
 //           credentials: 'include',
 //           headers: { 'Content-Type': 'application/json' },
-//           body: JSON.stringify({ powerTokens: 2 }),
+//           body: JSON.stringify({ coinTokens: 1 }),
 //         }
 //       );
 //       const result = await response.json();
@@ -402,7 +162,7 @@
 //             fontWeight: '600',
 //             marginBottom: '1rem',
 //           }}>
-//             Exchange Power Tokens
+//             Exchange for Power Tokens
 //           </h5>
 //           <p style={{
 //             color: '#393f4d',
@@ -410,7 +170,7 @@
 //             marginBottom: '1.5rem',
 //             lineHeight: '1.5',
 //           }}>
-//             Exchange 2 Power Tokens for 1 Coin
+//             Exchange 1 Coin Token for 2 Power Tokens
 //           </p>
 //           <button
 //             onClick={handleExchangePowerTokens}
@@ -614,14 +374,16 @@
 
 
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
-import powerTokenImg from '../assets/power-token.png'; // Placeholder for power token image (lightning bolt)
-import coinTokenImg from '../assets/coin-token.png'; // Placeholder for coin token image (coin stack)
-import premiumImg from '../assets/crown.png'; // Placeholder for premium image (crown)
+import powerTokenImg from '../assets/power-token.png';
+import coinTokenImg from '../assets/coin-token.png';
+import premiumImg from '../assets/crown.png';
+import { authApi } from '../redux/services/authApi'; // Import authApi
 
 const Store = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const dispatch = useDispatch(); // Get the dispatch function
 
   const handlePayment = async (type, amount, description, successMessage) => {
     if (!isAuthenticated) {
@@ -670,6 +432,8 @@ const Store = () => {
           const verifyResult = await verifyRes.json();
           if (verifyResult.message) {
             toast.success(successMessage);
+            // Trigger a profile refresh after successful payment
+            dispatch(authApi.endpoints.getProfile.initiate(user._id, { forceRefetch: true }));
           } else {
             toast.error('Payment verification failed');
           }
@@ -702,6 +466,8 @@ const Store = () => {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Failed to exchange tokens');
       toast.success(result.message);
+      // Trigger a profile refresh after successful exchange
+      dispatch(authApi.endpoints.getProfile.initiate(user._id, { forceRefetch: true }));
     } catch (error) {
       toast.error(error.message || 'Failed to exchange tokens');
     }
