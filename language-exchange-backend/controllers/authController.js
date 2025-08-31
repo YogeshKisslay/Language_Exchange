@@ -53,67 +53,6 @@ const verifyUser = asyncHandler(async (req, res) => {
   }
 });
 
-// const loginUser = asyncHandler(async (req, res) => {
-//   const { email, password } = req.body;
-//   const user = await User.findOne({ email });
-//   if (!user || !user.isVerified) {
-//     return res.status(401).json({ message: "Invalid email or not verified" });
-//   }
-//   if (user.googleId) {
-//     return res.status(400).json({ message: "Use Auth0 login instead" });
-//   }
-//   const match = await bcrypt.compare(password, user.password);
-//   if (!match) {
-//     return res.status(401).json({ message: "Invalid credentials" });
-//   }
-
-//   const token = generateToken(user._id);
-//   const isProduction = process.env.NODE_ENV === 'production';
-//   res.cookie("token", token, {
-//     httpOnly: true,
-//     secure: isProduction,
-//     sameSite: isProduction ? 'none' : 'lax',
-//     maxAge: 7 * 24 * 60 * 60 * 1000,
-//     path: '/',
-//   });
-//   console.log('Login - NODE_ENV:', process.env.NODE_ENV, 'Cookie Settings:', { secure: isProduction, sameSite: isProduction ? 'none' : 'lax' });
-//   res.json({
-//     message: "Logged in successfully",
-//     token,
-//     user: { name: user.name, _id: user._id },
-//   });
-// });
-
-// const auth0Login = asyncHandler(async (req, res) => {
-//   const { emails, name, sub: googleId } = req.user;
-//   const email = emails?.[0]?.value || "";
-//   const fullName = `${name.givenName || ""} ${name.familyName || ""}`.trim();
-
-//   let user = await User.findOne({ email });
-//   if (!user) {
-//     user = await User.create({
-//       name: fullName,
-//       email,
-//       googleId,
-//       isVerified: true,
-//     });
-//   } else if (!user.googleId) {
-//     user.googleId = googleId;
-//     await user.save();
-//   }
-
-//   const token = generateToken(user._id);
-//   const isProduction = process.env.NODE_ENV === 'production';
-//   res.cookie("token", token, {
-//     httpOnly: true,
-//     secure: isProduction,
-//     sameSite: isProduction ? 'none' : 'lax',
-//     maxAge: 7 * 24 * 60 * 60 * 1000,
-//     path: '/',
-//   });
-//   console.log('Auth0 Login - NODE_ENV:', process.env.NODE_ENV, 'Cookie Settings:', { secure: isProduction, sameSite: isProduction ? 'none' : 'lax' });
-//   res.redirect(process.env.FRONTEND_URL);
-// });
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
@@ -146,16 +85,46 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 });
 
+// const auth0Login = asyncHandler(async (req, res) => {
+//   const { emails, name, sub: googleId } = req.user;
+//   const email = emails?.[0]?.value || "";
+//   const fullName = `${name.givenName || ""} ${name.familyName || ""}`.trim();
+
+//   let user = await User.findOne({ email });
+//   if (!user) {
+//     user = await User.create({
+//       name: fullName,
+//       email,
+//       googleId,
+//       isVerified: true,
+//     });
+//   } else if (!user.googleId) {
+//     user.googleId = googleId;
+//     await user.save();
+//   }
+
+//   const token = generateToken(user._id);
+
+//   // Instead of redirecting with a cookie, redirect with the token as a query parameter.
+//   // The frontend can then read this parameter.
+//   res.redirect(`${process.env.FRONTEND_URL}/auth0-callback?token=${token}`);
+// });
+
 const auth0Login = asyncHandler(async (req, res) => {
-  const { emails, name, sub: googleId } = req.user;
-  const email = emails?.[0]?.value || "";
-  const fullName = `${name.givenName || ""} ${name.familyName || ""}`.trim();
+  // Correctly extract the email and name from Auth0's profile data
+  // Auth0 returns email in an array, so we access the value from the first element.
+  // The name is a nested object, so we build the full name.
+  const email = req.user.emails[0].value;
+  const name = `${req.user.name.givenName} ${req.user.name.familyName}`.trim();
+  const googleId = req.user.sub;
 
   let user = await User.findOne({ email });
+
   if (!user) {
     user = await User.create({
-      name: fullName,
-      email,
+      // Provide the correctly extracted name and email
+      name: name,
+      email: email,
       googleId,
       isVerified: true,
     });
@@ -166,8 +135,6 @@ const auth0Login = asyncHandler(async (req, res) => {
 
   const token = generateToken(user._id);
 
-  // Instead of redirecting with a cookie, redirect with the token as a query parameter.
-  // The frontend can then read this parameter.
   res.redirect(`${process.env.FRONTEND_URL}/auth0-callback?token=${token}`);
 });
 
