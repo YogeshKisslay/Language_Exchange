@@ -112,29 +112,58 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { setCredentials, logout } from '../slices/authSlice';
 
 // A custom base query function that handles token retrieval
+// const customBaseQuery = fetchBaseQuery({
+//   baseUrl: `${import.meta.env.VITE_BACKEND_URL}/api`,
+//   credentials: 'include',
+//   prepareHeaders: (headers, { getState }) => {
+//     // Get the token directly from the Redux state
+//     const token = getState().auth.token;
+    
+//     // Add the token to the Authorization header if it exists
+//     if (token) {
+//       headers.set('Authorization', `Bearer ${token}`);
+//     }
+    
+//     // Log the headers for debugging
+//     console.log('prepareHeaders - Headers:', headers);
+    
+//     return headers;
+//   },
+// });
 const customBaseQuery = fetchBaseQuery({
   baseUrl: `${import.meta.env.VITE_BACKEND_URL}/api`,
   credentials: 'include',
   prepareHeaders: (headers, { getState }) => {
-    // Get the token directly from the Redux state
     const token = getState().auth.token;
-    
-    // Add the token to the Authorization header if it exists
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);
     }
-    
-    // Log the headers for debugging
-    console.log('prepareHeaders - Headers:', headers);
-    
     return headers;
   },
 });
-
 export const authApi = createApi({
   reducerPath: 'authApi',
   baseQuery: customBaseQuery, // Use the custom base query
   endpoints: (builder) => ({
+    getProfile: builder.query({
+      query: () => '/user/profile',
+      async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data.user) {
+            // Check if a token was also returned by the backend.
+            // This is crucial for handling re-authentication via cookies.
+            const token = getState().auth.token || data.token; 
+            dispatch(setCredentials({ user: data.user, token }));
+          } else {
+            dispatch(logout());
+          }
+        } catch (err) {
+          console.error('Profile fetch failed:', err);
+          dispatch(logout()); // Log out if authentication fails
+        }
+      },
+    }),
     register: builder.mutation({
       query: (credentials) => ({
         url: '/auth/register',
@@ -162,23 +191,23 @@ export const authApi = createApi({
         method: 'GET',
       }),
     }),
-    getProfile: builder.query({
-      query: () => {
-        return '/user/profile';
-      },
-      // This is the key part for rehydration. It runs after a query is started.
-      async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
-        try {
-          const { data } = await queryFulfilled;
-          // Set credentials with the user and token from the response
-          dispatch(setCredentials({ user: data.user, token: getState().auth.token || data.token }));
-        } catch (err) {
-          console.error('Profile fetch failed:', err);
-          // If the profile fetch fails, log the user out to clear invalid state
-          dispatch(logout());
-        }
-      },
-    }),
+    // getProfile: builder.query({
+    //   query: () => {
+    //     return '/user/profile';
+    //   },
+    //   // This is the key part for rehydration. It runs after a query is started.
+    //   async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
+    //     try {
+    //       const { data } = await queryFulfilled;
+    //       // Set credentials with the user and token from the response
+    //       dispatch(setCredentials({ user: data.user, token: getState().auth.token || data.token }));
+    //     } catch (err) {
+    //       console.error('Profile fetch failed:', err);
+    //       // If the profile fetch fails, log the user out to clear invalid state
+    //       dispatch(logout());
+    //     }
+    //   },
+    // }),
     updateProfile: builder.mutation({
       query: (profileData) => ({
         url: '/user/profile',

@@ -61,6 +61,39 @@
 // );
 
 // src/main.jsx
+// import React from 'react';
+// import ReactDOM from 'react-dom/client';
+// import { Provider } from 'react-redux';
+// import { PersistGate } from 'redux-persist/integration/react';
+// import { store, persistor } from './redux/store.js';
+// import { authApi } from './redux/services/authApi';
+// import App from './App.jsx';
+// import './index.css';
+// import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+// import { BrowserRouter } from 'react-router-dom';
+
+// // This function will fetch the profile on app start to check authentication status.
+// const checkAuthOnStart = () => {
+//   store.dispatch(
+//     authApi.endpoints.getProfile.initiate(undefined, { forceRefetch: true })
+//   )
+// };
+
+// ReactDOM.createRoot(document.getElementById('root')).render(
+//   <Provider store={store}>
+//     <PersistGate loading={null} persistor={persistor} onBeforeLift={checkAuthOnStart}>
+//       {() => (
+//         <BrowserRouter>
+//           <React.StrictMode>
+//             <App />
+//           </React.StrictMode>
+//         </BrowserRouter>
+//       )}
+//     </PersistGate>
+//   </Provider>
+// );
+
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
@@ -72,16 +105,15 @@ import './index.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import { BrowserRouter } from 'react-router-dom';
 
-// This function will fetch the profile on app start to check authentication status.
-const checkAuthOnStart = () => {
-  store.dispatch(
-    authApi.endpoints.getProfile.initiate(undefined, { forceRefetch: true })
-  )
+const checkAuthAndFetchProfile = () => {
+  // Always dispatch the getProfile action on load.
+  // The backend will use the existing cookie to authenticate.
+  store.dispatch(authApi.endpoints.getProfile.initiate(undefined, { forceRefetch: true }));
 };
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <Provider store={store}>
-    <PersistGate loading={null} persistor={persistor} onBeforeLift={checkAuthOnStart}>
+    <PersistGate loading={null} persistor={persistor} onBeforeLift={checkAuthAndFetchProfile}>
       {() => (
         <BrowserRouter>
           <React.StrictMode>
