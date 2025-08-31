@@ -501,6 +501,32 @@ const LoginModal = () => {
   //     toast.error(err.data?.message || 'Login failed');
   //   }
   // };
+// const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     try {
+//       // 1. Initiate the login request.
+//       const loginResponse = await login({ email, password }).unwrap();
+
+//       // 2. Await the response and check if a token and user exist.
+//       if (loginResponse?.token && loginResponse?.user) {
+//         // 3. Manually save the token and initial user info.
+//         localStorage.setItem('token', loginResponse.token);
+//         dispatch(setCredentials({ token: loginResponse.token, user: loginResponse.user }));
+
+//         // 4. Trigger the getProfile call and wait for it to finish,
+//         // using the user ID from the login response.
+//         await dispatch(authApi.endpoints.getProfile.initiate(loginResponse.user._id, { forceRefetch: true })).unwrap();
+        
+//         toast.success('Logged in successfully!');
+//         navigate('/');
+//       } else {
+//         // If login response is malformed, treat it as a failure.
+//         throw new Error('Login response was invalid');
+//       }
+//     } catch (err) {
+//       toast.error(err.data?.message || err.message || 'Login failed');
+//     }
+//   };
 const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -513,8 +539,7 @@ const handleSubmit = async (e) => {
         localStorage.setItem('token', loginResponse.token);
         dispatch(setCredentials({ token: loginResponse.token, user: loginResponse.user }));
 
-        // 4. Trigger the getProfile call and wait for it to finish,
-        // using the user ID from the login response.
+        // 4. Trigger the getProfile call and wait for it to finish.
         await dispatch(authApi.endpoints.getProfile.initiate(loginResponse.user._id, { forceRefetch: true })).unwrap();
         
         toast.success('Logged in successfully!');

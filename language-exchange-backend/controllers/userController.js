@@ -18,12 +18,27 @@ const { sendEmailService } = require('../services/emailService');
 //   res.status(200).json({ user });
 // });
 
+// const getProfile = asyncHandler(async (req, res) => {
+//   // Use the authenticated user's ID from req.user
+//   const userId = req.params.userId || (req.user ? req.user.id : null);
+  
+//   if (!userId) {
+//     // If no user is authenticated, return a 401. This is the new, correct behavior.
+//     return res.status(401).json({ message: "Authentication required" });
+//   }
+
+//   const user = await User.findById(userId).select("-password");
+//   if (!user) {
+//     return res.status(404).json({ message: "User not found" });
+//   }
+
+//   res.status(200).json({ user });
+// })
 const getProfile = asyncHandler(async (req, res) => {
   // Use the authenticated user's ID from req.user
   const userId = req.params.userId || (req.user ? req.user.id : null);
   
   if (!userId) {
-    // If no user is authenticated, return a 401. This is the new, correct behavior.
     return res.status(401).json({ message: "Authentication required" });
   }
 
@@ -33,8 +48,7 @@ const getProfile = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json({ user });
-})
-
+});
 const updateProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
   if (!user) {

@@ -518,6 +518,113 @@
 
 // export default authApi;
 
+// import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+// import { setCredentials, logout } from '../slices/authSlice';
+
+// const customBaseQuery = fetchBaseQuery({
+//   baseUrl: `${import.meta.env.VITE_BACKEND_URL}/api`,
+//   prepareHeaders: (headers, { getState }) => {
+//     const token = getState().auth.token || localStorage.getItem('token');
+    
+//     if (token) {
+//       headers.set('Authorization', `Bearer ${token}`);
+//     }
+    
+//     return headers;
+//   },
+// });
+
+// export const authApi = createApi({
+//   reducerPath: 'authApi',
+//   baseQuery: customBaseQuery,
+//   tagTypes: ['User'],
+//   endpoints: (builder) => ({
+//     getProfile: builder.query({
+//       query: (userId) => `/user/profile/${userId}`, // Updated to take a userId param
+//       providesTags: ['User'],
+//       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+//         try {
+//           const { data } = await queryFulfilled;
+//           if (data.user) {
+//             dispatch(setCredentials({ user: data.user, token: localStorage.getItem('token') }));
+//           }
+//         } catch (err) {
+//           console.error('Profile fetch failed:', err);
+//           dispatch(logout());
+//         }
+//       },
+//     }),
+//     register: builder.mutation({
+//       query: (credentials) => ({
+//         url: '/auth/register',
+//         method: 'POST',
+//         body: credentials,
+//       }),
+//     }),
+//     login: builder.mutation({
+//       query: (credentials) => ({
+//         url: '/auth/login',
+//         method: 'POST',
+//         body: credentials,
+//       }),
+//       // Removed invalidatesTags: ['User'] here to prevent the race condition.
+//       // The component will now manually call getProfile after login.
+//     }),
+//     forgotPassword: builder.mutation({
+//       query: (email) => ({
+//         url: '/auth/forgot-password',
+//         method: 'POST',
+//         body: { email },
+//       }),
+//     }),
+//     googleLogin: builder.mutation({
+//       query: () => ({
+//         url: '/auth/auth0',
+//         method: 'GET',
+//       }),
+//     }),
+//     updateProfile: builder.mutation({
+//       query: (profileData) => ({
+//         url: '/user/profile',
+//         method: 'PUT',
+//         body: profileData,
+//       }),
+//       invalidatesTags: ['User'],
+//     }),
+//     logout: builder.mutation({
+//       query: () => ({
+//         url: '/user/logout',
+//         method: 'POST',
+//       }),
+//       async onQueryStarted(arg, { dispatch }) {
+//         localStorage.removeItem('token');
+//         dispatch(logout());
+//       },
+//     }),
+//     resetPassword: builder.mutation({
+//       query: ({ token, newPassword }) => ({
+//         url: `/auth/reset-password/${token}`,
+//         method: 'POST',
+//         body: { newPassword },
+//       }),
+//     }),
+//   }),
+// });
+
+// export const {
+//   useRegisterMutation,
+//   useLoginMutation,
+//   useForgotPasswordMutation,
+//   useGoogleLoginMutation,
+//   useGetProfileQuery,
+//   useUpdateProfileMutation,
+//   useLogoutMutation,
+//   useResetPasswordMutation,
+// } = authApi;
+
+// export default authApi;
+
+
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { setCredentials, logout } from '../slices/authSlice';
 
@@ -540,7 +647,8 @@ export const authApi = createApi({
   tagTypes: ['User'],
   endpoints: (builder) => ({
     getProfile: builder.query({
-      query: (userId) => `/user/profile/${userId}`, // Updated to take a userId param
+      // We no longer require a userId. The backend will use the token for the authenticated user's ID.
+      query: (userId) => `/user/profile${userId ? '/' + userId : ''}`,
       providesTags: ['User'],
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
@@ -567,8 +675,6 @@ export const authApi = createApi({
         method: 'POST',
         body: credentials,
       }),
-      // Removed invalidatesTags: ['User'] here to prevent the race condition.
-      // The component will now manually call getProfile after login.
     }),
     forgotPassword: builder.mutation({
       query: (email) => ({
