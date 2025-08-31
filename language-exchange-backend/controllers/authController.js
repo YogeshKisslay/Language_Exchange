@@ -53,6 +53,67 @@ const verifyUser = asyncHandler(async (req, res) => {
   }
 });
 
+// const loginUser = asyncHandler(async (req, res) => {
+//   const { email, password } = req.body;
+//   const user = await User.findOne({ email });
+//   if (!user || !user.isVerified) {
+//     return res.status(401).json({ message: "Invalid email or not verified" });
+//   }
+//   if (user.googleId) {
+//     return res.status(400).json({ message: "Use Auth0 login instead" });
+//   }
+//   const match = await bcrypt.compare(password, user.password);
+//   if (!match) {
+//     return res.status(401).json({ message: "Invalid credentials" });
+//   }
+
+//   const token = generateToken(user._id);
+//   const isProduction = process.env.NODE_ENV === 'production';
+//   res.cookie("token", token, {
+//     httpOnly: true,
+//     secure: isProduction,
+//     sameSite: isProduction ? 'none' : 'lax',
+//     maxAge: 7 * 24 * 60 * 60 * 1000,
+//     path: '/',
+//   });
+//   console.log('Login - NODE_ENV:', process.env.NODE_ENV, 'Cookie Settings:', { secure: isProduction, sameSite: isProduction ? 'none' : 'lax' });
+//   res.json({
+//     message: "Logged in successfully",
+//     token,
+//     user: { name: user.name, _id: user._id },
+//   });
+// });
+
+// const auth0Login = asyncHandler(async (req, res) => {
+//   const { emails, name, sub: googleId } = req.user;
+//   const email = emails?.[0]?.value || "";
+//   const fullName = `${name.givenName || ""} ${name.familyName || ""}`.trim();
+
+//   let user = await User.findOne({ email });
+//   if (!user) {
+//     user = await User.create({
+//       name: fullName,
+//       email,
+//       googleId,
+//       isVerified: true,
+//     });
+//   } else if (!user.googleId) {
+//     user.googleId = googleId;
+//     await user.save();
+//   }
+
+//   const token = generateToken(user._id);
+//   const isProduction = process.env.NODE_ENV === 'production';
+//   res.cookie("token", token, {
+//     httpOnly: true,
+//     secure: isProduction,
+//     sameSite: isProduction ? 'none' : 'lax',
+//     maxAge: 7 * 24 * 60 * 60 * 1000,
+//     path: '/',
+//   });
+//   console.log('Auth0 Login - NODE_ENV:', process.env.NODE_ENV, 'Cookie Settings:', { secure: isProduction, sameSite: isProduction ? 'none' : 'lax' });
+//   res.redirect(process.env.FRONTEND_URL);
+// });
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
@@ -68,19 +129,20 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   const token = generateToken(user._id);
-  const isProduction = process.env.NODE_ENV === 'production';
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    path: '/',
-  });
-  console.log('Login - NODE_ENV:', process.env.NODE_ENV, 'Cookie Settings:', { secure: isProduction, sameSite: isProduction ? 'none' : 'lax' });
+  
+  // REMOVE the cookie-setting logic.
+  // We will now send the token directly in the response body.
+  
   res.json({
     message: "Logged in successfully",
-    token,
-    user: { name: user.name, _id: user._id },
+    token, // The token is now a part of the JSON response.
+    user: { name: user.name, _id: user._id, // Add other user fields
+      knownLanguages: user.knownLanguages,
+      learnLanguages: user.learnLanguages,
+      powerTokens: user.powerTokens,
+      coinTokens: user.coinTokens,
+      premium: user.premium
+    },
   });
 });
 
@@ -103,18 +165,16 @@ const auth0Login = asyncHandler(async (req, res) => {
   }
 
   const token = generateToken(user._id);
-  const isProduction = process.env.NODE_ENV === 'production';
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    path: '/',
-  });
-  console.log('Auth0 Login - NODE_ENV:', process.env.NODE_ENV, 'Cookie Settings:', { secure: isProduction, sameSite: isProduction ? 'none' : 'lax' });
-  res.redirect(process.env.FRONTEND_URL);
+
+  // Instead of redirecting with a cookie, redirect with the token as a query parameter.
+  // The frontend can then read this parameter.
+  res.redirect(`${process.env.FRONTEND_URL}/auth0-callback?token=${token}`);
 });
 
+const logoutUser = asyncHandler(async (req, res) => {
+  // REMOVE all cookie-clearing logic.
+  res.status(200).json({ message: "Logged out successfully" });
+});
 const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
@@ -149,20 +209,20 @@ const resetPassword = asyncHandler(async (req, res) => {
 });
 
 
-// this is for auth0 not needed
-const logoutUser = asyncHandler(async (req, res) => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  const cookieOptions = {
-    httpOnly: true,
-    secure: isProduction, // true in production  
-    sameSite: isProduction ? 'none' : 'lax', // 'none' in production
-    path: '/',
-    expires: new Date(0), // Expire immediately (Unix epoch)
-  };
-  res.clearCookie("token", cookieOptions);
-  console.log('Logout - NODE_ENV:', process.env.NODE_ENV, 'Cookie cleared with:', cookieOptions);
-  res.status(200).json({ message: "Logged out successfully" }); 
-});
+// // this is for auth0 not needed
+// const logoutUser = asyncHandler(async (req, res) => {
+//   const isProduction = process.env.NODE_ENV === 'production';
+//   const cookieOptions = {
+//     httpOnly: true,
+//     secure: isProduction, // true in production  
+//     sameSite: isProduction ? 'none' : 'lax', // 'none' in production
+//     path: '/',
+//     expires: new Date(0), // Expire immediately (Unix epoch)
+//   };
+//   res.clearCookie("token", cookieOptions);
+//   console.log('Logout - NODE_ENV:', process.env.NODE_ENV, 'Cookie cleared with:', cookieOptions);
+//   res.status(200).json({ message: "Logged out successfully" }); 
+// });
 module.exports = {
   registerUser,
   verifyUser,

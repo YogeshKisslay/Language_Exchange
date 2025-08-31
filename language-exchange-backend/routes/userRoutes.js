@@ -12,7 +12,7 @@ router.get("/profile", authenticateUser, userController.getProfile);
 router.get("/profile/:userId", authenticateUser, userController.getProfile);
 // Update authenticated user's profile
 router.put("/profile", authenticateUser, userController.updateProfile);
-router.post("/logout", authenticateUser, userController.logout);
+router.post("/logout", userController.logout);
 router.post('/payment/order', authenticateUser, userController.createPaymentOrder);
 router.post('/payment/verify', authenticateUser, userController.verifyPayment);
 router.get('/all-users', authenticateUser, userController.getAllUsers);

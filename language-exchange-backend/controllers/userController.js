@@ -5,18 +5,35 @@ const Razorpay = require("razorpay");
 
 const { sendEmailService } = require('../services/emailService');
 
+// const getProfile = asyncHandler(async (req, res) => {
+//   console.log('getProfile route hit');
+//   const userId = req.params.userId || req.user.id;
+//   console.log("Request params:", req.params);
+//   console.log("Fetching profile for userId:", userId);
+//   const user = await User.findById(userId).select("-password");
+//   if (!user) {
+//     console.log(`User not found for ID: ${userId}`);
+//     return res.status(404).json({ message: "User not found" });
+//   }
+//   res.status(200).json({ user });
+// });
+
 const getProfile = asyncHandler(async (req, res) => {
-  console.log('getProfile route hit');
-  const userId = req.params.userId || req.user.id;
-  console.log("Request params:", req.params);
-  console.log("Fetching profile for userId:", userId);
+  // Use the authenticated user's ID from req.user
+  const userId = req.params.userId || (req.user ? req.user.id : null);
+  
+  if (!userId) {
+    // If no user is authenticated, return a 401. This is the new, correct behavior.
+    return res.status(401).json({ message: "Authentication required" });
+  }
+
   const user = await User.findById(userId).select("-password");
   if (!user) {
-    console.log(`User not found for ID: ${userId}`);
     return res.status(404).json({ message: "User not found" });
   }
+
   res.status(200).json({ user });
-});
+})
 
 const updateProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);

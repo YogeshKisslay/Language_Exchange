@@ -30,5 +30,5 @@ router.get(
 );
 
 router.get("/auth0/callback", passport.authenticate("auth0"), auth0Login);
-router.get("/auth0/logout", logoutUser);
+// router.get("/auth0/logout", logoutUser);
 module.exports = router;

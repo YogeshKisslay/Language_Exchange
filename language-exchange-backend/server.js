@@ -1,7 +1,7 @@
 
 
 const express = require("express");
-const cookieParser = require("cookie-parser");
+// const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const passport = require("passport");
 const cron = require("node-cron");
@@ -15,7 +15,7 @@ const socket = require("./socket");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const callRoutes = require("./routes/callRoutes");
-const session = require("express-session");
+// const session = require("express-session");
 
 const app = express();
 const server = http.createServer(app);
@@ -30,18 +30,18 @@ const allowedOrigins = [
 ];
 
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "your_secret_key", // Use env variable or fallback
-    resave: false,
-    saveUninitialized: true,
-  })
-);
+// app.use(
+//   session({
+//     secret: process.env.SESSION_SECRET || "your_secret_key", // Use env variable or fallback
+//     resave: false,
+//     saveUninitialized: true,
+//   })
+// );
 
-app.use(passport.initialize());
-app.use(passport.session());
+// app.use(passport.initialize());
+// app.use(passport.session());
 app.use(express.json());
-app.use(cookieParser());
+// app.use(cookieParser());
 
 // CORS configuration
 app.use(
