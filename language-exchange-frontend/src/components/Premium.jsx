@@ -3444,29 +3444,74 @@ const Premium = () => {
     return Math.min((duration / maxDuration) * 100, 100);
   };
 
-  const handleInitiateCall = async () => {
-    if (!language) return toast.error('Please enter a language');
-    if (!user?.powerTokens || user.powerTokens < 1) return toast.error('Insufficient power tokens');
+  // const handleInitiateCall = async () => {
+  //   if (!language) return toast.error('Please enter a language');
+  //   if (!user?.powerTokens || user.powerTokens < 1) return toast.error('Insufficient power tokens');
+  //   try {
+  //     const response = await initiateCall(language).unwrap();
+  //     dispatch(setCallStatus({
+  //       callId: response.callId,
+  //       status: 'pending',
+  //       receivers: response.potentialReceivers,
+  //       language,
+  //       callerId: user._id,
+  //       caller: user.name,
+  //       startTime: new Date().toISOString(),
+  //       isMuted: false,
+  //     }));
+  //     toast.success('Call initiated, waiting for a receiver...');
+  //     // Refresh profile immediately to show token deduction
+  //     dispatch(authApi.endpoints.getProfile.initiate(user._id, { forceRefetch: true }));
+  //   } catch (err) {
+  //     toast.error(err.data?.error || 'Failed to initiate call');
+  //   }
+  // };
+const handleInitiateCall = async () => {
+    if (!language) {
+      toast.error('Please enter a language');
+      return;
+    }
+    if (!user?.powerTokens || user.powerTokens < 1) {
+      toast.error('You need at least 1 power token to initiate a call');
+      return;
+    }
+    
     try {
-      const response = await initiateCall(language).unwrap();
-      dispatch(setCallStatus({
-        callId: response.callId,
-        status: 'pending',
-        receivers: response.potentialReceivers,
-        language,
-        callerId: user._id,
-        caller: user.name,
-        startTime: new Date().toISOString(),
-        isMuted: false,
-      }));
-      toast.success('Call initiated, waiting for a receiver...');
-      // Refresh profile immediately to show token deduction
-      dispatch(authApi.endpoints.getProfile.initiate(user._id, { forceRefetch: true }));
-    } catch (err) {
-      toast.error(err.data?.error || 'Failed to initiate call');
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/calls/initiate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ language }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.status === 200) {
+        dispatch(
+          setCallStatus({
+            callId: data.callId,
+            status: 'pending',
+            receivers: data.potentialReceivers,
+            language,
+            callerId: user?._id,
+            caller: user?.name,
+            startTime: new Date().toISOString(),
+            isMuted: false,
+          })
+        );
+        toast.success('Call initiated, waiting for a receiver...');
+      } else if (response.status === 202) {
+        toast.info(data.message, { autoClose: 8000 });
+      } else {
+        throw new Error(data.error || 'Failed to initiate call');
+      }
+    } catch (error) {
+      console.error('Initiate call failed:', error);
+      toast.error(error.message || 'Unknown error');
     }
   };
-
   const handleSelectiveCall = async (receiverId) => {
     if (!user?.premium) return toast.error('Premium access required');
     if (!user?.powerTokens || user.powerTokens < 1) return toast.error('Insufficient power tokens');
