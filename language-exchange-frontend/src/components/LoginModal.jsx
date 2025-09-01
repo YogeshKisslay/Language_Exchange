@@ -623,6 +623,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { useLoginMutation, useForgotPasswordMutation, authApi } from '../redux/services/authApi';
+import { userApi } from '../redux/services/userApi'; // <-- Import userApi
 import { setCredentials } from '../redux/slices/authSlice';
 import { toast } from 'react-toastify';
 
@@ -635,26 +636,48 @@ const LoginModal = () => {
   const [login, { isLoading: loginLoading }] = useLoginMutation();
   const [forgotPassword, { isLoading: forgotLoading }] = useForgotPasswordMutation();
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   try {
+  //     // 1. Initiate the login request.
+  //     const loginResponse = await login({ email, password }).unwrap();
+
+  //     // 2. Await the response and check if a token and user exist.
+  //     if (loginResponse?.token && loginResponse?.user) {
+  //       // 3. Manually save the token and initial user info.
+  //       localStorage.setItem('token', loginResponse.token);
+  //       dispatch(setCredentials({ token: loginResponse.token, user: loginResponse.user }));
+
+  //       // 4. Trigger the getProfile call and wait for it to finish.
+  //       // It now correctly calls the /user/profile endpoint without a user ID.
+  //       await dispatch(authApi.endpoints.getProfile.initiate(undefined, { forceRefetch: true })).unwrap();
+        
+  //       toast.success('Logged in successfully!');
+  //       navigate('/');
+  //     } else {
+  //       // If login response is malformed, treat it as a failure.
+  //       throw new Error('Login response was invalid');
+  //     }
+  //   } catch (err) {
+  //     toast.error(err.data?.message || err.message || 'Login failed');
+  //   }
+  // };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // 1. Initiate the login request.
       const loginResponse = await login({ email, password }).unwrap();
 
-      // 2. Await the response and check if a token and user exist.
       if (loginResponse?.token && loginResponse?.user) {
-        // 3. Manually save the token and initial user info.
         localStorage.setItem('token', loginResponse.token);
         dispatch(setCredentials({ token: loginResponse.token, user: loginResponse.user }));
-
-        // 4. Trigger the getProfile call and wait for it to finish.
-        // It now correctly calls the /user/profile endpoint without a user ID.
-        await dispatch(authApi.endpoints.getProfile.initiate(undefined, { forceRefetch: true })).unwrap();
+        
+        // --- This now dispatches the getProfile call from userApi ---
+        await dispatch(userApi.endpoints.getProfile.initiate(undefined, { forceRefetch: true })).unwrap();
         
         toast.success('Logged in successfully!');
         navigate('/');
       } else {
-        // If login response is malformed, treat it as a failure.
         throw new Error('Login response was invalid');
       }
     } catch (err) {

@@ -126,12 +126,51 @@
 // );
 
 
+// import React from 'react';
+// import ReactDOM from 'react-dom/client';
+// import { Provider } from 'react-redux';
+// import { PersistGate } from 'redux-persist/integration/react';
+// import { store, persistor } from './redux/store.js';
+// import { authApi } from './redux/services/authApi';
+// import App from './App.jsx';
+// import './index.css';
+// import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+// import { BrowserRouter } from 'react-router-dom';
+
+// const checkAuthStatus = () => {
+//     const token = localStorage.getItem('token');
+//     if (token) {
+//         // If a token exists in local storage, initiate a getProfile call.
+//         // This will attempt to re-authenticate the user.
+//         store.dispatch(authApi.endpoints.getProfile.initiate(undefined, { forceRefetch: true }));
+//     }
+// };
+
+// ReactDOM.createRoot(document.getElementById('root')).render(
+//     <Provider store={store}>
+//         <PersistGate loading={null} persistor={persistor}>
+//             {/* The onBeforeLift prop is a good place to trigger our initial auth check */}
+//             {() => {
+//                 checkAuthStatus();
+//                 return (
+//                     <BrowserRouter>
+//                         <React.StrictMode>
+//                             <App />
+//                         </React.StrictMode>
+//                     </BrowserRouter>
+//                 );
+//             }}
+//         </PersistGate>
+//     </Provider>
+// );
+
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './redux/store.js';
-import { authApi } from './redux/services/authApi';
+import { userApi } from './redux/services/userApi'; // <-- Import userApi
 import App from './App.jsx';
 import './index.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -140,26 +179,24 @@ import { BrowserRouter } from 'react-router-dom';
 const checkAuthStatus = () => {
     const token = localStorage.getItem('token');
     if (token) {
-        // If a token exists in local storage, initiate a getProfile call.
-        // This will attempt to re-authenticate the user.
-        store.dispatch(authApi.endpoints.getProfile.initiate(undefined, { forceRefetch: true }));
+      // --- This now dispatches the getProfile call from userApi ---
+      store.dispatch(userApi.endpoints.getProfile.initiate(undefined, { forceRefetch: true }));
     }
 };
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-    <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
-            {/* The onBeforeLift prop is a good place to trigger our initial auth check */}
-            {() => {
-                checkAuthStatus();
-                return (
-                    <BrowserRouter>
-                        <React.StrictMode>
-                            <App />
-                        </React.StrictMode>
-                    </BrowserRouter>
-                );
-            }}
-        </PersistGate>
-    </Provider>
+  <Provider store={store}>
+    <PersistGate loading={null} persistor={persistor}>
+      {() => {
+        checkAuthStatus();
+        return (
+          <BrowserRouter>
+            <React.StrictMode>
+              <App />
+            </React.StrictMode>
+          </BrowserRouter>
+        );
+      }}
+    </PersistGate>
+  </Provider>
 );
