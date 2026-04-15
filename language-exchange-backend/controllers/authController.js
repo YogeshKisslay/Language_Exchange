@@ -206,7 +206,7 @@ const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
-// const { sendVerificationEmail } = require("../services/emailService"); // <-- Comment out or remove this line
+const { sendVerificationEmail } = require("../services/emailService");
 
 // Generate JWT token
 const generateToken = (id) => {
@@ -266,12 +266,9 @@ const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
 
-  // --- REMOVED THE isVerified CHECK HERE ---
-  // We no longer need to check isVerified because it's always true on creation
-  if (!user) { 
-    return res.status(401).json({ message: "Invalid email" }); // Changed message slightly
+  if (!user || (!BYPASS_EMAIL && !user.isVerified)) {
+    return res.status(401).json({ message: "Invalid email or not verified" });
   }
-  // --- END OF REMOVAL ---
 
   if (user.googleId) {
     return res.status(400).json({ message: "Use Auth0 login instead" });
