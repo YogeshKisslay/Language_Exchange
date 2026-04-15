@@ -627,6 +627,8 @@ import { userApi } from '../redux/services/userApi'; // <-- Import userApi
 import { setCredentials } from '../redux/slices/authSlice';
 import { toast } from 'react-toastify';
 
+const BYPASS_EMAIL = import.meta.env.VITE_BYPASS_EMAIL === "true";
+
 const LoginModal = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -749,16 +751,18 @@ const LoginModal = () => {
                   required
                 />
               </div>
-              <div className="mb-3 text-end">
-                <button
-                  type="button"
-                  className="btn btn-link p-0 text-decoration-none"
-                  onClick={handleForgotPassword}
-                  disabled={forgotLoading}
-                >
-                  Forgot Password?
-                </button>
-              </div>
+              {!BYPASS_EMAIL && (
+                <div className="mb-3 text-end">
+                  <button
+                    type="button"
+                    className="btn btn-link p-0 text-decoration-none"
+                    onClick={handleForgotPassword}
+                    disabled={forgotLoading}
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
               <button
                 type="submit"
                 className="btn btn-primary w-100 mb-3"

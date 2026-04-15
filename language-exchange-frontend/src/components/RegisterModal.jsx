@@ -14,8 +14,8 @@ const RegisterModal = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await register({ name, email, password }).unwrap();
-      alert('Registration successful! Please verify your email.');
+      const data = await register({ name, email, password }).unwrap();
+      alert(data.message || 'Registration successful!');
       navigate('/login'); // Redirect to login route
     } catch (err) {
       alert(err.data?.message || 'Registration failed');

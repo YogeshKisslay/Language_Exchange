@@ -10,6 +10,7 @@ const { sendVerificationEmail } = require("../services/emailService");
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
+const BYPASS_EMAIL = process.env.BYPASS_EMAIL === "true";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
@@ -23,11 +24,15 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await User.create({ name, email, password: hashedPassword });
+  const user = await User.create({ name, email, password: hashedPassword, isVerified: BYPASS_EMAIL });
 
   if (user) {
-    sendVerificationEmail(user);
-    res.status(201).json({ message: "Verification email sent" });
+    if (BYPASS_EMAIL) {
+      res.status(201).json({ message: "Registration successful! You can now log in." });
+    } else {
+      sendVerificationEmail(user);
+      res.status(201).json({ message: "Verification email sent" });
+    }
   } else {
     res.status(400).json({ message: "Invalid user data" });
   }
@@ -149,6 +154,10 @@ const forgotPassword = asyncHandler(async (req, res) => {
   if (!user) {
     res.status(404).json({ message: "User not found" });
     return;
+  }
+
+  if (BYPASS_EMAIL) {
+    return res.status(503).json({ message: "Password reset via email is disabled in this environment." });
   }
 
   sendVerificationEmail(user, "reset");
