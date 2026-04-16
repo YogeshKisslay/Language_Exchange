@@ -1,5 +1,3 @@
-
-
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
@@ -16,8 +14,8 @@ const sendVerificationEmail = (user, type = "verify") => {
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
   const url = type === "reset"
-    ? `${process.env.FRONTEND_URL}/${type}/${token}`  // Frontend for reset
-    : `${process.env.BACKEND_URL}/api/auth/${type}/${token}`;  // Backend for verify
+    ? `${process.env.FRONTEND_URL}/${type}/${token}`
+    : `${process.env.BACKEND_URL}/api/auth/${type}/${token}`;
 
   const mailOptions = {
     from: `"Language Exchange" <${process.env.EMAIL}>`,
@@ -35,14 +33,13 @@ const sendVerificationEmail = (user, type = "verify") => {
   });
 };
 
-
 const sendEmailService = async ({ to, subject, text, from }) => {
   const mailOptions = {
     from: from ? `"${from.name}" <${from.email}>` : `"Language Exchange" <${process.env.EMAIL}>`,
     to,
     subject,
     text,
-    replyTo: from ? from.email : process.env.EMAIL, // Add reply-to for sender's email
+    replyTo: from ? from.email : process.env.EMAIL,
   };
 
   try {
@@ -56,4 +53,3 @@ const sendEmailService = async ({ to, subject, text, from }) => {
 };
 
 module.exports = { sendVerificationEmail, sendEmailService, transporter };
-
