@@ -151,11 +151,8 @@ const RegisterModal = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await register({ name, email, password }).unwrap();
-      
-      // --- MODIFIED SUCCESS MESSAGE ---
-      toast.success('Registration successful! You can now log in.'); // <-- Use toast instead of alert
-      
+      const data = await register({ name, email, password }).unwrap();
+      toast.success(data.message || 'Registration successful!');
       navigate('/login');
     } catch (err) {
       // Use toast for errors too

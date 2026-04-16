@@ -206,12 +206,13 @@ const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
-// const { sendVerificationEmail } = require("../services/emailService"); // <-- Comment out or remove this line
+const { sendVerificationEmail } = require("../services/emailService");
 
 // Generate JWT token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
+const BYPASS_EMAIL = process.env.BYPASS_EMAIL === "true";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
@@ -225,20 +226,15 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  
-  // --- MODIFIED USER CREATION ---
-  const user = await User.create({ 
-    name, 
-    email, 
-    password: hashedPassword,
-    isVerified: true // <-- Set isVerified to true immediately
-  });
+  const user = await User.create({ name, email, password: hashedPassword, isVerified: BYPASS_EMAIL });
 
   if (user) {
-    // sendVerificationEmail(user); // <-- Comment out or remove this line
-    
-    // --- MODIFIED SUCCESS MESSAGE ---
-    res.status(201).json({ message: "Registration successful! You can now log in." }); // <-- Updated message
+    if (BYPASS_EMAIL) {
+      res.status(201).json({ message: "Registration successful! You can now log in." });
+    } else {
+      sendVerificationEmail(user);
+      res.status(201).json({ message: "Verification email sent" });
+    }
   } else {
     res.status(400).json({ message: "Invalid user data" });
   }
@@ -270,12 +266,9 @@ const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
 
-  // --- REMOVED THE isVerified CHECK HERE ---
-  // We no longer need to check isVerified because it's always true on creation
-  if (!user) { 
-    return res.status(401).json({ message: "Invalid email" }); // Changed message slightly
+  if (!user || (!BYPASS_EMAIL && !user.isVerified)) {
+    return res.status(401).json({ message: "Invalid email or not verified" });
   }
-  // --- END OF REMOVAL ---
 
   if (user.googleId) {
     return res.status(400).json({ message: "Use Auth0 login instead" });
@@ -346,16 +339,13 @@ const forgotPassword = asyncHandler(async (req, res) => {
     res.status(404).json({ message: "User not found" });
     return;
   }
-  
-  // NOTE: This will likely fail on Render's free tier due to SMTP block
-  try {
-      const { sendVerificationEmail } = require("../services/emailService"); // Re-require temporarily
-      sendVerificationEmail(user, "reset"); 
-      res.json({ message: "Password reset email sent (if email service is available)" });
-  } catch (emailError) {
-      console.error("Forgot password email failed:", emailError);
-      res.status(500).json({ message: "Could not send reset email due to server configuration." });
+
+  if (BYPASS_EMAIL) {
+    return res.status(503).json({ message: "Password reset via email is disabled in this environment." });
   }
+
+  sendVerificationEmail(user, "reset");
+  res.json({ message: "Password reset email sent" });
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
