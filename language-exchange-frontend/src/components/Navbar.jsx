@@ -1921,7 +1921,6 @@ const Navbar = () => {
 
   const { data: missedCallsData, isLoading: missedCallsLoading } = useGetMissedCallsQuery(undefined, {
     skip: !isAuthenticated,
-    pollingInterval: 15000,
   });
   const [dismissMissedCall] = useDismissMissedCallMutation();
   const [initiateSelectiveCall] = useInitiateSelectiveCallMutation();

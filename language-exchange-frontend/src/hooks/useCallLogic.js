@@ -14,6 +14,7 @@ import {
 } from '../redux/services/callApi';
 import { setCallStatus, clearCallStatus } from '../redux/slices/authSlice';
 import { userApi } from '../redux/services/userApi';
+import { missedCallApi } from '../redux/services/missedCallApi';
 
 const useCallLogic = () => {
   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
@@ -476,7 +477,7 @@ const useCallLogic = () => {
 
     socket.on('missed-call-alert', (data) => {
       toast.info(`You have ${data.count} new missed call(s)!`);
-      // Missed calls query in Navbar will pick up the new data on its next poll
+      dispatch(missedCallApi.util.invalidateTags(['MissedCall']));
     });
 
     socket.on('call-ended', (data) => {
