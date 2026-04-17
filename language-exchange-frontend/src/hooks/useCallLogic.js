@@ -149,7 +149,7 @@ const useCallLogic = () => {
 
         if (state === 'connected') {
           toast.success('Audio call connected!');
-          // Clear any pending disconnect timer if we recovered
+          setReconnectAttempt(0);
           if (disconnectTimeoutRef.current) {
             clearTimeout(disconnectTimeoutRef.current);
             disconnectTimeoutRef.current = null;
@@ -198,7 +198,7 @@ const useCallLogic = () => {
     }
 
     try {
-      const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${callId}`)) || false;
+      const persistedIsMuted = callStatusRef.current?.isMuted ?? JSON.parse(localStorage.getItem(`isMuted_${callId}`)) ?? false;
 
       // Acquire microphone (use existing stream if already open)
       let stream = localStreamRef.current;
@@ -298,11 +298,13 @@ const useCallLogic = () => {
             toast.success('Reconnected to the call!');
           } else {
             // Receiver does NOT create offers. Signal the caller to re-send theirs.
-            // (call-refresh → backend → call-reconnect on caller → caller increments
-            //  reconnectAttempt → caller runs this same block with isCaller=true)
+            // Reset reconnectAttempt immediately so this effect doesn't loop —
+            // isReconnecting flips false synchronously (no await here), which would
+            // re-trigger the effect before the caller's new offer arrives.
             if (socketRef.current?.connected) {
               socketRef.current.emit('call-refresh', { callId: cs.callId, userId: userRef.current._id });
             }
+            setReconnectAttempt(0);
           }
         } catch (error) {
           console.error('Failed to reconnect:', error);
@@ -406,10 +408,9 @@ const useCallLogic = () => {
     });
 
     socket.on('offer', async ({ callId, offer, from }) => {
-      // If a stale connection exists for this call (e.g. caller reconnected and
-      // sent a fresh offer), tear it down before processing the new one.
-      // This eliminates the "setLocalDescription in wrong state: stable" error
-      // that occurred when two concurrent async offer handlers interleaved.
+      // Reset reconnect counter — receiving an offer means the caller is alive
+      // and we should stop any pending reconnect loop on the receiver side.
+      setReconnectAttempt(0);
       if (peerConnection.current && callStatusRef.current?.callId === callId) {
         console.log('New offer for active call — resetting stale WebRTC connection');
         cleanupWebRTC();
@@ -419,12 +420,24 @@ const useCallLogic = () => {
       }
     });
 
-    socket.on('answer', ({ answer }) => {
+    socket.on('answer', async ({ callId, answer }) => {
       // Only apply answer when we're waiting for one
       if (peerConnection.current && peerConnection.current.signalingState === 'have-local-offer') {
-        peerConnection.current
-          .setRemoteDescription(new RTCSessionDescription(answer))
-          .catch(err => console.error('Error setting remote answer:', err));
+        try {
+          await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
+          // Flush ICE candidates that arrived before the answer (TURN relay candidates
+          // come via trickle ICE and often arrive before the answer is received).
+          // Without this flush, cross-network calls fail because TURN candidates
+          // are queued but never applied.
+          const queued = iceCandidatesQueue.current.filter(e => e.callId === callId);
+          iceCandidatesQueue.current = iceCandidatesQueue.current.filter(e => e.callId !== callId);
+          for (const entry of queued) {
+            await peerConnection.current?.addIceCandidate(new RTCIceCandidate(entry.candidate))
+              .catch(err => console.warn('Queued ICE candidate error:', err));
+          }
+        } catch (err) {
+          console.error('Error setting remote answer:', err);
+        }
       } else {
         console.warn('Ignoring answer in state:', peerConnection.current?.signalingState);
       }
@@ -552,12 +565,17 @@ const useCallLogic = () => {
   // ─── Restore call state from polling data ─────────────────────────────────
   useEffect(() => {
     if (currentCallData?.call) {
-      const persistedIsMuted = JSON.parse(localStorage.getItem(`isMuted_${currentCallData.call._id}`)) || false;
+      const cs = callStatusRef.current;
+      // Prefer current Redux mute state over localStorage — cleanupWebRTC deletes the
+      // localStorage key during reconnects, so reading it would incorrectly reset mute.
+      // Fall back to localStorage only on a fresh page load (cs has no callId yet).
+      const fromStorage = JSON.parse(localStorage.getItem(`isMuted_${currentCallData.call._id}`)) ?? false;
+      const persistedIsMuted = cs?.callId === currentCallData.call._id
+        ? (cs?.isMuted ?? fromStorage)
+        : fromStorage;
       const isCaller = user._id === currentCallData.call.caller?._id;
       const isPotentialReceiver = currentCallData.call.status === 'pending' &&
         currentCallData.call.potentialReceivers?.some(r => r._id.toString() === user._id.toString());
-
-      const cs = callStatusRef.current;
       let newCallStatus;
       if (isCaller) {
         newCallStatus = {
