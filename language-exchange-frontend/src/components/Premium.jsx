@@ -7,6 +7,7 @@ import { setCallStatus } from '../redux/slices/authSlice';
 import { toast } from 'react-toastify';
 import EmailModal from './EmailModal';
 import useCallLogic from '../hooks/useCallLogic';
+import '../styles/Home.css';
 
 const Premium = () => {
   const { user, isAuthenticated, callStatus } = useSelector((state) => state.auth);
@@ -86,253 +87,266 @@ const Premium = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="text-center mt-5">
-        <p className="text-secondary">Please log in to access this page.</p>
+      <div style={{ color: '#94a3b8', textAlign: 'center', marginTop: '80px' }}>
+        Please log in to access this page.
       </div>
     );
   }
 
   if (!user?.premium) {
-      // Logic for non-premium users to upgrade is now handled by the Store page
-      // and a redirect or link from the Navbar. This page is for premium users only.
     return (
-        <div className="bg-white min-vh-100 pt-5 text-center">
-        <h2 className="text-dark fw-bold">Upgrade to Premium</h2>
-        <p className="text-secondary fs-5 mb-3"> 
-          This is a premium feature. Please visit the store to upgrade.
-        </p>
-        <Link 
-            to="/store"
-            className="btn btn-warning text-dark fw-bold px-4 py-2 rounded-pill shadow-sm"
-        >
-            Go to Store
-        </Link>
+      <div style={{ background: '#0f1117', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1.2rem', padding: '2rem' }}>
+        <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'rgba(254,218,106,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <i className="bi bi-star-fill" style={{ fontSize: '2rem', color: '#feda6a' }}></i>
         </div>
+        <h2 style={{ color: '#f1f5f9', fontWeight: '800', margin: 0 }}>Upgrade to Premium</h2>
+        <p style={{ color: '#64748b', textAlign: 'center', maxWidth: '360px', margin: 0 }}>
+          Unlock selective calling, view all users, and send emails directly.
+        </p>
+        <Link to="/store" style={{ background: '#feda6a', color: '#1d1e22', fontWeight: '700', padding: '10px 28px', borderRadius: '50px', textDecoration: 'none' }}>
+          Go to Store
+        </Link>
+      </div>
     );
   }
 
+  const partnerName = callStatus
+    ? callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller
+    : '';
+  const durSec = callStatus?.status === 'active' ? getCallDuration() : 0;
+  const durMin = Math.floor(durSec / 60);
+  const durSecRem = (durSec % 60).toString().padStart(2, '0');
+  const progress = callStatus?.status === 'active' ? getCallDurationProgress() : 0;
+
   return (
-    <div className="container py-4">
-      <h2 className="text-center text-dark fw-bold mb-3">Premium Dashboard</h2>
+    <div style={{ background: '#0f1117', minHeight: '100vh', padding: '2rem 1rem', fontFamily: "'Inter', sans-serif" }}>
+      <div className="container">
 
-      <div className="text-center mb-3">
-        <Link
-          to="/store"
-          className="btn btn-dark text-warning fw-bold px-3 py-2 rounded-pill"
-        >
-          Buy More Tokens or Coins
-        </Link>
-      </div>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
+          <div>
+            <h2 style={{ color: '#f1f5f9', fontWeight: '800', margin: 0 }}>Premium Dashboard</h2>
+            <p style={{ color: '#64748b', margin: 0, fontSize: '0.9rem' }}>Welcome back, {user?.name}</p>
+          </div>
+          <div style={{ display: 'flex', gap: '0.7rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ background: 'rgba(254,218,106,0.12)', color: '#feda6a', borderRadius: '20px', padding: '5px 14px', fontSize: '0.82rem', fontWeight: '600' }}>
+              <i className="bi bi-lightning-fill" style={{ marginRight: '5px' }}></i>{user?.powerTokens ?? 0} Power
+            </span>
+            <span style={{ background: 'rgba(99,179,237,0.12)', color: '#63b3ed', borderRadius: '20px', padding: '5px 14px', fontSize: '0.82rem', fontWeight: '600' }}>
+              <i className="bi bi-coin" style={{ marginRight: '5px' }}></i>{user?.coinTokens ?? 0} Coins
+            </span>
+            <Link to="/store" style={{ background: 'rgba(254,218,106,0.12)', color: '#feda6a', borderRadius: '20px', padding: '5px 14px', fontSize: '0.82rem', fontWeight: '600', textDecoration: 'none', border: '1px solid rgba(254,218,106,0.2)' }}>
+              <i className="bi bi-bag-fill" style={{ marginRight: '5px' }}></i>Store
+            </Link>
+          </div>
+        </div>
 
-      {callStatus ? (
-        <div className="card mx-auto mb-4 shadow-sm" style={{ maxWidth: '500px' }}>
-          <div className="card-body">
-            <h5 className="card-title text-dark fw-bold mb-3">Call Status</h5>
-            {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+        {/* Call section */}
+        <div style={{ maxWidth: '540px', margin: '0 auto 2.5rem' }}>
+          <div style={{ background: 'rgba(22,25,35,0.92)', border: '1px solid rgba(254,218,106,0.18)', borderRadius: '20px', padding: '2rem', backdropFilter: 'blur(12px)' }}>
+
+            {callStatus ? (
               <>
-                <p className="text-secondary">Waiting for someone to accept your call...</p>
-                {callStatus.receivers && callStatus.receivers.length > 0 ? (
-                  <p className="text-warning">
-                    Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}
-                  </p>
-                ) : (
-                  <p>No potential receivers left.</p>
+                <p style={{ fontSize: '0.72rem', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(254,218,106,0.7)', marginBottom: '1.2rem' }}>Call Status</p>
+
+                {/* Pending — caller */}
+                {callStatus.status === 'pending' && callStatus.callerId === user?._id && (
+                  <>
+                    <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(254,218,106,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                      <i className="bi bi-telephone-outbound-fill" style={{ fontSize: '1.6rem', color: '#feda6a' }}></i>
+                    </div>
+                    <p style={{ color: '#f1f5f9', fontWeight: '700', textAlign: 'center', fontSize: '1.1rem', marginBottom: '0.3rem' }}>Calling…</p>
+                    <p style={{ color: '#64748b', textAlign: 'center', fontSize: '0.85rem', marginBottom: '1.4rem' }}>
+                      Waiting for <strong style={{ color: '#feda6a' }}>{callStatus.receivers?.[0]?.name || 'user'}</strong>
+                    </p>
+                    <button
+                      onClick={handleCancelCall}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '11px', border: '1px solid rgba(229,62,62,0.3)', borderRadius: '12px', background: 'rgba(229,62,62,0.12)', color: '#fc8181', fontWeight: '600', cursor: 'pointer', fontSize: '0.9rem' }}
+                    >
+                      <i className="bi bi-telephone-x-fill"></i> Cancel Call
+                    </button>
+                  </>
                 )}
-                <button
-                  onClick={handleCancelCall}
-                  className="btn btn-dark text-warning w-100 rounded-pill"
-                >
-                  Cancel Call
-                </button>
-              </>
-            ) : callStatus.status === 'pending' && callStatus.callerId !== user?._id ? (
-              <>
-                <p className="text-secondary">
-                  Incoming call from <strong>{callStatus.caller}</strong> for <strong>{callStatus.language}</strong>
-                </p>
-                <div className="d-flex gap-3">
-                  <button
-                    onClick={handleAcceptCall}
-                    className="btn btn-warning text-dark w-50 rounded-pill"
-                  >
-                    Accept Call
-                  </button>
-                  <button
-                    onClick={handleRejectCall}
-                    className="btn btn-dark text-warning w-50 rounded-pill"
-                  >
-                    Reject Call
-                  </button>
-                </div>
-              </>
-            ) : callStatus.status === 'active' ? (
-              <>
-                <p className="text-secondary">
-                  Active call with <strong>{callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}</strong>
-                </p>
-                <p className="text-secondary">
-                  Call Duration: {Math.floor(getCallDuration() / 60)}:{(getCallDuration() % 60).toString().padStart(2, '0')}
-                </p>
-                <div className="progress mb-2" style={{ height: '5px' }}>
-                  <div
-                    className={`progress-bar ${getCallDurationProgress() >= 100 ? 'bg-danger' : 'bg-warning'}`}
-                    style={{ width: `${getCallDurationProgress()}%` }}
-                  ></div>
-                </div>
-                {callStatus.extended && <p className="text-warning">Call Extended!</p>}
-                <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
-                <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
-                <div className="d-flex flex-column gap-2">
-                  <button
-                    onClick={handleEndCall}
-                    className="btn btn-dark text-warning rounded-pill"
-                  >
-                    End Call
-                  </button>
-                  <button
-                    onClick={toggleMute}
-                    className="btn btn-dark text-warning rounded-pill"
-                  >
-                    {callStatus.isMuted ? 'Unmute' : 'Mute'}
-                  </button>
-                  <button
-                    onClick={handleExtendCall}
-                    disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
-                    className="btn btn-warning text-dark rounded-pill"
-                  >
-                    {extendRequest ? 'Awaiting Approval' : 'Extend Call'}
-                  </button>
-                </div>
-                {extendRequest && (
-                  <div className="mt-3">
-                    <p className="text-secondary">{extendRequest.requesterName} wants to extend the call. Approve?</p>
-                    <div className="d-flex gap-3">
-                      <button
-                        onClick={() => handleApproveExtend(true)}
-                        className="btn btn-warning text-dark w-50 rounded-pill"
-                      >
-                        Yes
+
+                {/* Pending — incoming */}
+                {callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id && (
+                  <>
+                    <div className="incoming-ring" style={{ margin: '0 auto 1rem' }}>
+                      <i className="bi bi-telephone-inbound-fill" style={{ fontSize: '1.8rem', color: '#feda6a' }}></i>
+                    </div>
+                    <p style={{ color: '#f1f5f9', fontWeight: '700', textAlign: 'center', fontSize: '1.3rem', marginBottom: '0.3rem' }}>{callStatus.caller}</p>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.4rem' }}>
+                      <span style={{ background: 'rgba(254,218,106,0.12)', color: '#feda6a', fontSize: '0.82rem', fontWeight: '600', padding: '3px 12px', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="bi bi-translate"></i>{callStatus.language}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.7rem' }}>
+                      <button onClick={handleAcceptCall} style={{ flex: 1, padding: '11px', borderRadius: '12px', border: 'none', background: '#38a169', color: '#fff', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px' }}>
+                        <i className="bi bi-telephone-fill"></i> Accept
                       </button>
-                      <button
-                        onClick={() => handleApproveExtend(false)}
-                        className="btn btn-dark text-warning w-50 rounded-pill"
-                      >
-                        No
+                      <button onClick={handleRejectCall} style={{ flex: 1, padding: '11px', borderRadius: '12px', border: 'none', background: '#e53e3e', color: '#fff', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px' }}>
+                        <i className="bi bi-telephone-x-fill"></i> Decline
                       </button>
                     </div>
-                  </div>
+                  </>
+                )}
+
+                {/* Active */}
+                {callStatus.status === 'active' && (
+                  <>
+                    <p style={{ color: '#f1f5f9', fontWeight: '700', textAlign: 'center', fontSize: '1.3rem', marginBottom: '0.3rem' }}>{partnerName}</p>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+                      <span style={{ background: 'rgba(74,222,128,0.12)', color: '#4ade80', fontSize: '0.8rem', fontWeight: '600', padding: '3px 12px', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="bi bi-circle-fill" style={{ fontSize: '0.45rem' }}></i>Live
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.5rem', fontWeight: '700', color: '#f1f5f9', justifyContent: 'center', marginBottom: '0.5rem', fontVariantNumeric: 'tabular-nums' }}>
+                      <i className="bi bi-clock" style={{ fontSize: '1.1rem', color: '#94a3b8' }}></i>
+                      {durMin}:{durSecRem}
+                    </div>
+                    <div style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginBottom: '1.2rem' }}>
+                      <div style={{ height: '100%', borderRadius: '2px', width: `${progress}%`, background: progress >= 100 ? '#e53e3e' : '#feda6a', transition: 'width 1s linear, background-color 0.3s ease' }}></div>
+                    </div>
+                    {callStatus.extended && (
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(254,218,106,0.12)', color: '#feda6a', fontSize: '0.8rem', fontWeight: '600', padding: '4px 12px', borderRadius: '20px', marginBottom: '0.8rem' }}>
+                        <i className="bi bi-plus-circle-fill"></i> Extended
+                      </div>
+                    )}
+                    <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
+                    <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
+                    <div className="call-controls">
+                      <button className={`ctrl-btn ${callStatus.isMuted ? 'muted' : 'mute-btn'}`} onClick={toggleMute}>
+                        <i className={`bi ${callStatus.isMuted ? 'bi-mic-mute-fill' : 'bi-mic-fill'}`}></i>
+                        {callStatus.isMuted ? 'Unmute' : 'Mute'}
+                      </button>
+                      <button className="ctrl-btn end-btn" onClick={handleEndCall}>
+                        <i className="bi bi-telephone-x-fill"></i>End
+                      </button>
+                      <button
+                        className="ctrl-btn extend-btn"
+                        onClick={handleExtendCall}
+                        disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
+                      >
+                        <i className="bi bi-clock-history"></i>
+                        {extendRequest ? 'Pending…' : 'Extend'}
+                      </button>
+                    </div>
+                    {extendRequest && (
+                      <div style={{ background: 'rgba(254,218,106,0.08)', border: '1px solid rgba(254,218,106,0.2)', borderRadius: '12px', padding: '1rem', marginTop: '1rem' }}>
+                        <p style={{ color: '#cbd5e1', fontSize: '0.88rem', marginBottom: '0.8rem', textAlign: 'center' }}>
+                          <strong style={{ color: '#feda6a' }}>{extendRequest.requesterName}</strong> wants to extend
+                        </p>
+                        <div style={{ display: 'flex', gap: '0.7rem' }}>
+                          <button onClick={() => handleApproveExtend(true)} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: '#38a169', color: '#fff', fontWeight: '600', cursor: 'pointer' }}>Yes</button>
+                          <button onClick={() => handleApproveExtend(false)} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: '#e53e3e', color: '#fff', fontWeight: '600', cursor: 'pointer' }}>No</button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {callStatus.status !== 'pending' && callStatus.status !== 'active' && (
+                  <p style={{ color: '#94a3b8', textAlign: 'center' }}>
+                    Call <strong style={{ color: '#feda6a' }}>{callStatus.status}</strong>
+                  </p>
                 )}
               </>
             ) : (
-              <p className="text-secondary">Call <strong>{callStatus.status}</strong>!</p>
+              <>
+                <h5 style={{ color: '#feda6a', fontWeight: '700', marginBottom: '1rem' }}>Start a Random Language Call</h5>
+                <div className="lang-input-row">
+                  <input
+                    type="text"
+                    placeholder="Enter language to learn"
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className="lang-input"
+                  />
+                  <button className="btn-primary-custom" onClick={handleInitiateCall}>
+                    Call
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>
-      ) : (
-        <div className="card mx-auto mb-4 shadow-sm" style={{ maxWidth: '400px' }}>
-          <div className="card-body">
-            <h5 className="card-title text-dark fw-bold mb-3">Start a Random Language Call</h5>
-            <div className="d-flex flex-column flex-sm-row gap-3 align-items-sm-center">
-              <input
-                type="text"
-                placeholder="Enter language to learn"
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="form-control rounded-pill"
-              />
-              <button
-                onClick={handleInitiateCall}
-                className="btn btn-dark text-warning rounded-pill px-4"
-              >
-                Initiate Call
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      <div className="card shadow-sm">
-        <div className="card-body">
-          <h5 className="card-title text-dark fw-bold mb-3">Available Users</h5>
-          <div className="d-flex flex-column flex-sm-row gap-3 align-items-sm-center mb-3">
+        {/* Users table */}
+        <div style={{ background: 'rgba(22,25,35,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px', padding: '1.5rem', backdropFilter: 'blur(8px)' }}>
+          <h5 style={{ color: '#f1f5f9', fontWeight: '700', marginBottom: '1.2rem' }}>Available Users</h5>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.2rem' }}>
             <input
               type="text"
-              placeholder="Search users by name, email, or languages"
+              placeholder="Search by name, email, or language…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="form-control rounded-pill"
+              style={{ flex: 1, minWidth: '200px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#f1f5f9', borderRadius: '10px', padding: '9px 14px', fontSize: '0.9rem', outline: 'none' }}
             />
-            <div className="form-check">
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', fontSize: '0.88rem', cursor: 'pointer', userSelect: 'none' }}>
               <input
                 type="checkbox"
                 checked={showPremiumOnly}
                 onChange={(e) => setShowPremiumOnly(e.target.checked)}
-                className="form-check-input"
-                id="premiumOnly"
+                style={{ accentColor: '#feda6a', width: '16px', height: '16px' }}
               />
-              <label className="form-check-label text-secondary" htmlFor="premiumOnly">
-                Show Premium Users Only
-              </label>
-            </div>
+              Premium only
+            </label>
           </div>
+
           {isLoading ? (
-            <p className="text-center text-secondary">Loading users...</p>
+            <p style={{ color: '#64748b', textAlign: 'center' }}>Loading users…</p>
           ) : error ? (
-            <p className="text-center text-secondary">
-              Error: {error.data?.error || 'Failed to load users'}
-            </p>
+            <p style={{ color: '#fc8181', textAlign: 'center' }}>Error: {error.data?.error || 'Failed to load users'}</p>
           ) : (
-            <div className="table-responsive">
-              <table className="table table-hover">
-                <thead className="table-dark text-warning">
-                  <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Status</th>
-                    <th scope="col" className="d-none d-md-table-cell">Known Languages</th>
-                    <th scope="col" className="d-none d-md-table-cell">Learning Languages</th>
-                    <th scope="col">Actions</th>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                    {['Name', 'Status', 'Knows', 'Learning', 'Actions'].map(h => (
+                      <th key={h} style={{ color: 'rgba(254,218,106,0.7)', fontWeight: '700', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '10px 12px', textAlign: 'left' }}>{h}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredUsers.map(u => (
-                    <tr key={u._id}>
-                      <td>
-                        <Link to={`/profile/${u._id}`} className="text-decoration-none text-secondary">
+                    <tr key={u._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <td style={{ padding: '10px 12px' }}>
+                        <Link to={`/profile/${u._id}`} style={{ color: '#f1f5f9', textDecoration: 'none', fontWeight: '600' }}>
                           {u.name}
-                          {u.premium && (
-                            <i className="bi bi-star-fill ms-2 text-warning" title="Premium User" />
-                          )}
+                          {u.premium && <i className="bi bi-star-fill" style={{ color: '#feda6a', marginLeft: '6px', fontSize: '0.75rem' }} title="Premium"></i>}
                         </Link>
                       </td>
-                      <td>
-                        {u.isOnline ? <span className="text-success fw-bold">Online</span> : <span className="text-secondary">Offline</span>}
+                      <td style={{ padding: '10px 12px' }}>
+                        {u.isOnline
+                          ? <span style={{ color: '#4ade80', fontWeight: '600', fontSize: '0.82rem' }}>● Online</span>
+                          : <span style={{ color: '#475569', fontSize: '0.82rem' }}>Offline</span>}
                       </td>
-                      <td className="d-none d-md-table-cell text-secondary">
-                        {u.knownLanguages.join(', ') || 'None'}
-                      </td>
-                      <td className="d-none d-md-table-cell text-secondary">
-                        {u.learnLanguages.join(', ') || 'None'}
-                      </td>
-                      <td>
-                        <div className="d-flex gap-2">
+                      <td style={{ padding: '10px 12px', color: '#64748b' }}>{u.knownLanguages.join(', ') || '—'}</td>
+                      <td style={{ padding: '10px 12px', color: '#64748b' }}>{u.learnLanguages.join(', ') || '—'}</td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <button
                             onClick={() => handleSelectiveCall(u._id)}
                             disabled={!u.isOnline || callStatus}
-                            className="btn btn-dark text-warning rounded-pill btn-sm"
+                            style={{ background: u.isOnline && !callStatus ? '#feda6a' : 'rgba(254,218,106,0.1)', color: u.isOnline && !callStatus ? '#1d1e22' : '#64748b', border: 'none', borderRadius: '8px', padding: '5px 12px', fontWeight: '600', fontSize: '0.8rem', cursor: u.isOnline && !callStatus ? 'pointer' : 'not-allowed' }}
                           >
-                            Call
+                            <i className="bi bi-telephone-fill" style={{ marginRight: '4px' }}></i>Call
                           </button>
                           <button
                             onClick={() => handleSendEmail(u._id, u.name)}
-                            disabled={!user?.premium}
-                            className="btn btn-dark text-warning rounded-pill btn-sm"
+                            style={{ background: 'rgba(99,179,237,0.12)', color: '#63b3ed', border: 'none', borderRadius: '8px', padding: '5px 12px', fontWeight: '600', fontSize: '0.8rem', cursor: 'pointer' }}
                           >
-                            Email
+                            <i className="bi bi-envelope-fill" style={{ marginRight: '4px' }}></i>Email
                           </button>
                         </div>
                       </td>
                     </tr>
                   ))}
+                  {filteredUsers.length === 0 && (
+                    <tr>
+                      <td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: '#475569' }}>No users found</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -344,10 +358,7 @@ const Premium = () => {
         <EmailModal
           recipientId={selectedRecipient.id}
           recipientName={selectedRecipient.name}
-          onClose={() => {
-            setShowEmailModal(false);
-            setSelectedRecipient(null);
-          }}
+          onClose={() => { setShowEmailModal(false); setSelectedRecipient(null); }}
         />
       )}
     </div>

@@ -26,11 +26,21 @@ const Home = () => {
   } = useCallLogic();
 
   if (isAuthenticated && callLoading && !callStatus) {
-    return <div className="text-center mt-5" style={{ color: '#393f4d' }}>Loading call status...</div>;
+    return <div className="text-center mt-5" style={{ color: '#e2e8f0' }}>Loading call status...</div>;
   }
 
+  const partnerName = callStatus
+    ? callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller
+    : '';
+
+  const durSec = callStatus?.status === 'active' ? getCallDuration() : 0;
+  const durMin = Math.floor(durSec / 60);
+  const durSecRem = (durSec % 60).toString().padStart(2, '0');
+  const progress = callStatus?.status === 'active' ? getCallDurationProgress() : 0;
+
   return (
-    <div style={{ backgroundColor: '#FFFFFF', minHeight: '100vh', padding: 0, margin: 0 }}>
+    <div>
+      {/* Hero */}
       <div className="hero-section">
         <div className="globe"></div>
         <div className="particles">
@@ -43,196 +53,226 @@ const Home = () => {
         <p className="hero-subtitle">Connect with language partners worldwide in real-time</p>
       </div>
 
-      <div
-        className="call-initiator"
-        style={{
-          maxWidth: '500px',
-          margin: '0 auto',
-          padding: '20px',
-          boxSizing: 'border-box',
-          backgroundColor: '#e9ecef',
-          borderRadius: '8px',
-        }}
-      >
+      {/* Call initiator card */}
+      <div className="call-initiator">
         {isAuthenticated ? (
           callStatus ? (
-            <div
-              className="call-card"
-              style={{
-                width: '100%',
-                margin: 0,
-                padding: 0,
-                background: 'transparent',
-                boxSizing: 'border-box',
-              }}
-            >
-              <h5 className="card-title">Call Status</h5>
-              {callStatus.status === 'pending' && callStatus.callerId === user?._id ? (
+            <div className="call-card">
+              <p className="call-card-title">Call Status</p>
+
+              {/* Pending — you are the caller */}
+              {callStatus.status === 'pending' && callStatus.callerId === user?._id && (
                 <>
-                  <p>Waiting for someone to accept your call for <strong>{callStatus.language}</strong>...</p>
-                  {callStatus.receivers && callStatus.receivers.length > 0 ? (
-                    <p style={{ color: '#feda6a' }}>
-                      Potential Receivers: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}
+                  <div className="incoming-ring" style={{ background: 'rgba(254,218,106,0.1)' }}>
+                    <i className="bi bi-telephone-outbound-fill" style={{ fontSize: '1.8rem', color: '#feda6a' }}></i>
+                  </div>
+                  <p className="call-partner-name">Calling…</p>
+                  <p style={{ color: '#94a3b8', textAlign: 'center', fontSize: '0.88rem', marginBottom: '1.4rem' }}>
+                    Waiting for someone to accept your call for{' '}
+                    <strong style={{ color: '#feda6a' }}>{callStatus.language}</strong>
+                  </p>
+                  {callStatus.receivers && callStatus.receivers.length > 0 && (
+                    <p style={{ color: '#64748b', textAlign: 'center', fontSize: '0.8rem', marginBottom: '1rem' }}>
+                      Reaching: {callStatus.receivers.map((r) => r.name || r.id || 'Unknown').join(', ')}
                     </p>
-                  ) : (
-                    <p>No potential receivers left.</p>
                   )}
-                  <button className="btn btn-danger-custom w-100" onClick={handleCancelCall}>
-                    Cancel Call
+                  <button className="call-btn call-btn-cancel" onClick={handleCancelCall}>
+                    <i className="bi bi-telephone-x-fill"></i> Cancel Call
                   </button>
                 </>
-              ) : callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id ? (
+              )}
+
+              {/* Pending — incoming call */}
+              {callStatus.status === 'pending' && callStatus.caller && callStatus.callerId !== user?._id && (
                 <>
-                  <p>Incoming call from <strong>{callStatus.caller}</strong> for <strong>{callStatus.language}</strong></p>
-                  <div className="d-flex gap-2">
-                    <button className="btn btn-success-custom w-50" onClick={handleAcceptCall}>
-                      Accept Call
+                  <div className="incoming-ring">
+                    <i className="bi bi-telephone-inbound-fill"></i>
+                  </div>
+                  <p className="call-partner-name">{callStatus.caller}</p>
+                  <span className="call-language-tag">
+                    <i className="bi bi-translate"></i>
+                    {callStatus.language}
+                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+                    <button className="call-btn call-btn-accept" onClick={handleAcceptCall}>
+                      <i className="bi bi-telephone-fill"></i> Accept
                     </button>
-                    <button className="btn btn-danger-custom w-50" onClick={handleRejectCall}>
-                      Reject Call
+                    <button className="call-btn call-btn-reject" onClick={handleRejectCall}>
+                      <i className="bi bi-telephone-x-fill"></i> Decline
                     </button>
                   </div>
                 </>
-              ) : callStatus.status === 'active' ? (
+              )}
+
+              {/* Active call */}
+              {callStatus.status === 'active' && (
                 <>
-                  <p>
-                    Active call with{' '}
-                    <strong>{callStatus.callerId === user?._id ? callStatus.receiver : callStatus.caller}</strong>
-                  </p>
-                  <p>
-                    Call Duration: {Math.floor(getCallDuration() / 60)}:
-                    {(getCallDuration() % 60).toString().padStart(2, '0')}
-                  </p>
-                  <div
-                    style={{
-                      height: '5px',
-                      backgroundColor: '#e0e0e0',
-                      borderRadius: '2.5px',
-                      overflow: 'hidden',
-                      margin: '10px 0',
-                    }}
-                  >
+                  <p className="call-partner-name">{partnerName}</p>
+                  <span className="call-language-tag">
+                    <i className="bi bi-circle-fill" style={{ fontSize: '0.5rem', color: '#4ade80' }}></i>
+                    Live
+                  </span>
+
+                  <div className="call-duration-row">
+                    <i className="bi bi-clock" style={{ fontSize: '1.1rem', color: '#94a3b8' }}></i>
+                    {durMin}:{durSecRem}
+                  </div>
+
+                  <div className="call-progress-track">
                     <div
+                      className="call-progress-fill"
                       style={{
-                        width: `${getCallDurationProgress()}%`,
-                        height: '100%',
-                        backgroundColor: getCallDurationProgress() >= 100 ? '#ff4d4f' : '#feda6a',
-                        transition: 'width 1s linear, background-color 0.3s ease',
+                        width: `${progress}%`,
+                        background: progress >= 100 ? '#e53e3e' : '#feda6a',
                       }}
                     ></div>
                   </div>
-                  {callStatus.extended && <p style={{ color: '#feda6a' }}>Call Extended!</p>}
+
+                  {callStatus.extended && (
+                    <div className="call-extended-badge">
+                      <i className="bi bi-plus-circle-fill"></i> Extended
+                    </div>
+                  )}
+
                   <audio autoPlay playsInline muted={true} ref={(el) => el && (el.srcObject = localStream)} />
                   <audio autoPlay playsInline muted={false} ref={(el) => el && (el.srcObject = remoteStream)} />
-                  <div className="d-flex flex-column gap-2">
-                    <button className="btn btn-danger-custom w-100" onClick={handleEndCall}>
-                      End Call
-                    </button>
-                    <button className="btn btn-secondary-custom w-100" onClick={toggleMute}>
+
+                  <div className="call-controls">
+                    <button
+                      className={`ctrl-btn ${callStatus.isMuted ? 'muted' : 'mute-btn'}`}
+                      onClick={toggleMute}
+                    >
+                      <i className={`bi ${callStatus.isMuted ? 'bi-mic-mute-fill' : 'bi-mic-fill'}`}></i>
                       {callStatus.isMuted ? 'Unmute' : 'Mute'}
                     </button>
+                    <button className="ctrl-btn end-btn" onClick={handleEndCall}>
+                      <i className="bi bi-telephone-x-fill"></i>
+                      End
+                    </button>
                     <button
-                      className="btn btn-warning-custom w-100"
+                      className="ctrl-btn extend-btn"
                       onClick={handleExtendCall}
                       disabled={!user?.powerTokens || user.powerTokens < 1 || extendRequest}
                     >
-                      {user?.powerTokens < 1
-                        ? 'No Power Tokens'
-                        : extendRequest
-                        ? 'Awaiting Approval'
-                        : 'Extend Call'}
+                      <i className="bi bi-clock-history"></i>
+                      {extendRequest ? 'Pending…' : 'Extend'}
                     </button>
                   </div>
+
                   {extendRequest && extendRequest.callId === callStatus.callId && (
-                    <div className="mt-3">
-                      <p>{extendRequest.requesterName} wants to extend the call. Approve?</p>
-                      <div className="d-flex gap-2">
-                        <button
-                          className="btn btn-success-custom w-50"
-                          onClick={() => handleApproveExtend(true)}
-                        >
-                          Yes
+                    <div className="extend-request-box">
+                      <p style={{ color: '#cbd5e1', fontSize: '0.88rem', marginBottom: '0.8rem', textAlign: 'center' }}>
+                        <strong style={{ color: '#feda6a' }}>{extendRequest.requesterName}</strong> wants to extend the call
+                      </p>
+                      <div style={{ display: 'flex', gap: '0.7rem' }}>
+                        <button className="call-btn call-btn-accept" style={{ flex: 1 }} onClick={() => handleApproveExtend(true)}>
+                          <i className="bi bi-check-lg"></i> Yes
                         </button>
-                        <button
-                          className="btn btn-danger-custom w-50"
-                          onClick={() => handleApproveExtend(false)}
-                        >
-                          No
+                        <button className="call-btn call-btn-reject" style={{ flex: 1 }} onClick={() => handleApproveExtend(false)}>
+                          <i className="bi bi-x-lg"></i> No
                         </button>
                       </div>
                     </div>
                   )}
                 </>
-              ) : (
-                <p>Call <strong>{callStatus.status}</strong>!</p>
+              )}
+
+              {/* Fallback status */}
+              {callStatus.status !== 'pending' && callStatus.status !== 'active' && (
+                <p style={{ color: '#94a3b8', textAlign: 'center' }}>
+                  Call <strong style={{ color: '#feda6a' }}>{callStatus.status}</strong>
+                </p>
               )}
             </div>
           ) : (
             <>
-              <h5>Start a Language Call</h5>
-              <div className="d-flex gap-3 align-items-center">
+              <h5 style={{ color: '#feda6a', fontWeight: 700, marginBottom: '1rem' }}>Start a Language Call</h5>
+              <div className="lang-input-row">
                 <input
                   type="text"
-                  className="form-control"
+                  className="lang-input"
                   placeholder="Enter language (e.g., Spanish)"
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
                 />
                 <button
-                  className="btn btn-primary-custom"
+                  className="btn-primary-custom"
                   onClick={handleInitiateCall}
                   disabled={!language || !user?.powerTokens || user.powerTokens < 1}
                 >
-                  {user?.powerTokens < 1 ? 'No Power Tokens' : 'Initiate Call'}
+                  {user?.powerTokens < 1 ? 'No Tokens' : 'Call'}
                 </button>
               </div>
             </>
           )
         ) : (
-          <div
-            className="alert alert-info-custom"
-            style={{
-              width: '100%',
-              margin: 0,
-              padding: 0,
-              background: 'transparent',
-              boxSizing: 'border-box',
-            }}
-          >
-            Please <Link to="/login">login</Link> to start exchanging languages!
+          <div className="auth-alert">
+            Please <Link to="/login">sign in</Link> to start exchanging languages!
           </div>
         )}
       </div>
 
-      <div className="feature-section container">
-        <div className="row g-4">
-          <div className="col-md-4">
-            <div className="feature-card">
-              <i className="bi bi-mic-fill feature-icon"></i>
-              <h5>Live Calls</h5>
-              <p style={{ color: '#393f4d' }}>Practice speaking with real people instantly.</p>
+      {/* Stats strip */}
+      <div className="stats-strip">
+        <div className="container">
+          <div className="row">
+            <div className="col-4 stat-item">
+              <div className="stat-number">50+</div>
+              <div className="stat-label">Languages</div>
             </div>
-          </div>
-          <div className="col-md-4">
-            <div className="feature-card">
-              <i className="bi bi-globe feature-icon"></i>
-              <h5>Global Reach</h5>
-              <p style={{ color: '#393f4d' }}>Connect with learners across the globe.</p>
+            <div className="col-4 stat-item">
+              <div className="stat-number">1K+</div>
+              <div className="stat-label">Users</div>
             </div>
-          </div>
-          <div className="col-md-4">
-            <div className="feature-card">
-              <i className="bi bi-star-fill feature-icon"></i>
-              <h5>Rewards</h5>
-              <p style={{ color: '#393f4d' }}>Earn tokens while teaching others.</p>
+            <div className="col-4 stat-item">
+              <div className="stat-number">24/7</div>
+              <div className="stat-label">Live Calls</div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="footer">
-        <p>© 2025 Language Exchange. Connecting the World, One Word at a Time.</p>
-      </div>
+      {/* Feature cards */}
+      <section className="feature-section">
+        <div className="container">
+          <h2 className="feature-section-title">Why Language Exchange?</h2>
+          <p className="feature-section-sub">Real people, real conversations, real progress</p>
+          <div className="row g-4">
+            <div className="col-md-4">
+              <div className="feature-card">
+                <div className="feature-icon-wrap">
+                  <i className="bi bi-mic-fill feature-icon"></i>
+                </div>
+                <h5>Live Calls</h5>
+                <p>Practice speaking with real people instantly — no scheduling needed.</p>
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="feature-card">
+                <div className="feature-icon-wrap">
+                  <i className="bi bi-globe feature-icon"></i>
+                </div>
+                <h5>Global Reach</h5>
+                <p>Connect with learners across the globe, any time of day.</p>
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="feature-card">
+                <div className="feature-icon-wrap">
+                  <i className="bi bi-star-fill feature-icon"></i>
+                </div>
+                <h5>Earn Rewards</h5>
+                <p>Collect tokens while teaching others your native language.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="footer">
+        <p>© 2025 Language Exchange. Connecting the World, One Word at a Time. Made with <span>♥</span></p>
+      </footer>
     </div>
   );
 };

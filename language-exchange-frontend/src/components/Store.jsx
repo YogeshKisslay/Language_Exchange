@@ -1566,275 +1566,155 @@ const Store = () => {
 
   if (!isAuthenticated) {
     return (
-      <div style={{ color: '#393f4d', textAlign: 'center', marginTop: '50px', fontSize: '1.2rem' }}>
+      <div style={{ color: '#94a3b8', textAlign: 'center', marginTop: '80px', fontSize: '1.1rem' }}>
         Please log in to access the store.
       </div>
     );
   }
 
+  const cardBase = {
+    background: 'rgba(22, 25, 35, 0.85)',
+    border: '1px solid rgba(255,255,255,0.07)',
+    borderRadius: '20px',
+    padding: '2rem 1.5rem',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    textAlign: 'center',
+    transition: 'transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s',
+    backdropFilter: 'blur(8px)',
+  };
+
+  const btnBase = {
+    background: '#feda6a',
+    color: '#1d1e22',
+    border: 'none',
+    width: '100%',
+    padding: '0.8rem',
+    borderRadius: '12px',
+    fontSize: '0.95rem',
+    fontWeight: '700',
+    cursor: 'pointer',
+    transition: 'background 0.2s, transform 0.15s',
+    marginTop: 'auto',
+  };
+
   return (
-    <div style={{
-      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      minHeight: '100vh',
-      padding: '40px 20px',
-      fontFamily: "'Poppins', sans-serif",
-    }}>
-      <h2 style={{
-        color: '#1d1e22',
-        textAlign: 'center',
-        marginBottom: '3rem',
-        fontSize: '2.5rem',
-        fontWeight: '700',
-        textShadow: '0 2px 4px rgba(254, 218, 106, 0.3)',
-        animation: 'fadeIn 0.8s ease-in',
-      }}>
+    <div style={{ background: '#0f1117', minHeight: '100vh', padding: '60px 20px', fontFamily: "'Inter', sans-serif" }}>
+      <h2 style={{ color: '#f1f5f9', textAlign: 'center', marginBottom: '0.5rem', fontSize: '2rem', fontWeight: '800' }}>
         Language Exchange Store
       </h2>
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: '2rem',
-        padding: '0 1rem',
-      }}>
+      <p style={{ color: '#64748b', textAlign: 'center', marginBottom: '3rem', fontSize: '1rem' }}>
+        Power up your learning journey
+      </p>
+
+      {/* Token balance pill */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
+        <span style={{ background: 'rgba(254,218,106,0.12)', color: '#feda6a', borderRadius: '20px', padding: '6px 18px', fontSize: '0.88rem', fontWeight: '600' }}>
+          <i className="bi bi-lightning-fill" style={{ marginRight: '6px' }}></i>
+          Power Tokens: {user?.powerTokens ?? 0}
+        </span>
+        <span style={{ background: 'rgba(99,179,237,0.12)', color: '#63b3ed', borderRadius: '20px', padding: '6px 18px', fontSize: '0.88rem', fontWeight: '600' }}>
+          <i className="bi bi-coin" style={{ marginRight: '6px' }}></i>
+          Coins: {user?.coinTokens ?? 0}
+        </span>
+      </div>
+
+      <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', padding: '0 1rem' }}>
+
         {/* Power Tokens */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '20px',
-          padding: '2rem',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
-          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-          animation: 'slideIn 0.5s ease-out',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textAlign: 'center',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'translateY(-10px)';
-          e.currentTarget.style.boxShadow = '0 12px 32px rgba(254, 218, 106, 0.3)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1)';
-        }}
+        <div
+          style={cardBase}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-8px)'; e.currentTarget.style.boxShadow = '0 16px 48px rgba(254,218,106,0.12)'; e.currentTarget.style.borderColor = 'rgba(254,218,106,0.25)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; }}
         >
-          <img
-            src={powerTokenImg}
-            alt="Power Token"
-            style={{ width: '80px', height: '80px', marginBottom: '1rem' }}
-          />
-          <h5 style={{
-            color: '#1d1e22',
-            fontSize: '1.5rem',
-            fontWeight: '600',
-            marginBottom: '1rem',
-          }}>
+          <div style={{ width: '72px', height: '72px', borderRadius: '18px', background: 'rgba(254,218,106,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.2rem' }}>
+            <img src={powerTokenImg} alt="Power Token" style={{ width: '44px', height: '44px' }} />
+          </div>
+          <h5 style={{ color: '#f1f5f9', fontSize: '1.2rem', fontWeight: '700', marginBottom: '0.5rem' }}>
             Exchange for Power Tokens
           </h5>
-          <p style={{
-            color: '#393f4d',
-            fontSize: '1rem',
-            marginBottom: '1.5rem',
-            lineHeight: '1.5',
-          }}>
-            Exchange 1 Coin Token for 2 Power Tokens
+          <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: '1.6' }}>
+            Spend 1 Coin Token to receive 2 Power Tokens
           </p>
           <button
             onClick={handleExchangePowerTokens}
-            style={{
-              backgroundColor: '#feda6a',
-              color: '#1d1e22',
-              border: 'none',
-              width: '100%',
-              padding: '0.75rem',
-              borderRadius: '10px',
-              fontSize: '1rem',
-              fontWeight: '600',
-              transition: 'background-color 0.3s ease, transform 0.3s ease',
-            }}
-            onMouseOver={(e) => {
-              e.target.style.backgroundColor = '#fee08f';
-              e.target.style.transform = 'scale(1.05)';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.backgroundColor = '#feda6a';
-              e.target.style.transform = 'scale(1)';
-            }}
+            style={btnBase}
+            onMouseOver={(e) => { e.target.style.background = '#fdc53f'; e.target.style.transform = 'translateY(-1px)'; }}
+            onMouseOut={(e) => { e.target.style.background = '#feda6a'; e.target.style.transform = 'translateY(0)'; }}
           >
-            Exchange Now
+            <i className="bi bi-arrow-left-right" style={{ marginRight: '8px' }}></i>Exchange Now
           </button>
         </div>
+
         {/* Coins */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '20px',
-          padding: '2rem',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
-          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-          animation: 'slideIn 0.5s ease-out 0.2s',
-          animationFillMode: 'backwards',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textAlign: 'center',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'translateY(-10px)';
-          e.currentTarget.style.boxShadow = '0 12px 32px rgba(254, 218, 106, 0.3)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1)';
-        }}
+        <div
+          style={cardBase}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-8px)'; e.currentTarget.style.boxShadow = '0 16px 48px rgba(254,218,106,0.12)'; e.currentTarget.style.borderColor = 'rgba(254,218,106,0.25)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; }}
         >
-          <img
-            src={coinTokenImg}
-            alt="Coin Token"
-            style={{ width: '80px', height: '80px', marginBottom: '1rem' }}
-          />
-          <h5 style={{
-            color: '#1d1e22',
-            fontSize: '1.5rem',
-            fontWeight: '600',
-            marginBottom: '1rem',
-          }}>
+          <div style={{ width: '72px', height: '72px', borderRadius: '18px', background: 'rgba(99,179,237,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.2rem' }}>
+            <img src={coinTokenImg} alt="Coin Token" style={{ width: '44px', height: '44px' }} />
+          </div>
+          <h5 style={{ color: '#f1f5f9', fontSize: '1.2rem', fontWeight: '700', marginBottom: '0.5rem' }}>
             Buy Coins
           </h5>
-          <p style={{
-            color: '#393f4d',
-            fontSize: '1rem',
-            marginBottom: '1.5rem',
-            lineHeight: '1.5',
-          }}>
+          <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.5rem', lineHeight: '1.6' }}>
             Get 10 Coins for ₹50
           </p>
+          <div style={{ background: 'rgba(99,179,237,0.1)', color: '#63b3ed', borderRadius: '12px', padding: '4px 14px', fontSize: '0.8rem', fontWeight: '600', marginBottom: '1.5rem' }}>
+            ₹5 per coin
+          </div>
           <button
-            onClick={() => handlePayment(
-              'coinTokens',
-              5000, // Amount in paise (₹50)
-              'Purchase 10 Coins',
-              'Successfully purchased 10 Coins!'
-            )}
-            style={{
-              backgroundColor: '#feda6a',
-              color: '#1d1e22',
-              border: 'none',
-              width: '100%',
-              padding: '0.75rem',
-              borderRadius: '10px',
-              fontSize: '1rem',
-              fontWeight: '600',
-              transition: 'background-color 0.3s ease, transform 0.3s ease',
-            }}
-            onMouseOver={(e) => {
-              e.target.style.backgroundColor = '#fee08f';
-              e.target.style.transform = 'scale(1.05)';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.backgroundColor = '#feda6a';
-              e.target.style.transform = 'scale(1)';
-            }}
+            onClick={() => handlePayment('coinTokens', 5000, 'Purchase 10 Coins', 'Successfully purchased 10 Coins!')}
+            style={btnBase}
+            onMouseOver={(e) => { e.target.style.background = '#fdc53f'; e.target.style.transform = 'translateY(-1px)'; }}
+            onMouseOut={(e) => { e.target.style.background = '#feda6a'; e.target.style.transform = 'translateY(0)'; }}
           >
-            Buy Now
+            <i className="bi bi-cart-fill" style={{ marginRight: '8px' }}></i>Buy Now — ₹50
           </button>
         </div>
-        {/* Premium Plan (Hidden for Premium Users) */}
+
+        {/* Premium Plan */}
         {!user?.premium && (
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '20px',
-            padding: '2rem',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
-            transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-            animation: 'slideIn 0.5s ease-out 0.4s',
-            animationFillMode: 'backwards',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textAlign: 'center',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-10px)';
-            e.currentTarget.style.boxShadow = '0 12px 32px rgba(254, 218, 106, 0.3)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1)';
-          }}
+          <div
+            style={{ ...cardBase, border: '1px solid rgba(254,218,106,0.3)', background: 'rgba(254,218,106,0.05)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-8px)'; e.currentTarget.style.boxShadow = '0 16px 48px rgba(254,218,106,0.18)'; e.currentTarget.style.borderColor = 'rgba(254,218,106,0.5)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'rgba(254,218,106,0.3)'; }}
           >
-            <img
-              src={premiumImg}
-              alt="Premium Plan"
-              style={{ width: '80px', height: '80px', marginBottom: '1rem' }}
-            />
-            <h5 style={{
-              color: '#1d1e22',
-              fontSize: '1.5rem',
-              fontWeight: '600',
-              marginBottom: '1rem',
-            }}>
-              Buy Premium Plan
+            <div style={{ width: '72px', height: '72px', borderRadius: '18px', background: 'rgba(254,218,106,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.2rem' }}>
+              <img src={premiumImg} alt="Premium" style={{ width: '44px', height: '44px' }} />
+            </div>
+            <div style={{ background: 'rgba(254,218,106,0.15)', color: '#feda6a', borderRadius: '20px', padding: '3px 12px', fontSize: '0.75rem', fontWeight: '700', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.8rem' }}>
+              Best Value
+            </div>
+            <h5 style={{ color: '#feda6a', fontSize: '1.2rem', fontWeight: '700', marginBottom: '0.5rem' }}>
+              Premium Plan
             </h5>
-            <p style={{
-              color: '#393f4d',
-              fontSize: '1rem',
-              marginBottom: '1.5rem',
-              lineHeight: '1.5',
-            }}>
-              Get Premium + 50 Coins for ₹500
+            <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '0.5rem', lineHeight: '1.6' }}>
+              Unlock Premium + 50 Coins
             </p>
+            <ul style={{ color: '#64748b', fontSize: '0.82rem', textAlign: 'left', listStyle: 'none', padding: 0, marginBottom: '1.5rem', width: '100%' }}>
+              <li style={{ marginBottom: '4px' }}><i className="bi bi-check-circle-fill" style={{ color: '#4ade80', marginRight: '8px' }}></i>Selective calls to any user</li>
+              <li style={{ marginBottom: '4px' }}><i className="bi bi-check-circle-fill" style={{ color: '#4ade80', marginRight: '8px' }}></i>View all users</li>
+              <li style={{ marginBottom: '4px' }}><i className="bi bi-check-circle-fill" style={{ color: '#4ade80', marginRight: '8px' }}></i>Email users directly</li>
+              <li><i className="bi bi-check-circle-fill" style={{ color: '#4ade80', marginRight: '8px' }}></i>50 Coins included</li>
+            </ul>
             <button
-              onClick={() => handlePayment(
-                'premium',
-                50000, // Amount in paise (₹500)
-                'Purchase Premium Plan',
-                'Premium plan activated with 50 Coins!'
-              )}
-              style={{
-                backgroundColor: '#feda6a',
-                color: '#1d1e22',
-                border: 'none',
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: '10px',
-                fontSize: '1rem',
-                fontWeight: '600',
-                transition: 'background-color 0.3s ease, transform 0.3s ease',
-              }}
-              onMouseOver={(e) => {
-                e.target.style.backgroundColor = '#fee08f';
-                e.target.style.transform = 'scale(1.05)';
-              }}
-              onMouseOut={(e) => {
-                e.target.style.backgroundColor = '#feda6a';
-                e.target.style.transform = 'scale(1)';
-              }}
+              onClick={() => handlePayment('premium', 50000, 'Purchase Premium Plan', 'Premium plan activated with 50 Coins!')}
+              style={btnBase}
+              onMouseOver={(e) => { e.target.style.background = '#fdc53f'; e.target.style.transform = 'translateY(-1px)'; }}
+              onMouseOut={(e) => { e.target.style.background = '#feda6a'; e.target.style.transform = 'translateY(0)'; }}
             >
-              Buy Now
+              <i className="bi bi-star-fill" style={{ marginRight: '8px' }}></i>Upgrade — ₹500
             </button>
           </div>
         )}
       </div>
 
-      <style>
-        {`
-          @keyframes slideIn {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-          }
-          @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-          @media (max-width: 600px) {
-            div[style*="gridTemplateColumns"] {
-              grid-template-columns: 1fr;
-            }
-          }
-        `}
-      </style>
+      <style>{`
+        @keyframes slideIn { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+      `}</style>
     </div>
   );
 };
