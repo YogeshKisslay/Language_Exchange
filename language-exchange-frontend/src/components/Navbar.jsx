@@ -1910,7 +1910,6 @@ import { useLogoutMutation } from '../redux/services/authApi';
 import { logout as logoutAction, setCallStatus } from '../redux/slices/authSlice';
 import { useGetMissedCallsQuery, useDismissMissedCallMutation } from '../redux/services/missedCallApi';
 import { useInitiateSelectiveCallMutation } from '../redux/services/callApi';
-import { io } from 'socket.io-client';
 import { toast } from 'react-toastify';
 
 const Navbar = () => {
@@ -1919,9 +1918,8 @@ const Navbar = () => {
   const [logoutApi, { isLoading }] = useLogoutMutation();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
-  const [socket, setSocket] = useState(null);
 
-  const { data: missedCallsData, isLoading: missedCallsLoading, refetch: refetchMissedCalls } = useGetMissedCallsQuery(undefined, {
+  const { data: missedCallsData, isLoading: missedCallsLoading } = useGetMissedCallsQuery(undefined, {
     skip: !isAuthenticated,
   });
   const [dismissMissedCall] = useDismissMissedCallMutation();
@@ -1964,35 +1962,6 @@ const Navbar = () => {
     }
   };
 
-  useEffect(() => {
-    if (isAuthenticated && user && user._id) {
-      const newSocket = io(import.meta.env.VITE_BACKEND_URL, { withCredentials: true });
-      newSocket.on('connect', () => {
-        console.log('Connected to WebSocket:', newSocket.id);
-        newSocket.emit('register', user._id);
-      });
-
-      newSocket.on('call-request', (data) => {
-        setNotifications((prev) => [...prev, { type: 'call-request', data }]);
-      });
-
-      newSocket.on('call-cancelled', (data) => {
-        setNotifications((prev) => prev.filter((n) => n.data.callId !== data.callId));
-      });
-
-      newSocket.on('call-rejected', (data) => {
-        setNotifications((prev) => prev.filter((n) => n.data.callId !== data.callId));
-      });
-
-      newSocket.on('missed-call-alert', (data) => {
-        toast.info(`You have ${data.count} new missed call(s)!`);
-        refetchMissedCalls();
-      });
-
-      setSocket(newSocket);
-      return () => newSocket.disconnect();
-    }
-  }, [isAuthenticated, user, refetchMissedCalls]);
 
   useEffect(() => {
     if (callStatus?.status === 'pending' && callStatus.caller && callStatus.callerId !== (user?._id || '')) {

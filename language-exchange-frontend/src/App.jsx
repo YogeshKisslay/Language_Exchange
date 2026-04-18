@@ -372,7 +372,7 @@ const App = () => {
       <ToastContainer position="top-right" autoClose={3000} />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/auth0-callback" element={null} />
+        <Route path="/auth0-callback" element={<div>Authenticating...</div>} />
         <Route path="/reset/:token" element={<ResetPassword />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:userId" element={<Profile />} />
