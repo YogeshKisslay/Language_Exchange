@@ -412,8 +412,22 @@ const useCallLogic = () => {
       // and we should stop any pending reconnect loop on the receiver side.
       setReconnectAttempt(0);
       if (peerConnection.current && callStatusRef.current?.callId === callId) {
-        console.log('New offer for active call — resetting stale WebRTC connection');
-        cleanupWebRTC();
+        // Tear down the stale PC but KEEP the mic stream.
+        // Calling track.stop() then getUserMedia immediately after is unreliable
+        // on mobile — the OS may not have released the mic yet, producing dead
+        // tracks. startWebRTC will reuse localStreamRef.current instead.
+        peerConnection.current.onconnectionstatechange = null;
+        peerConnection.current.onicecandidate = null;
+        peerConnection.current.ontrack = null;
+        peerConnection.current.close();
+        peerConnection.current = null;
+        setRemoteStream(null);
+        iceCandidatesQueue.current = [];
+        isWebRTCStarting.current = false;
+        if (disconnectTimeoutRef.current) {
+          clearTimeout(disconnectTimeoutRef.current);
+          disconnectTimeoutRef.current = null;
+        }
       }
       if (!isWebRTCStarting.current) {
         await startWebRTC(socket, false, from, callId, offer);
