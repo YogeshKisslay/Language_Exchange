@@ -717,15 +717,16 @@ const useCallLogic = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({ language }),
+        body: JSON.stringify({ language: language.trim().toLowerCase() }),
       });
       const data = await response.json();
       if (response.status === 200) {
+        const normalizedLanguage = language.trim().toLowerCase();
         dispatch(setCallStatus({
           callId: data.callId,
           status: 'pending',
           receivers: data.potentialReceivers,
-          language,
+          language: normalizedLanguage,
           callerId: user?._id,
           caller: user?.name,
           startTime: new Date().toISOString(),

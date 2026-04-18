@@ -1,12 +1,24 @@
-
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useResetPasswordMutation } from '../redux/services/authApi';
+import { toast } from 'react-toastify';
+
+const inputStyle = {
+  width: '100%',
+  padding: '10px 14px',
+  borderRadius: '10px',
+  border: '1px solid rgba(255,255,255,0.12)',
+  background: 'rgba(255,255,255,0.06)',
+  color: '#f1f5f9',
+  fontSize: '0.9rem',
+  outline: 'none',
+  transition: 'border-color 0.2s, box-shadow 0.2s',
+};
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [focused, setFocused] = useState('');
   const { token } = useParams();
   const navigate = useNavigate();
   const [resetPassword, { isLoading }] = useResetPasswordMutation();
@@ -14,158 +26,73 @@ const ResetPassword = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      alert("Passwords don't match");
+      toast.error("Passwords don't match");
       return;
     }
-
     try {
       await resetPassword({ token, newPassword: password }).unwrap();
-      alert('Password reset successfully');
+      toast.success('Password reset successfully');
       navigate('/login');
     } catch (err) {
-      alert(err.data?.message || 'Failed to reset password');
+      toast.error(err.data?.message || 'Failed to reset password');
     }
   };
 
+  const focusStyle = { borderColor: 'rgba(254,218,106,0.55)', boxShadow: '0 0 0 3px rgba(254,218,106,0.12)' };
+
   return (
-    <div style={{
-      backgroundColor: '#FFFFFF',
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
-    }}>
-      <div style={{
-        maxWidth: '400px',
-        width: '100%',
-        background: 'linear-gradient(135deg, #d4d4dc 0%, #FFFFFF 100%)',
-        borderRadius: '15px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-        padding: '2rem',
-        animation: 'slideIn 0.5s ease-out',
-      }}>
-        <h2 style={{
-          color: '#1d1e22',
-          fontWeight: 'bold',
-          textShadow: '0 0 5px rgba(254, 218, 106, 0.3)',
-          textAlign: 'center',
-          marginBottom: '2rem',
-        }}>
-          Reset Password
-        </h2>
+    <div style={{ background: '#0f1117', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ maxWidth: '420px', width: '100%', background: 'rgba(18,20,30,0.92)', border: '1px solid rgba(254,218,106,0.18)', borderRadius: '20px', boxShadow: '0 24px 64px rgba(0,0,0,0.6)', backdropFilter: 'blur(16px)', padding: '2.5rem 2rem', animation: 'slideUp 0.5s ease-out' }}>
+
+        <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(254,218,106,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.2rem' }}>
+          <i className="bi bi-key-fill" style={{ fontSize: '1.6rem', color: '#feda6a' }}></i>
+        </div>
+
+        <h2 style={{ color: '#f1f5f9', fontWeight: '800', textAlign: 'center', marginBottom: '0.4rem', fontSize: '1.5rem' }}>Reset Password</h2>
+        <p style={{ color: '#64748b', textAlign: 'center', fontSize: '0.88rem', marginBottom: '2rem' }}>Enter your new password below</p>
+
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label htmlFor="password" style={{
-              color: '#393f4d',
-              fontWeight: '500',
-              display: 'block',
-              marginBottom: '0.5rem',
-            }}>
-              New Password
-            </label>
+          <div style={{ marginBottom: '1.2rem' }}>
+            <label style={{ color: '#94a3b8', fontSize: '0.82rem', fontWeight: '600', display: 'block', marginBottom: '6px' }}>New Password</label>
             <input
               type="password"
-              id="password"
               placeholder="Enter new password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              style={{
-                width: '100%',
-                padding: '0.75rem 1rem',
-                borderRadius: '8px',
-                border: '1px solid #d4d4dc',
-                color: '#393f4d',
-                backgroundColor: '#FFFFFF',
-                transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#1d1e22';
-                e.target.style.boxShadow = '0 0 5px rgba(29, 30, 34, 0.5)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#d4d4dc';
-                e.target.style.boxShadow = 'none';
-              }}
+              style={{ ...inputStyle, ...(focused === 'pw' ? focusStyle : {}) }}
+              onFocus={() => setFocused('pw')}
+              onBlur={() => setFocused('')}
             />
           </div>
           <div style={{ marginBottom: '2rem' }}>
-            <label htmlFor="confirmPassword" style={{
-              color: '#393f4d',
-              fontWeight: '500',
-              display: 'block',
-              marginBottom: '0.5rem',
-            }}>
-              Confirm Password
-            </label>
+            <label style={{ color: '#94a3b8', fontSize: '0.82rem', fontWeight: '600', display: 'block', marginBottom: '6px' }}>Confirm Password</label>
             <input
               type="password"
-              id="confirmPassword" // Fixed ID to match label
               placeholder="Confirm new password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              style={{
-                width: '100%',
-                padding: '0.75rem 1rem',
-                borderRadius: '8px',
-                border: '1px solid #d4d4dc',
-                color: '#393f4d',
-                backgroundColor: '#FFFFFF',
-                transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#1d1e22';
-                e.target.style.boxShadow = '0 0 5px rgba(29, 30, 34, 0.5)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#d4d4dc';
-                e.target.style.boxShadow = 'none';
-              }}
+              style={{ ...inputStyle, ...(focused === 'cpw' ? focusStyle : {}) }}
+              onFocus={() => setFocused('cpw')}
+              onBlur={() => setFocused('')}
             />
           </div>
           <button
             type="submit"
             disabled={isLoading}
-            style={{
-              backgroundColor: '#feda6a',
-              color: '#1d1e22',
-              border: 'none',
-              width: '100%',
-              padding: '0.75rem',
-              borderRadius: '20px',
-              fontWeight: 'bold',
-              boxShadow: '0 2px 6px rgba(254, 218, 106, 0.4)',
-              transition: 'background-color 0.3s ease, transform 0.3s ease',
-              opacity: isLoading ? 0.6 : 1,
-            }}
-            onMouseOver={(e) => {
-              if (!isLoading) {
-                e.target.style.backgroundColor = '#fee08f';
-                e.target.style.transform = 'scale(1.05)';
-              }
-            }}
-            onMouseOut={(e) => {
-              if (!isLoading) {
-                e.target.style.backgroundColor = '#feda6a';
-                e.target.style.transform = 'scale(1)';
-              }
-            }}
+            style={{ width: '100%', padding: '11px', borderRadius: '12px', border: 'none', background: isLoading ? 'rgba(254,218,106,0.4)' : '#feda6a', color: '#1d1e22', fontWeight: '700', fontSize: '0.95rem', cursor: isLoading ? 'not-allowed' : 'pointer', transition: 'background 0.2s, transform 0.15s' }}
+            onMouseOver={(e) => { if (!isLoading) e.target.style.background = '#fdc53f'; }}
+            onMouseOut={(e) => { if (!isLoading) e.target.style.background = '#feda6a'; }}
           >
-            {isLoading ? 'Resetting...' : 'Change Password'}
+            {isLoading ? 'Resetting…' : 'Change Password'}
           </button>
         </form>
       </div>
 
-      <style>
-        {`
-          @keyframes slideIn {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-          }
-        `}
-      </style>
+      <style>{`
+        @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+      `}</style>
     </div>
   );
 };

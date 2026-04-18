@@ -1,2 +1,145 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 @import 'bootstrap-icons/font/bootstrap-icons.css';
+
+/* ── Global dark base ───────────────────────────────────────────────── */
+body {
+  background-color: #0f1117;
+  color: #e2e8f0;
+  font-family: 'Inter', 'Arial', sans-serif;
+}
+
+/* ── Modal backdrop — semi-transparent so hero shows through ───────── */
+.modal-backdrop {
+  background-color: rgba(5, 6, 10, 0.7) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+}
+
+/* ── Glassmorphism modal card ──────────────────────────────────────── */
+.modal-content {
+  background: rgba(18, 20, 30, 0.92) !important;
+  border: 1px solid rgba(254, 218, 106, 0.18) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.04) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: #e2e8f0 !important;
+}
+
+.modal-header {
+  border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+  padding: 1.25rem 1.5rem !important;
+}
+
+.modal-title {
+  color: #feda6a !important;
+  font-weight: 700 !important;
+  font-size: 1.15rem !important;
+}
+
+.btn-close {
+  filter: invert(1) brightness(0.7) !important;
+}
+
+.modal-body {
+  padding: 1.5rem !important;
+}
+
+/* ── Modal form inputs ─────────────────────────────────────────────── */
+.modal-content .form-label {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.modal-content .form-control {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: #f1f5f9 !important;
+  border-radius: 10px !important;
+  padding: 10px 14px !important;
+  font-size: 0.9rem !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+.modal-content .form-control::placeholder {
+  color: rgba(255,255,255,0.3) !important;
+}
+.modal-content .form-control:focus {
+  border-color: rgba(254, 218, 106, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(254, 218, 106, 0.12) !important;
+  background: rgba(255,255,255,0.09) !important;
+  outline: none !important;
+}
+
+/* ── Modal primary submit button ──────────────────────────────────── */
+.modal-content .btn-primary {
+  background: #feda6a !important;
+  border: none !important;
+  color: #1d1e22 !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  padding: 10px !important;
+  transition: background 0.2s, transform 0.15s !important;
+}
+.modal-content .btn-primary:hover:not(:disabled) {
+  background: #fdc53f !important;
+  transform: translateY(-1px) !important;
+}
+.modal-content .btn-primary:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+}
+
+/* ── Modal Google / outline button ────────────────────────────────── */
+.modal-content .btn-outline-primary {
+  background: transparent !important;
+  border: 1px solid rgba(254, 218, 106, 0.35) !important;
+  color: #feda6a !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  padding: 10px !important;
+  transition: background 0.2s, border-color 0.2s !important;
+}
+.modal-content .btn-outline-primary:hover {
+  background: rgba(254, 218, 106, 0.1) !important;
+  border-color: rgba(254, 218, 106, 0.6) !important;
+}
+
+/* ── Modal link buttons ────────────────────────────────────────────── */
+.modal-content .btn-link {
+  color: #feda6a !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  border-bottom: 1px solid rgba(254,218,106,0.4) !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  transition: border-color 0.2s !important;
+}
+.modal-content .btn-link:hover {
+  border-color: #feda6a !important;
+}
+
+/* ── OR divider ────────────────────────────────────────────────────── */
+.modal-content hr {
+  border-color: rgba(255,255,255,0.1) !important;
+}
+.modal-content .text-muted {
+  color: #475569 !important;
+}
+
+/* ── Forgot password link ──────────────────────────────────────────── */
+.modal-content .text-end .btn-link {
+  font-size: 0.82rem;
+  color: #94a3b8 !important;
+  border-bottom: none !important;
+}
+.modal-content .text-end .btn-link:hover {
+  color: #feda6a !important;
+}
+
+/* ── "Don't have an account?" text ────────────────────────────────── */
+.modal-content p.text-center {
+  color: #64748b;
+  font-size: 0.88rem;
+}
